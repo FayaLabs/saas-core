@@ -1,0 +1,65 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLayoutStore } from '../stores/layout.store'
+
+type Breakpoint = 'sm' | 'md' | 'lg' | 'xl' | '2xl'
+
+const BREAKPOINTS: Record<Breakpoint, number> = {
+  sm: 640,
+  md: 768,
+  lg: 1024,
+  xl: 1280,
+  '2xl': 1536,
+}
+
+function getBreakpoint(width: number): Breakpoint {
+  if (width >= BREAKPOINTS['2xl']) return '2xl'
+  if (width >= BREAKPOINTS.xl) return 'xl'
+  if (width >= BREAKPOINTS.lg) return 'lg'
+  if (width >= BREAKPOINTS.md) return 'md'
+  return 'sm'
+}
+
+export function useLayout() {
+  const store = useLayoutStore()
+  const [isMobile, setIsMobile] = useState(false)
+  const [currentBreakpoint, setCurrentBreakpoint] = useState<Breakpoint>('lg')
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 767px)')
+
+    const handleMobileChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setIsMobile(e.matches)
+    }
+
+    handleMobileChange(mobileQuery)
+    mobileQuery.addEventListener('change', handleMobileChange)
+
+    const handleResize = () => {
+      setCurrentBreakpoint(getBreakpoint(window.innerWidth))
+    }
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      mobileQuery.removeEventListener('change', handleMobileChange)
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
+
+  const closeMobileDrawer = useCallback(() => {
+    if (store.mobileDrawerOpen) {
+      store.toggleMobileDrawer()
+    }
+  }, [store])
+
+  return useMemo(
+    () => ({
+      ...store,
+      isMobile,
+      currentBreakpoint,
+      closeMobileDrawer,
+    }),
+    [store, isMobile, currentBreakpoint, closeMobileDrawer]
+  )
+}

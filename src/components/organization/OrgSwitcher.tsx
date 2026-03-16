@@ -1,0 +1,174 @@
+import * as React from 'react'
+import { Building2, Check, ChevronDown, Plus } from 'lucide-react'
+import { cn } from '../../lib/cn'
+import { useOrganizationStore } from '../../stores/organization.store'
+import { useOrgAdapterOptional } from '../../lib/org-context'
+import { useAuthStore } from '../../stores/auth.store'
+import { usePermissionsStore } from '../../stores/permissions.store'
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownContent,
+  DropdownItem,
+  DropdownSeparator,
+} from '../ui/dropdown'
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalFooter,
+} from '../ui/modal'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+
+interface OrgSwitcherProps {
+  collapsed?: boolean
+}
+
+export function OrgSwitcher({ collapsed }: OrgSwitcherProps) {
+  const adapter = useOrgAdapterOptional()
+  const currentOrg = useOrganizationStore((s) => s.currentOrg)
+  const userOrgs = useOrganizationStore((s) => s.userOrgs)
+  const setCurrentOrg = useOrganizationStore((s) => s.setCurrentOrg)
+  const setUserOrgs = useOrganizationStore((s) => s.setUserOrgs)
+  const setMembers = useOrganizationStore((s) => s.setMembers)
+  const setCurrentProfile = usePermissionsStore((s) => s.setCurrentProfile)
+  const setProfiles = usePermissionsStore((s) => s.setProfiles)
+  const user = useAuthStore((s) => s.user)
+
+  const [createOpen, setCreateOpen] = React.useState(false)
+  const [newOrgName, setNewOrgName] = React.useState('')
+  const [creating, setCreating] = React.useState(false)
+
+  if (!adapter || !currentOrg) return null
+
+  const initial = currentOrg.name.charAt(0).toUpperCase()
+
+  const handleSwitch = async (orgId: string) => {
+    if (orgId === currentOrg.id || !adapter || !user) return
+    try {
+      const org = await adapter.getOrg(orgId)
+      setCurrentOrg(org)
+      const members = await adapter.listMembers(orgId)
+      setMembers(members)
+      const profiles = await adapter.listProfiles(orgId)
+      setProfiles(profiles)
+      const myMembership = members.find((m) => m.userId === user.id)
+      if (myMembership) {
+        const profile = profiles.find((p) => p.id === myMembership.profileId)
+        setCurrentProfile(profile ?? null)
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleCreate = async () => {
+    if (!newOrgName.trim() || !adapter || !user) return
+    setCreating(true)
+    try {
+      const org = await adapter.createOrg(newOrgName.trim(), user.id)
+      const orgs = await adapter.listUserOrgs(user.id)
+      setUserOrgs(orgs)
+      setCurrentOrg(org)
+      const members = await adapter.listMembers(org.id)
+      setMembers(members)
+      const profiles = await adapter.listProfiles(org.id)
+      setProfiles(profiles)
+      const myMembership = members.find((m) => m.userId === user.id)
+      if (myMembership) {
+        const profile = profiles.find((p) => p.id === myMembership.profileId)
+        setCurrentProfile(profile ?? null)
+      }
+      setCreateOpen(false)
+      setNewOrgName('')
+    } catch {
+      // ignore
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  return (
+    <>
+      <div className={cn('border-t border-border', collapsed ? 'px-1 py-2' : 'px-3 py-2')}>
+        <Dropdown>
+          <DropdownTrigger asChild>
+            <button
+              className={cn(
+                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors hover:bg-accent',
+                collapsed && 'justify-center px-0'
+              )}
+            >
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary text-xs font-bold">
+                {currentOrg.logoUrl ? (
+                  <img src={currentOrg.logoUrl} alt="" className="h-full w-full rounded-md object-cover" />
+                ) : (
+                  initial
+                )}
+              </div>
+              {!collapsed && (
+                <>
+                  <span className="flex-1 truncate text-left">{currentOrg.name}</span>
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </>
+              )}
+            </button>
+          </DropdownTrigger>
+          <DropdownContent align="start" className="w-56">
+            {userOrgs.map((org) => (
+              <DropdownItem
+                key={org.orgId}
+                onClick={() => handleSwitch(org.orgId)}
+                className="flex items-center gap-2"
+              >
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-primary/10 text-primary text-xs font-bold">
+                  {org.orgLogoUrl ? (
+                    <img src={org.orgLogoUrl} alt="" className="h-full w-full rounded object-cover" />
+                  ) : (
+                    org.orgName.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <span className="flex-1 truncate">{org.orgName}</span>
+                {org.orgId === currentOrg.id && (
+                  <Check className="h-4 w-4 text-primary" />
+                )}
+              </DropdownItem>
+            ))}
+            <DropdownSeparator />
+            <DropdownItem onClick={() => setCreateOpen(true)} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              <span>Create organization</span>
+            </DropdownItem>
+          </DropdownContent>
+        </Dropdown>
+      </div>
+
+      <Modal open={createOpen} onOpenChange={setCreateOpen}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Create Organization</ModalTitle>
+            <ModalDescription>Create a new workspace for your team.</ModalDescription>
+          </ModalHeader>
+          <div className="py-4">
+            <Input
+              placeholder="Organization name"
+              value={newOrgName}
+              onChange={(e) => setNewOrgName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleCreate() }}
+              autoFocus
+            />
+          </div>
+          <ModalFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreate} disabled={!newOrgName.trim() || creating}>
+              {creating ? 'Creating...' : 'Create'}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
+  )
+}

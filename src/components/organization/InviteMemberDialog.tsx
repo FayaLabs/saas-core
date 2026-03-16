@@ -1,0 +1,155 @@
+import * as React from 'react'
+import { Plus, X } from 'lucide-react'
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalFooter,
+} from '../ui/modal'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select'
+import { Badge } from '../ui/badge'
+import { usePermissionsStore } from '../../stores/permissions.store'
+import { useOrganizationStore } from '../../stores/organization.store'
+import { useInviteStore } from '../../stores/invite.store'
+import { useOrgAdapterOptional } from '../../lib/org-context'
+import { useAuthStore } from '../../stores/auth.store'
+
+interface InviteMemberDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogProps) {
+  const adapter = useOrgAdapterOptional()
+  const currentOrg = useOrganizationStore((s) => s.currentOrg)
+  const profiles = usePermissionsStore((s) => s.profiles)
+  const setInvites = useInviteStore((s) => s.setInvites)
+  const user = useAuthStore((s) => s.user)
+
+  const [emails, setEmails] = React.useState<string[]>([''])
+  const [profileId, setProfileId] = React.useState(profiles[1]?.id ?? profiles[0]?.id ?? '')
+  const [sending, setSending] = React.useState(false)
+  const [sent, setSent] = React.useState(false)
+
+  const addEmail = () => setEmails((prev) => [...prev, ''])
+
+  const updateEmail = (idx: number, value: string) => {
+    setEmails((prev) => {
+      const next = [...prev]
+      next[idx] = value
+      return next
+    })
+  }
+
+  const removeEmail = (idx: number) => {
+    setEmails((prev) => prev.filter((_, i) => i !== idx))
+  }
+
+  const handleSend = async () => {
+    if (!adapter || !currentOrg || !user) return
+    const validEmails = emails.filter((e) => e.trim() && e.includes('@'))
+    if (validEmails.length === 0) return
+
+    setSending(true)
+    try {
+      if (validEmails.length === 1) {
+        await adapter.createInvite(currentOrg.id, validEmails[0].trim(), profileId, user.id)
+      } else {
+        await adapter.bulkInvite(currentOrg.id, validEmails.map((e) => e.trim()), profileId, user.id)
+      }
+      const invites = await adapter.listInvites(currentOrg.id)
+      setInvites(invites)
+      setSent(true)
+    } catch {
+      // ignore
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const handleClose = () => {
+    onOpenChange(false)
+    // Reset after animation
+    setTimeout(() => {
+      setEmails([''])
+      setProfileId(profiles[1]?.id ?? profiles[0]?.id ?? '')
+      setSent(false)
+    }, 200)
+  }
+
+  return (
+    <Modal open={open} onOpenChange={handleClose}>
+      <ModalContent>
+        <ModalHeader>
+          <ModalTitle>Invite Team Members</ModalTitle>
+          <ModalDescription>Send invites to join your organization.</ModalDescription>
+        </ModalHeader>
+
+        {sent ? (
+          <div className="py-8 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <Badge variant="default">Sent</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">Invitations have been sent successfully.</p>
+          </div>
+        ) : (
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Email addresses</label>
+              {emails.map((email, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <Input
+                    type="email"
+                    placeholder="team@example.com"
+                    value={email}
+                    onChange={(e) => updateEmail(idx, e.target.value)}
+                  />
+                  {emails.length > 1 && (
+                    <Button variant="ghost" size="sm" onClick={() => removeEmail(idx)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button variant="ghost" size="sm" onClick={addEmail} className="text-xs">
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Add another
+              </Button>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Role</label>
+              <Select value={profileId} onValueChange={setProfileId}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
+        <ModalFooter>
+          {sent ? (
+            <Button onClick={handleClose}>Done</Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={handleClose}>Cancel</Button>
+              <Button onClick={handleSend} disabled={sending || emails.every((e) => !e.trim())}>
+                {sending ? 'Sending...' : 'Send Invites'}
+              </Button>
+            </>
+          )}
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  )
+}
