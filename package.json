@@ -55,7 +55,7 @@
     "tailwind.config.ts"
   ],
   "scripts": {
-    "prepare": "tsup",
+    "prepare": "tsup --no-dts",
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
