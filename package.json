@@ -8,44 +8,44 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     },
     "./components": {
+      "types": "./dist/components/index.d.ts",
       "import": "./dist/components/index.js",
-      "require": "./dist/components/index.cjs",
-      "types": "./dist/components/index.d.ts"
+      "require": "./dist/components/index.cjs"
     },
     "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
       "import": "./dist/hooks/index.js",
-      "require": "./dist/hooks/index.cjs",
-      "types": "./dist/hooks/index.d.ts"
+      "require": "./dist/hooks/index.cjs"
     },
     "./stores": {
+      "types": "./dist/stores/index.d.ts",
       "import": "./dist/stores/index.js",
-      "require": "./dist/stores/index.cjs",
-      "types": "./dist/stores/index.d.ts"
+      "require": "./dist/stores/index.cjs"
     },
     "./server": {
+      "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.js",
-      "require": "./dist/server/index.cjs",
-      "types": "./dist/server/index.d.ts"
+      "require": "./dist/server/index.cjs"
     },
     "./config": {
+      "types": "./dist/config/index.d.ts",
       "import": "./dist/config/index.js",
-      "require": "./dist/config/index.cjs",
-      "types": "./dist/config/index.d.ts"
+      "require": "./dist/config/index.cjs"
     },
     "./lib": {
+      "types": "./dist/lib/index.d.ts",
       "import": "./dist/lib/index.js",
-      "require": "./dist/lib/index.cjs",
-      "types": "./dist/lib/index.d.ts"
+      "require": "./dist/lib/index.cjs"
     },
     "./types": {
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/types/index.js",
-      "require": "./dist/types/index.cjs",
-      "types": "./dist/types/index.d.ts"
+      "require": "./dist/types/index.cjs"
     },
     "./styles.css": "./dist/styles.css"
   },
