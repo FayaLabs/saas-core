@@ -27,14 +27,14 @@ export const lightTheme: ThemeTokens = {
     warning: '38 92% 50%',
     warningForeground: '222.2 84% 4.9%',
 
-    // Layout surfaces — defaults: sidebar white, content light gray
-    sidebar: '0 0% 100%',
-    sidebarForeground: '222.2 84% 4.9%',
-    sidebarBorder: '214.3 31.8% 91.4%',
-    sidebarAccent: '210 40% 96.1%',
-    sidebarAccentForeground: '222.2 47.4% 11.2%',
-    sidebarMuted: '215.4 16.3% 46.9%',
-    content: '210 20% 98%',
+    // Layout surfaces — defaults: dark sidebar, light gray content
+    sidebar: '220 20% 14%',
+    sidebarForeground: '220 15% 85%',
+    sidebarBorder: '220 15% 20%',
+    sidebarAccent: '220 20% 22%',
+    sidebarAccentForeground: '0 0% 100%',
+    sidebarMuted: '220 10% 50%',
+    content: '220 15% 96%',
   },
   perception: {
     buttonRadius: '0.5rem',

@@ -87,7 +87,7 @@ export interface SaasAppConfig {
   theme?: CreateThemeOptions | SaasTheme
   /** Layout variant (default: 'sidebar') */
   layout?: 'sidebar' | 'topbar' | 'minimal'
-  /** When true (sidebar layout only), content area floats in a rounded frame over the sidebar background */
+  /** Content floats in a rounded frame over the sidebar background (default: true). Set false to disable. */
   sidebarFrame?: boolean
   /** Vertical-specific pages */
   pages: PageConfig[]
@@ -536,7 +536,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
           AppShell,
           {
             variant: layout,
-            sidebarFrame: config.sidebarFrame,
+            sidebarFrame: config.sidebarFrame !== false,
             navigation,
             user,
             pageTitle,
