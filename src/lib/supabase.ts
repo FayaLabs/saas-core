@@ -28,3 +28,7 @@ export function getSupabaseClient(): SupabaseClient {
   }
   return client
 }
+
+export function getSupabaseClientOptional(): SupabaseClient | null {
+  return client
+}

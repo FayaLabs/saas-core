@@ -26,6 +26,7 @@ interface AppShellUser {
 
 interface AppShellProps {
   variant: 'sidebar' | 'topbar' | 'minimal'
+  sidebarFrame?: boolean
   navigation?: NavigationItem[]
   logo?: React.ReactNode
   user?: AppShellUser
@@ -39,6 +40,10 @@ interface AppShellProps {
   currentPath?: string
   userMenuExtras?: { label: string; icon?: React.ReactNode; onClick: () => void }[]
   orgSwitcher?: React.ReactNode
+  topbarStart?: React.ReactNode
+  topbarEnd?: React.ReactNode
+  sidebarTopContent?: React.ReactNode
+  sidebarFooterContent?: React.ReactNode
 }
 
 function TopbarActions({
@@ -47,23 +52,27 @@ function TopbarActions({
   onProfile,
   onSettings,
   userMenuExtras,
+  showSearch = true,
 }: {
   user?: AppShellUser
   onSignOut?: () => void
   onProfile?: () => void
   onSettings?: () => void
   userMenuExtras?: AppShellProps['userMenuExtras']
+  showSearch?: boolean
 }) {
   const { notifications, unreadCount, markRead, markAllRead } = useNotificationStore()
 
   return (
     <div className="flex items-center gap-1">
-      <button
-        className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-        aria-label="Search"
-      >
-        <Search className="h-5 w-5" />
-      </button>
+      {showSearch && (
+        <button
+          className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          aria-label="Search"
+        >
+          <Search className="h-5 w-5" />
+        </button>
+      )}
 
       {/* Notification dropdown */}
       <Popover.Root>
@@ -103,6 +112,7 @@ function TopbarActions({
 
 export function AppShell({
   variant,
+  sidebarFrame,
   navigation = [],
   logo,
   user,
@@ -116,6 +126,10 @@ export function AppShell({
   currentPath,
   userMenuExtras,
   orgSwitcher,
+  topbarStart,
+  topbarEnd,
+  sidebarTopContent,
+  sidebarFooterContent,
 }: AppShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
@@ -134,8 +148,9 @@ export function AppShell({
               <Menu className="h-5 w-5" />
             </button>
             {pageTitle && <h2 className="font-semibold text-lg">{pageTitle}</h2>}
+            {topbarStart}
           </div>
-          <div />
+          <div className="flex items-center gap-2">{topbarEnd}</div>
         </>
       )
 
@@ -153,6 +168,9 @@ export function AppShell({
           onBilling={onBilling}
           userMenuExtras={userMenuExtras}
           orgSwitcher={orgSwitcher}
+          sidebarTopContent={sidebarTopContent}
+          sidebarFooterContent={sidebarFooterContent}
+          frame={sidebarFrame}
         >
           {children}
           {/* Mobile drawer */}
@@ -178,14 +196,17 @@ export function AppShell({
           logo={logo}
           user={user}
           onNavigate={onNavigate}
+          leftContent={topbarStart}
           rightContent={
             <div className="flex items-center gap-1">
+              {topbarEnd}
               <TopbarActions
                 user={user}
                 onSignOut={onSignOut}
                 onProfile={onProfile}
                 onSettings={onSettings}
                 userMenuExtras={userMenuExtras}
+                showSearch={false}
               />
             </div>
           }
@@ -196,7 +217,7 @@ export function AppShell({
 
     case 'minimal':
       return (
-        <MinimalLayout logo={logo} user={user}>
+        <MinimalLayout logo={logo} user={user} headerEnd={topbarEnd}>
           {children}
         </MinimalLayout>
       )

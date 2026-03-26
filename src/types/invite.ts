@@ -2,14 +2,22 @@ export type InviteStatus = 'pending' | 'accepted' | 'expired' | 'revoked'
 
 export interface Invite {
   id: string
-  orgId: string
+  tenantId: string
   email: string
-  profileId: string
-  profileName: string
+  role: string
+  locationIds?: string[]
   invitedBy: string
-  invitedByName: string
+  token: string
   status: InviteStatus
-  createdAt: string
   expiresAt: string
   acceptedAt?: string
+  createdAt: string
+  /** @deprecated Use tenantId */
+  orgId?: string
+  /** @deprecated */
+  profileId?: string
+  /** @deprecated */
+  profileName?: string
+  /** @deprecated */
+  invitedByName?: string
 }

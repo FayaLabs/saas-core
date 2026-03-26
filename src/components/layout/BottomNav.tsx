@@ -10,9 +10,26 @@ import {
   BarChart3,
   FileText,
   Mail,
+  MessageCircle,
+  DollarSign,
+  Megaphone,
+  ShoppingCart,
+  Target,
+  Wrench,
+  ClipboardList,
+  Briefcase,
+  UserCog,
+  BookOpen,
+  Globe,
+  Percent,
+  Tag,
+  Camera,
+  UtensilsCrossed,
+  Search,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { useChatStore } from '../../stores/chat.store'
 
 interface NavigationItem {
   id: string
@@ -27,23 +44,20 @@ interface BottomNavProps {
   navigation: NavigationItem[]
   activeRoute: string
   onNavigate: (route: string) => void
+  showChat?: boolean
 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
-  Home,
-  Users,
-  Settings,
-  CreditCard,
-  Bell,
-  Calendar,
-  Package,
-  BarChart3,
-  FileText,
-  Mail,
+  Home, Users, Settings, CreditCard, Bell, Calendar, Package, BarChart3,
+  FileText, Mail, MessageCircle, DollarSign, Megaphone, ShoppingCart,
+  Target, Wrench, ClipboardList, Briefcase, UserCog, BookOpen, Globe,
+  Percent, Tag, Camera, UtensilsCrossed, Search,
 }
 
-export function BottomNav({ navigation, activeRoute, onNavigate }: BottomNavProps) {
-  const items = navigation.slice(0, 5)
+export function BottomNav({ navigation, activeRoute, onNavigate, showChat = true }: BottomNavProps) {
+  const maxItems = showChat ? 4 : 5
+  const items = navigation.filter((n) => n.section === 'main').slice(0, maxItems)
+  const { isOpen, toggleOpen } = useChatStore()
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-center justify-around border-t border-border bg-background px-2 md:hidden">
@@ -73,6 +87,20 @@ export function BottomNav({ navigation, activeRoute, onNavigate }: BottomNavProp
           </button>
         )
       })}
+      {showChat && (
+        <button
+          onClick={toggleOpen}
+          className={cn(
+            'relative flex flex-1 flex-col items-center gap-1 py-1 text-xs font-medium transition-colors',
+            isOpen
+              ? 'text-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span>Chat</span>
+        </button>
+      )}
     </nav>
   )
 }

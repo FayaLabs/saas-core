@@ -71,7 +71,7 @@ export function SubscriptionCard({
         {plan && (
           <div className="text-sm">
             <span className="text-2xl font-bold">
-              ${subscription.interval === 'monthly' ? plan.prices.monthly : plan.prices.yearly}
+              ${subscription.interval === 'monthly' ? (plan.prices?.monthly ?? plan.priceMonthly) : (plan.prices?.yearly ?? plan.priceYearly)}
             </span>
             <span className="text-muted-foreground">
               /{subscription.interval === 'monthly' ? 'mo' : 'yr'}

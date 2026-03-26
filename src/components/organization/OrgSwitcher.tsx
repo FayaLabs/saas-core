@@ -93,16 +93,16 @@ export function OrgSwitcher({ collapsed }: OrgSwitcherProps) {
 
   return (
     <>
-      <div className={cn('border-t border-border', collapsed ? 'px-1 py-2' : 'px-3 py-2')}>
+      <div className={cn('border-t border-sidebar-border', collapsed ? 'px-1 py-2' : 'px-3 py-2')}>
         <Dropdown>
           <DropdownTrigger asChild>
             <button
               className={cn(
-                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors hover:bg-accent',
+                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors hover:bg-sidebar-accent',
                 collapsed && 'justify-center px-0'
               )}
             >
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary text-xs font-bold">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sidebar-accent text-sidebar-accent-foreground text-xs font-bold">
                 {currentOrg.logoUrl ? (
                   <img src={currentOrg.logoUrl} alt="" className="h-full w-full rounded-md object-cover" />
                 ) : (
@@ -112,19 +112,19 @@ export function OrgSwitcher({ collapsed }: OrgSwitcherProps) {
               {!collapsed && (
                 <>
                   <span className="flex-1 truncate text-left">{currentOrg.name}</span>
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-sidebar-muted" />
                 </>
               )}
             </button>
           </DropdownTrigger>
-          <DropdownContent align="start" className="w-56">
+          <DropdownContent align="start" className="w-56 bg-sidebar text-sidebar-foreground border-sidebar-border">
             {userOrgs.map((org) => (
               <DropdownItem
                 key={org.orgId}
                 onClick={() => handleSwitch(org.orgId)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
               >
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-primary/10 text-primary text-xs font-bold">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-sidebar-accent text-sidebar-accent-foreground text-xs font-bold">
                   {org.orgLogoUrl ? (
                     <img src={org.orgLogoUrl} alt="" className="h-full w-full rounded object-cover" />
                   ) : (
@@ -137,8 +137,8 @@ export function OrgSwitcher({ collapsed }: OrgSwitcherProps) {
                 )}
               </DropdownItem>
             ))}
-            <DropdownSeparator />
-            <DropdownItem onClick={() => setCreateOpen(true)} className="flex items-center gap-2">
+            <DropdownSeparator className="bg-sidebar-border" />
+            <DropdownItem onClick={() => setCreateOpen(true)} className="flex items-center gap-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground">
               <Plus className="h-4 w-4" />
               <span>Create organization</span>
             </DropdownItem>

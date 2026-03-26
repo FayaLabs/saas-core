@@ -1,9 +1,9 @@
 import * as React from 'react'
 import * as TabsPrimitive from '@radix-ui/react-tabs'
 import { cn } from '../../lib/cn'
-import { CompanySettings } from './CompanySettings'
-import { UserProfile } from './UserProfile'
-import { BrandingSettings } from './BrandingSettings'
+import { ConnectedCompanySettings } from './ConnectedCompanySettings'
+import { ConnectedUserProfile } from './ConnectedUserProfile'
+import { ConnectedBrandingSettings } from './ConnectedBrandingSettings'
 
 interface SettingsTab {
   id: string
@@ -16,15 +16,24 @@ interface SettingsPageProps {
   extraTabs?: SettingsTab[]
   defaultTab?: string
   className?: string
+  beforeContent?: React.ReactNode
+  afterContent?: React.ReactNode
 }
 
 const DEFAULT_TABS: SettingsTab[] = [
-  { id: 'general', label: 'General', component: <CompanySettings /> },
-  { id: 'profile', label: 'Profile', component: <UserProfile /> },
-  { id: 'branding', label: 'Branding', component: <BrandingSettings /> },
+  { id: 'general', label: 'General', component: <ConnectedCompanySettings /> },
+  { id: 'profile', label: 'Profile', component: <ConnectedUserProfile /> },
+  { id: 'branding', label: 'Branding', component: <ConnectedBrandingSettings /> },
 ]
 
-export function SettingsPage({ tabs, extraTabs, defaultTab, className }: SettingsPageProps) {
+export function SettingsPage({
+  tabs,
+  extraTabs,
+  defaultTab,
+  className,
+  beforeContent,
+  afterContent,
+}: SettingsPageProps) {
   const baseTabs = tabs ?? DEFAULT_TABS
   const resolvedTabs = extraTabs ? [...baseTabs, ...extraTabs] : baseTabs
   const resolvedDefault = defaultTab ?? resolvedTabs[0]?.id ?? 'general'
@@ -37,6 +46,8 @@ export function SettingsPage({ tabs, extraTabs, defaultTab, className }: Setting
           Manage your account and organization preferences.
         </p>
       </div>
+
+      {beforeContent}
 
       <TabsPrimitive.Root defaultValue={resolvedDefault}>
         <TabsPrimitive.List className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
@@ -64,6 +75,8 @@ export function SettingsPage({ tabs, extraTabs, defaultTab, className }: Setting
           </TabsPrimitive.Content>
         ))}
       </TabsPrimitive.Root>
+
+      {afterContent}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 export { cn } from './cn'
-export { createSupabaseClient, getSupabaseClient } from './supabase'
+export { createSupabaseClient, getSupabaseClient, getSupabaseClientOptional } from './supabase'
 export { createApiClient, ApiError } from './api'
 export {
   useRouter,
@@ -18,3 +18,14 @@ export type { DataProvider, CrudQuery, CrudResult } from './data-providers/types
 export { createMockProvider } from './data-providers/mock'
 export { OrgAdapterProvider, useOrgAdapter, useOrgAdapterOptional } from './org-context'
 export { createMockOrgAdapter } from './org-adapters/mock'
+export { createSupabaseOrgAdapter } from './org-adapters/supabase'
+export { createSupabaseProvider } from './data-providers/supabase'
+export type { SupabaseProviderConfig } from './data-providers/supabase'
+export {
+  createPlugin,
+  getWidgetsForZone,
+  PluginRuntimeProvider,
+  resolvePluginRuntime,
+  usePluginRuntime,
+  usePluginRuntimeOptional,
+} from './plugins'

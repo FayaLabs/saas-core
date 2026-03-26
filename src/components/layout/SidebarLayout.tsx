@@ -28,6 +28,10 @@ interface SidebarLayoutProps {
   onBilling?: () => void
   userMenuExtras?: { label: string; icon?: React.ReactNode; onClick: () => void }[]
   orgSwitcher?: React.ReactNode
+  sidebarTopContent?: React.ReactNode
+  sidebarFooterContent?: React.ReactNode
+  /** When true, content floats in a rounded frame over the sidebar background */
+  frame?: boolean
 }
 
 export function SidebarLayout({
@@ -44,6 +48,9 @@ export function SidebarLayout({
   onBilling,
   userMenuExtras,
   orgSwitcher,
+  sidebarTopContent,
+  sidebarFooterContent,
+  frame,
 }: SidebarLayoutProps) {
   const { sidebarCollapsed, setSidebarCollapsed, isMobile } = useLayout()
   const router = useRouter()
@@ -59,7 +66,7 @@ export function SidebarLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className={cn('flex h-screen overflow-hidden', isMobile || !frame ? 'bg-content' : 'bg-sidebar')}>
       {/* Desktop Sidebar */}
       {!isMobile && (
         <Sidebar
@@ -76,26 +83,30 @@ export function SidebarLayout({
           onBilling={onBilling}
           userMenuExtras={userMenuExtras}
           orgSwitcher={orgSwitcher}
+          topContent={sidebarTopContent}
+          footerContent={sidebarFooterContent}
         />
       )}
 
       {/* Main Content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Optional topbar content (page title, etc.) */}
-        {topbarContent && (
-          <header className="flex h-14 items-center justify-between border-b border-border bg-background px-4">
-            {topbarContent}
-          </header>
-        )}
-
-        <main
-          className={cn(
-            'flex-1 overflow-y-auto',
-            isMobile && 'pb-16'
+      <div className={cn('flex flex-1 flex-col overflow-hidden', frame && !isMobile && 'p-3')}>
+        <div className={cn('flex flex-1 flex-col overflow-hidden bg-content', frame && !isMobile && 'rounded-[1.25rem]')}>
+          {/* Optional topbar content (page title, etc.) */}
+          {topbarContent && (
+            <header className="flex h-12 items-center justify-between border-b border-border/50 px-6">
+              {topbarContent}
+            </header>
           )}
-        >
-          {children}
-        </main>
+
+          <main
+            className={cn(
+              'flex-1 overflow-y-auto p-6',
+              isMobile && 'pb-16'
+            )}
+          >
+            {children}
+          </main>
+        </div>
       </div>
 
       {/* Mobile Bottom Nav */}

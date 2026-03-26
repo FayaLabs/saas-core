@@ -1,6 +1,7 @@
-import type { OrgAdapter, Organization, OrgMember, OrgMembership } from '../../types/org-adapter'
+import type { OrgAdapter, Organization, OrgMember, OrgMembership, CreateOrgOptions } from '../../types/org-adapter'
 import type { PermissionProfile } from '../../types/permissions'
 import type { Invite } from '../../types/invite'
+import type { TenantSettings } from '../../types/tenant'
 
 const STORAGE_KEY = 'saas-core:mock-orgs'
 
@@ -28,6 +29,15 @@ function setStored(data: MockOrgData) {
 
 function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+function createDefaultSettings(options?: CreateOrgOptions): TenantSettings {
+  return {
+    timezone: options?.timezone ?? 'America/Sao_Paulo',
+    currency: options?.currency ?? 'BRL',
+    locale: options?.locale ?? 'pt-BR',
+    branding: {},
+  }
 }
 
 export function createMockOrgAdapter(defaultProfiles?: PermissionProfile[]): OrgAdapter {
@@ -98,7 +108,7 @@ export function createMockOrgAdapter(defaultProfiles?: PermissionProfile[]): Org
       return org
     },
 
-    async createOrg(name: string, userId: string): Promise<Organization> {
+    async createOrg(name: string, userId: string, options?: CreateOrgOptions): Promise<Organization> {
       const data = getStored()
       const orgId = crypto.randomUUID()
       const firstProfile = defaultProfiles?.[0]
@@ -107,6 +117,9 @@ export function createMockOrgAdapter(defaultProfiles?: PermissionProfile[]): Org
         id: orgId,
         name,
         slug: slugify(name),
+        verticalId: options?.verticalId,
+        plan: 'free',
+        settings: createDefaultSettings(options) as unknown as Record<string, unknown>,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
@@ -229,8 +242,11 @@ export function createMockOrgAdapter(defaultProfiles?: PermissionProfile[]): Org
 
       const invite: Invite = {
         id: crypto.randomUUID(),
+        tenantId: orgId,
         orgId,
         email,
+        role: 'staff',
+        token: crypto.randomUUID(),
         profileId,
         profileName: profile?.name ?? profileId,
         invitedBy,

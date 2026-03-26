@@ -42,6 +42,20 @@ const saasPreset: Partial<Config> = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        // Layout surface tokens
+        sidebar: {
+          DEFAULT: 'hsl(var(--sidebar))',
+          foreground: 'hsl(var(--sidebar-foreground))',
+          border: 'hsl(var(--sidebar-border))',
+          accent: 'hsl(var(--sidebar-accent))',
+          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+          muted: 'hsl(var(--sidebar-muted))',
+        },
+        content: 'hsl(var(--content))',
       },
       borderRadius: {
         button: 'var(--button-radius)',

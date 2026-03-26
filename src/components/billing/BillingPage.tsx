@@ -2,6 +2,7 @@ import * as React from 'react'
 import { PlanSelector } from './PlanSelector'
 import { SubscriptionCard } from './SubscriptionCard'
 import { useBillingStore } from '../../stores/billing.store'
+import { useBilling } from '../../hooks/useBilling'
 import type { PlanInterval } from '../../types'
 
 interface BillingPageProps {
@@ -10,7 +11,13 @@ interface BillingPageProps {
 
 export function BillingPage({ className }: BillingPageProps) {
   const { plans, subscription, loading } = useBillingStore()
+  const billing = useBilling()
   const [interval, setInterval] = React.useState<PlanInterval>('monthly')
+
+  // Fetch subscription on mount
+  React.useEffect(() => {
+    billing.fetchSubscription()
+  }, [])
 
   const currentPlan = plans.find((p) => p.id === subscription?.planId)
 
@@ -27,7 +34,7 @@ export function BillingPage({ className }: BillingPageProps) {
         <SubscriptionCard
           subscription={subscription}
           plan={currentPlan}
-          onCancel={() => {/* wired by vertical */}}
+          onCancel={billing.cancelSubscription}
           loading={loading}
         />
       )}
@@ -38,7 +45,7 @@ export function BillingPage({ className }: BillingPageProps) {
           currentPlanId={subscription?.planId}
           interval={interval}
           onIntervalChange={setInterval}
-          onSelectPlan={() => {/* wired by vertical */}}
+          onSelectPlan={(planId) => billing.subscribe(planId, interval)}
           loading={loading}
         />
       )}

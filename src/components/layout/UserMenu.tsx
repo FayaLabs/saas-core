@@ -53,7 +53,7 @@ export function UserMenu({
       <DropdownMenu.Trigger asChild>
         <button
           className={cn(
-            'inline-flex shrink-0 items-center justify-center rounded-md p-1.5 hover:bg-accent/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            'inline-flex shrink-0 items-center justify-center rounded-md p-1.5 hover:bg-sidebar-accent/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             className
           )}
           aria-label="User menu"

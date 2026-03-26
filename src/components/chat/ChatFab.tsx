@@ -14,7 +14,7 @@ export function ChatFab({ className }: ChatFabProps) {
     <button
       onClick={toggleOpen}
       className={cn(
-        'fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all hover:scale-105 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'fixed bottom-6 right-6 z-50 hidden h-12 w-12 items-center justify-center rounded-full border border-border/60 bg-gradient-to-b from-card via-card to-muted text-muted-foreground shadow-md transition-all hover:scale-105 hover:text-foreground hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:flex',
         isOpen && 'rotate-90',
         className
       )}

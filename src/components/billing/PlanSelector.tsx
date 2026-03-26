@@ -56,7 +56,7 @@ export function PlanSelector({
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {plans.map((plan) => {
           const isCurrent = plan.id === currentPlanId
-          const price = interval === 'monthly' ? plan.prices.monthly : plan.prices.yearly
+          const price = interval === 'monthly' ? (plan.prices?.monthly ?? plan.priceMonthly) : (plan.prices?.yearly ?? plan.priceYearly)
 
           return (
             <Card

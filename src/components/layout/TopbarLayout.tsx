@@ -19,6 +19,7 @@ interface TopbarLayoutProps {
   children: React.ReactNode
   user?: { fullName: string; avatarUrl?: string; email: string }
   onNavigate?: (route: string) => void
+  leftContent?: React.ReactNode
   rightContent?: React.ReactNode
 }
 
@@ -28,6 +29,7 @@ export function TopbarLayout({
   children,
   user,
   onNavigate,
+  leftContent,
   rightContent,
 }: TopbarLayoutProps) {
   const { mobileDrawerOpen, toggleMobileDrawer } = useLayout()
@@ -43,16 +45,17 @@ export function TopbarLayout({
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
+    <div className="flex h-screen flex-col overflow-hidden bg-content">
       <Topbar
         navigation={navigation}
         logo={logo}
         user={user}
         onMenuClick={toggleMobileDrawer}
+        leftContent={leftContent}
         rightContent={rightContent}
       />
 
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto px-6 py-6">{children}</main>
 
       <MobileDrawer
         open={mobileDrawerOpen}

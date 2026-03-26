@@ -5,8 +5,39 @@ export interface Tenant {
   logoUrl?: string
   settings: TenantSettings
   plan: string
+  verticalId?: string
   createdAt: string
   updatedAt: string
+}
+
+export interface Location {
+  id: string
+  tenantId: string
+  name: string
+  slug: string
+  addressLine1?: string
+  addressLine2?: string
+  city?: string
+  state?: string
+  postalCode?: string
+  country: string
+  phone?: string
+  email?: string
+  timezone: string
+  isHeadquarters: boolean
+  isActive: boolean
+  settings: Record<string, unknown>
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LocationMember {
+  id: string
+  locationId: string
+  userId: string
+  role: string
+  isPrimary: boolean
+  createdAt: string
 }
 
 export interface TenantSettings {

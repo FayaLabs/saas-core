@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Card } from '../ui/card'
+import { ArrowLeft } from 'lucide-react'
+import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
-import type { FieldDef, EntityDef } from '../../types/crud'
+import type { FieldDef, FieldGroup, EntityDef } from '../../types/crud'
 
 interface CrudFormPageProps {
   entityDef: EntityDef
@@ -114,6 +115,57 @@ function renderField(field: FieldDef, value: any, onChange: (val: any) => void) 
   }
 }
 
+function FormFieldItem({ field, value, onChange }: { field: FieldDef; value: any; onChange: (val: any) => void }) {
+  return (
+    <div className={`grid gap-1.5 ${field.span === 2 ? 'md:col-span-2' : ''}`}>
+      {field.type !== 'boolean' && (
+        <label className="text-sm font-medium text-foreground">
+          {field.label}
+          {field.required && <span className="text-destructive ml-0.5">*</span>}
+        </label>
+      )}
+      {renderField(field, value, onChange)}
+    </div>
+  )
+}
+
+function FormGroup({
+  group,
+  fields,
+  values,
+  onChange,
+}: {
+  group: FieldGroup
+  fields: FieldDef[]
+  values: Record<string, any>
+  onChange: (key: string, val: any) => void
+}) {
+  const cols = group.columns ?? 2
+
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-foreground">{group.label}</h3>
+      {group.description && (
+        <p className="text-xs text-muted-foreground mt-0.5 mb-3">{group.description}</p>
+      )}
+      <Card>
+        <CardContent className="pt-5">
+          <div className={`grid gap-4 ${cols >= 2 ? 'md:grid-cols-2' : ''} ${cols >= 3 ? 'lg:grid-cols-3' : ''}`}>
+            {fields.map((field) => (
+              <FormFieldItem
+                key={field.key}
+                field={field}
+                value={values[field.key]}
+                onChange={(val) => onChange(field.key, val)}
+              />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel, namePlural }: CrudFormPageProps) {
   const formFields = entityDef.fields.filter((f) => f.showInForm !== false)
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
@@ -132,59 +184,93 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
     onSubmit(values)
   }
 
+  const handleChange = (key: string, val: any) => {
+    setValues((prev) => ({ ...prev, [key]: val }))
+  }
+
   const title = mode === 'create' ? `Add ${entityDef.name}` : `Edit ${entityDef.name}`
-  const breadcrumbLabel = mode === 'create' ? `New ${entityDef.name}` : (initialData?.[displayField] ?? `Edit`)
+  const breadcrumbLabel = mode === 'create' ? `New ${entityDef.name}` : (initialData?.[displayField] ?? 'Edit')
+
+  // Organize fields by groups
+  const groups = entityDef.fieldGroups ?? []
+  const groupFieldMap = new Map<string, FieldDef[]>()
+  const ungroupedFields: FieldDef[] = []
+
+  for (const field of formFields) {
+    if (field.group) {
+      const existing = groupFieldMap.get(field.group) ?? []
+      existing.push(field)
+      groupFieldMap.set(field.group, existing)
+    } else {
+      ungroupedFields.push(field)
+    }
+  }
+
+  const hasGroups = groups.length > 0 || groupFieldMap.size > 0
 
   return (
     <div className="w-full flex flex-col items-center">
-    <div className="w-full max-w-2xl space-y-6">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="hover:text-foreground transition-colors"
-        >
-          {namePlural}
-        </button>
-        <span>/</span>
-        <span className="text-foreground font-medium">{breadcrumbLabel}</span>
-      </nav>
+      <div className="w-full max-w-3xl space-y-6">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <button type="button" onClick={onCancel} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            {namePlural}
+          </button>
+          <span>/</span>
+          <span className="text-foreground font-medium">{breadcrumbLabel}</span>
+        </nav>
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">{title}</h1>
-        <p className="text-muted-foreground">
-          {mode === 'create' ? `Create a new ${entityDef.name.toLowerCase()}.` : `Update ${entityDef.name.toLowerCase()} details.`}
-        </p>
-      </div>
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold">{title}</h1>
+          <p className="text-muted-foreground">
+            {mode === 'create' ? `Create a new ${entityDef.name.toLowerCase()}.` : `Update ${entityDef.name.toLowerCase()} details.`}
+          </p>
+        </div>
 
-      {/* Form */}
-      <Card>
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="grid gap-5">
-            {formFields.map((field) => (
-              <div key={field.key} className="grid gap-1.5">
-                {field.type !== 'boolean' && (
-                  <label className="text-sm font-medium text-foreground">
-                    {field.label}
-                    {field.required && <span className="text-destructive ml-0.5">*</span>}
-                  </label>
-                )}
-                {renderField(field, values[field.key], (val) =>
-                  setValues((prev) => ({ ...prev, [field.key]: val })),
-                )}
-              </div>
-            ))}
-          </div>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Ungrouped fields */}
+          {ungroupedFields.length > 0 && (
+            <Card>
+              <CardContent className="pt-5">
+                <div className={`grid gap-4 ${!hasGroups ? '' : 'md:grid-cols-2'}`}>
+                  {ungroupedFields.map((field) => (
+                    <FormFieldItem
+                      key={field.key}
+                      field={field}
+                      value={values[field.key]}
+                      onChange={(val) => handleChange(field.key, val)}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-          <div className="flex items-center gap-3 mt-8 pt-6 border-t">
+          {/* Grouped fields */}
+          {groups.map((group) => {
+            const fields = groupFieldMap.get(group.id)
+            if (!fields || fields.length === 0) return null
+            return (
+              <FormGroup
+                key={group.id}
+                group={group}
+                fields={fields}
+                values={values}
+                onChange={handleChange}
+              />
+            )
+          })}
+
+          {/* Submit */}
+          <div className="flex items-center gap-3 pt-2">
             <Button type="submit">{mode === 'create' ? `Add ${entityDef.name}` : 'Save Changes'}</Button>
             <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
           </div>
         </form>
-      </Card>
-    </div>
+      </div>
     </div>
   )
 }

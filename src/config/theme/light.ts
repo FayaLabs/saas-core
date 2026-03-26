@@ -18,12 +18,23 @@ export const lightTheme: ThemeTokens = {
     border: '214.3 31.8% 91.4%',
     input: '214.3 31.8% 91.4%',
     ring: '222.2 84% 4.9%',
+    popover: '0 0% 100%',
+    popoverForeground: '222.2 84% 4.9%',
     destructive: '0 84.2% 60.2%',
     destructiveForeground: '210 40% 98%',
     success: '142 76% 36%',
     successForeground: '210 40% 98%',
     warning: '38 92% 50%',
     warningForeground: '222.2 84% 4.9%',
+
+    // Layout surfaces — defaults: sidebar white, content light gray
+    sidebar: '0 0% 100%',
+    sidebarForeground: '222.2 84% 4.9%',
+    sidebarBorder: '214.3 31.8% 91.4%',
+    sidebarAccent: '210 40% 96.1%',
+    sidebarAccentForeground: '222.2 47.4% 11.2%',
+    sidebarMuted: '215.4 16.3% 46.9%',
+    content: '210 20% 98%',
   },
   perception: {
     buttonRadius: '0.5rem',

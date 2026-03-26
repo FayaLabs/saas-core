@@ -21,10 +21,12 @@ export function SignupForm({
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setSuccess(null)
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.')
@@ -37,7 +39,13 @@ export function SignupForm({
     }
 
     try {
-      await signUp(email, password, fullName)
+      const result = await signUp(email, password, fullName)
+      if (result.requiresEmailVerification) {
+        setSuccess(`Account created for ${email}. Check your inbox to confirm your email before signing in.`)
+        setPassword('')
+        setConfirmPassword('')
+        return
+      }
       onSuccess?.()
     } catch (err: any) {
       setError(err.message ?? 'Failed to create account. Please try again.')
@@ -55,6 +63,12 @@ export function SignupForm({
       {error && (
         <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
           {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700">
+          {success}
         </div>
       )}
 

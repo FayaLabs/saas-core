@@ -20,12 +20,23 @@ export interface SemanticColors {
   border: string
   input: string
   ring: string
+  popover: string
+  popoverForeground: string
   destructive: string
   destructiveForeground: string
   success: string
   successForeground: string
   warning: string
   warningForeground: string
+
+  // Layout surface colors
+  sidebar: string
+  sidebarForeground: string
+  sidebarBorder: string
+  sidebarAccent: string
+  sidebarAccentForeground: string
+  sidebarMuted: string
+  content: string
 }
 
 export interface UIPerceptionTokens {
@@ -38,4 +49,32 @@ export interface UIPerceptionTokens {
   shadowSm: string
   shadowMd: string
   shadowLg: string
+}
+
+// --- Friendly theme presets (non-technical) ---
+
+export type ThemeRadius = 'sharp' | 'soft' | 'round'
+export type ThemeDensity = 'compact' | 'comfortable' | 'spacious'
+export type ThemeShadow = 'none' | 'subtle' | 'medium' | 'bold'
+export type ThemeFont = 'system' | 'inter' | 'dm-sans' | 'poppins' | 'geist' | 'plus-jakarta' | 'outfit'
+
+export interface SaasTheme {
+  name: string
+  brand: string
+  radius?: ThemeRadius
+  density?: ThemeDensity
+  shadow?: ThemeShadow
+  font?: ThemeFont
+  sidebar?: {
+    background: string
+    foreground: string
+    border?: string
+    accent: string
+    accentForeground: string
+    muted?: string
+  }
+  content?: {
+    background: string
+  }
+  colors?: Partial<SemanticColors>
 }

@@ -1,5 +1,6 @@
 export { useAuthStore } from './auth.store'
 export { useTenantStore } from './tenant.store'
+export { usePluginStore } from './plugin.store'
 export { useLayoutStore } from './layout.store'
 export { useThemeStore } from './theme.store'
 export { useBillingStore } from './billing.store'

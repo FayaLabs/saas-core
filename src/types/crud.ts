@@ -19,10 +19,32 @@ export interface FieldDef {
   currency?: string
   showInTable?: boolean
   showInForm?: boolean
+  /** Show this field in the detail page overview (default: true) */
+  showInDetail?: boolean
   sortable?: boolean
   searchable?: boolean
   renderCell?: (value: any, row: any) => React.ReactNode
   defaultValue?: any
+  /** Field group name — groups fields into sections in forms and detail views */
+  group?: string
+  /** Column span in two-column layout: 1 (half) or 2 (full width). Default: 1 */
+  span?: 1 | 2
+}
+
+export interface FieldGroup {
+  id: string
+  label: string
+  description?: string
+  /** Number of columns for this group (default: 2) */
+  columns?: 1 | 2 | 3
+}
+
+export interface DetailTab {
+  id: string
+  label: string
+  icon?: string
+  /** React component to render as tab content. Receives { item, entityDef } props */
+  component?: React.ComponentType<{ item: any; entityDef: EntityDef }>
 }
 
 export interface EntityDef<T = Record<string, any>> {
@@ -30,9 +52,24 @@ export interface EntityDef<T = Record<string, any>> {
   namePlural?: string
   icon: string
   fields: FieldDef[]
+  /** Named groups for organizing fields in forms and detail views */
+  fieldGroups?: FieldGroup[]
+  /** Custom tabs on the detail page (in addition to Overview) */
+  detailTabs?: DetailTab[]
+  data?: {
+    table: string
+    schema?: string
+    tenantScoped?: boolean
+    tenantIdColumn?: string
+    searchColumns?: string[]
+    selectColumns?: string
+    columnMap?: Record<string, string>
+  }
   defaultSort?: string
   defaultSortDir?: 'asc' | 'desc'
   displayField?: string
-  /** Field key containing an image URL — shown as hero image on card layout */
+  /** Secondary field shown below the display field in detail hero (e.g., email) */
+  subtitleField?: string
+  /** Field key containing an image URL — shown as hero image on card layout and detail avatar */
   imageField?: string
 }

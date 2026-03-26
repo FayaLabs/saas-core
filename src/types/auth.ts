@@ -23,6 +23,7 @@ export interface AuthState {
   session: AuthSession | null
   loading: boolean
   initialized: boolean
+  pendingEmailVerification: boolean
 }
 
 export interface LoginCredentials {

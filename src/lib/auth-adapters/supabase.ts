@@ -55,6 +55,19 @@ export function createSupabaseAuthAdapter(): AuthAdapter {
         options: { data: { full_name: fullName } },
       })
       if (error) throw error
+
+      // When email confirmation is enabled, session is null
+      if (!data.session) {
+        if (!data.user) throw new Error('Signup failed: no user returned')
+        // Return a partial session so the UI can show "check your email"
+        return {
+          accessToken: '',
+          refreshToken: '',
+          expiresAt: 0,
+          user: mapSupabaseUser(data.user),
+        }
+      }
+
       return mapSupabaseSession(data.session)
     },
 

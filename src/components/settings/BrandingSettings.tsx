@@ -8,7 +8,10 @@ import type { TenantSettings } from '../../types'
 
 interface BrandingSettingsProps {
   branding?: TenantSettings['branding'] | null
-  onSave?: (branding: TenantSettings['branding']) => void
+  onSave?: (branding: TenantSettings['branding'], assets?: {
+    logoFile?: File | null
+    faviconFile?: File | null
+  }) => void
 }
 
 interface FileUploadProps {
@@ -130,7 +133,12 @@ export function BrandingSettings({ branding, onSave }: BrandingSettingsProps) {
         accentColor,
         logoUrl,
         faviconUrl,
+      }, {
+        logoFile,
+        faviconFile,
       })
+      setLogoFile(null)
+      setFaviconFile(null)
     } finally {
       setSaving(false)
     }

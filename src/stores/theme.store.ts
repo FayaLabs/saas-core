@@ -30,6 +30,7 @@ function resolveMode(mode: ThemeMode): 'light' | 'dark' {
 function buildTheme(base: ThemeTokens, overrides: CreateThemeOptions | null): ThemeTokens {
   if (!overrides) return base
 
+  const isDark = base.name === 'dark'
   const colors = { ...base.colors }
 
   // Brand shorthand: derive primary, ring, accent from single HSL
@@ -45,9 +46,14 @@ function buildTheme(base: ThemeTokens, overrides: CreateThemeOptions | null): Th
     }
   }
 
-  // Apply explicit color overrides (only what the user specified)
-  if (overrides.colors) {
-    for (const [key, value] of Object.entries(overrides.colors)) {
+  // Apply explicit color overrides.
+  // In dark mode, use darkColors if provided; otherwise skip light-only colors.
+  const colorOverrides = isDark && overrides.darkColors
+    ? overrides.darkColors
+    : overrides.colors
+
+  if (colorOverrides) {
+    for (const [key, value] of Object.entries(colorOverrides)) {
       if (value !== undefined) {
         (colors as any)[key] = value
       }

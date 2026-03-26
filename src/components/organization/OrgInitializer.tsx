@@ -1,18 +1,22 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuthStore } from '../../stores/auth.store'
 import { useOrganizationStore, getPersistedOrgId } from '../../stores/organization.store'
 import { usePermissionsStore } from '../../stores/permissions.store'
 import { useOrgAdapterOptional } from '../../lib/org-context'
+import { TenantOnboarding } from './TenantOnboarding'
 
 export function OrgInitializer() {
   const adapter = useOrgAdapterOptional()
   const user = useAuthStore((s) => s.user)
+  const currentOrg = useOrganizationStore((s) => s.currentOrg)
   const setCurrentOrg = useOrganizationStore((s) => s.setCurrentOrg)
   const setUserOrgs = useOrganizationStore((s) => s.setUserOrgs)
   const setMembers = useOrganizationStore((s) => s.setMembers)
   const setLoading = useOrganizationStore((s) => s.setLoading)
   const setProfiles = usePermissionsStore((s) => s.setProfiles)
   const setCurrentProfile = usePermissionsStore((s) => s.setCurrentProfile)
+  const [needsOnboarding, setNeedsOnboarding] = useState(false)
+  const [initialized, setInitialized] = useState(false)
 
   useEffect(() => {
     if (!adapter || !user) return
@@ -26,7 +30,13 @@ export function OrgInitializer() {
         if (cancelled) return
         setUserOrgs(orgs)
 
-        if (orgs.length === 0) return
+        if (orgs.length === 0) {
+          setNeedsOnboarding(true)
+          setInitialized(true)
+          return
+        }
+
+        setNeedsOnboarding(false)
 
         // Select persisted org or first
         const persistedId = getPersistedOrgId()
@@ -54,13 +64,26 @@ export function OrgInitializer() {
       } catch {
         // ignore init errors
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+          setInitialized(true)
+        }
       }
     }
 
     init()
     return () => { cancelled = true }
   }, [adapter, user?.id])
+
+  // Hide onboarding once org is set (after TenantOnboarding creates one)
+  useEffect(() => {
+    if (currentOrg && needsOnboarding) {
+      setNeedsOnboarding(false)
+    }
+  }, [currentOrg])
+
+  if (!initialized || !user) return null
+  if (needsOnboarding) return <TenantOnboarding />
 
   return null
 }

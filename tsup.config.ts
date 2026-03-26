@@ -12,7 +12,7 @@ export default defineConfig({
     'types/index': 'src/types/index.ts',
   },
   format: ['esm', 'cjs'],
-  dts: true,
+  dts: false,
   splitting: true,
   clean: true,
   external: ['react', 'react-dom', 'express'],

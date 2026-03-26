@@ -2,8 +2,11 @@ import React from 'react'
 import { CrudPage } from './CrudPage'
 import { createCrudStore } from '../../stores/createCrudStore'
 import { createMockProvider } from '../../lib/data-providers/mock'
+import { createSupabaseProvider } from '../../lib/data-providers/supabase'
+import { getSupabaseClientOptional } from '../../lib/supabase'
 import type { EntityDef } from '../../types/crud'
 import type { DataProvider } from '../../lib/data-providers/types'
+import { useOrganizationStore } from '../../stores/organization.store'
 
 interface CreateCrudPageOptions<T extends { id: string }> {
   mockData?: T[]
@@ -18,7 +21,26 @@ export function createCrudPage<T extends { id: string }>(
   entityDef: EntityDef<T>,
   options?: CreateCrudPageOptions<T>,
 ): React.ComponentType & { __crudBasePath?: string } {
-  const provider = options?.dataProvider ?? createMockProvider(entityDef, options?.mockData)
+  const provider = options?.dataProvider
+    ?? (() => {
+      const client = getSupabaseClientOptional()
+      if (client && entityDef.data?.table) {
+        return createSupabaseProvider<T>(entityDef.data.table, {
+          schema: entityDef.data.schema,
+          tenantId: entityDef.data.tenantScoped === false
+            ? undefined
+            : () => useOrganizationStore.getState().currentOrg?.id,
+          tenantIdColumn: entityDef.data.tenantIdColumn,
+          searchColumns: entityDef.data.searchColumns ?? entityDef.fields
+            .filter((field) => field.searchable)
+            .map((field) => field.key),
+          selectColumns: entityDef.data.selectColumns,
+          columnMap: entityDef.data.columnMap,
+        })
+      }
+
+      return createMockProvider(entityDef, options?.mockData)
+    })()
   const useStore = createCrudStore(provider)
   const display = options?.display ?? 'table'
 

@@ -54,6 +54,8 @@ interface SidebarProps {
   onBilling?: () => void
   userMenuExtras?: { label: string; icon?: React.ReactNode; onClick: () => void }[]
   orgSwitcher?: React.ReactNode
+  topContent?: React.ReactNode
+  footerContent?: React.ReactNode
 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -91,10 +93,10 @@ function NavItem({
       onClick={() => onNavigate(item.route)}
       className={cn(
         'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-        'hover:bg-accent hover:text-accent-foreground',
+        'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
         isActive
-          ? 'bg-accent text-accent-foreground'
-          : 'text-muted-foreground',
+          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+          : 'text-sidebar-muted',
         collapsed && 'justify-center px-2'
       )}
     >
@@ -152,6 +154,8 @@ export function Sidebar({
   onBilling,
   userMenuExtras,
   orgSwitcher,
+  topContent,
+  footerContent,
 }: SidebarProps) {
   const router = useRouter()
   const routerPath = router.usePathname()
@@ -181,14 +185,14 @@ export function Sidebar({
     <Tooltip.Provider>
       <aside
         className={cn(
-          'flex h-full flex-col border-r border-border bg-background transition-all duration-200',
+          'flex h-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200',
           collapsed ? 'w-16' : 'w-64'
         )}
       >
         {/* Logo + Collapse Toggle */}
         <div
           className={cn(
-            'flex h-14 items-center justify-between border-b border-border px-4',
+            'flex h-14 items-center justify-between border-b border-sidebar-border px-4',
             collapsed && 'justify-center px-2'
           )}
         >
@@ -197,7 +201,7 @@ export function Sidebar({
               {logo ?? <span className="text-lg font-bold">App</span>}
               <button
                 onClick={onToggle}
-                className="ml-auto rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                className="ml-auto rounded-md p-1.5 text-sidebar-muted transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 aria-label="Collapse sidebar"
               >
                 <PanelLeftClose className="h-4 w-4" />
@@ -207,7 +211,7 @@ export function Sidebar({
           {collapsed && (
             <button
               onClick={onToggle}
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="rounded-md p-1.5 text-sidebar-muted transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               aria-label="Expand sidebar"
             >
               <PanelLeft className="h-4 w-4" />
@@ -217,6 +221,8 @@ export function Sidebar({
 
         {/* Main Navigation */}
         <nav className="flex-1 space-y-1 overflow-y-auto p-2">
+          {topContent && <div className="mb-4 space-y-2">{topContent}</div>}
+
           {mainItems.length > 0 && (
             <div className="space-y-1">
               {mainItems.map((item) => (
@@ -234,7 +240,7 @@ export function Sidebar({
           {secondaryItems.length > 0 && (
             <div className="mt-6 space-y-1">
               {!collapsed && (
-                <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <p className="px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-muted">
                   Secondary
                 </p>
               )}
@@ -253,7 +259,7 @@ export function Sidebar({
 
         {/* Settings nav items */}
         {settingsItems.length > 0 && (
-          <div className="border-t border-border p-2 space-y-1">
+          <div className="border-t border-sidebar-border p-2 space-y-1">
             {settingsItems.map((item) => (
               <NavItem
                 key={item.id}
@@ -266,13 +272,19 @@ export function Sidebar({
           </div>
         )}
 
+        {footerContent && (
+          <div className="border-t border-sidebar-border p-2">
+            <div className="space-y-2">{footerContent}</div>
+          </div>
+        )}
+
         {/* Org Switcher — above user row */}
         {orgSwitcher && React.isValidElement(orgSwitcher)
           ? React.cloneElement(orgSwitcher as React.ReactElement<any>, { collapsed })
           : orgSwitcher}
 
         {/* Bottom: User row with inline action icons */}
-        <div className="border-t border-border p-2">
+        <div className="border-t border-sidebar-border p-2">
           <div className={cn(
             'flex items-center rounded-md',
             collapsed ? 'flex-col gap-1' : 'gap-1 px-1'
@@ -295,7 +307,7 @@ export function Sidebar({
 
             {/* Search */}
             <button
-              className="inline-flex shrink-0 items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent/50 hover:text-accent-foreground"
+              className="inline-flex shrink-0 items-center justify-center rounded-md p-2 text-sidebar-muted transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
               aria-label="Search"
             >
               <Search className="h-4 w-4" />
@@ -305,7 +317,7 @@ export function Sidebar({
             <Popover.Root>
               <Popover.Trigger asChild>
                 <button
-                  className="relative inline-flex shrink-0 items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent/50 hover:text-accent-foreground"
+                  className="relative inline-flex shrink-0 items-center justify-center rounded-md p-2 text-sidebar-muted transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                   aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : 'Notifications'}
                 >
                   <Bell className="h-4 w-4" />

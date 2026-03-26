@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Send } from 'lucide-react'
+import { ArrowUp } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useChatStore, type ChatMessage } from '../../stores/chat.store'
 import { useChat } from '../../hooks/useChat'
@@ -39,54 +39,59 @@ export function ChatPanel({
   return (
     <div
       className={cn(
-        'fixed bottom-24 right-6 z-50 flex w-80 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl sm:w-96',
+        'fixed z-50 flex flex-col overflow-hidden bg-card',
+        'inset-0 bottom-16 rounded-none border-0 shadow-none',
+        'md:inset-auto md:bottom-20 md:right-6 md:w-[22rem] md:rounded-2xl md:border md:border-border/50 md:shadow-2xl sm:md:w-[24rem]',
         'animate-in slide-in-from-bottom-4 fade-in-0 duration-200',
         className
       )}
-      style={{ maxHeight: 'calc(100vh - 160px)' }}
+      style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'calc(100vh - 140px)' : undefined }}
     >
       {/* Header */}
-      <div className="flex items-center border-b border-border px-4 py-3">
-        <h3 className="text-sm font-semibold">{title}</h3>
+      <div className="flex items-center px-5 py-3.5">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-success" />
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        </div>
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3" style={{ minHeight: 200, maxHeight: 400 }}>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-3 space-y-2.5" style={{ minHeight: 200, maxHeight: 420 }}>
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <p className="text-sm text-muted-foreground">Send a message to start chatting</p>
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <p className="text-sm text-muted-foreground">How can I help you today?</p>
           </div>
         )}
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
         ))}
         {isStreaming && messages[messages.length - 1]?.content === '' && (
-          <div className="flex items-center gap-1 text-muted-foreground px-3 py-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse" />
-            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse delay-100" />
-            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse delay-200" />
+          <div className="flex items-center gap-1.5 px-3 py-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-pulse" />
+            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-pulse [animation-delay:150ms]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-pulse [animation-delay:300ms]" />
           </div>
         )}
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="border-t border-border p-3">
-        <div className="flex items-center gap-2">
+      <form onSubmit={handleSubmit} className="p-3 pt-0">
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-background p-1.5 pl-4 transition-colors focus-within:border-foreground/20">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="Message..."
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
             disabled={isStreaming}
           />
           <button
             type="submit"
             disabled={!input.trim() || isStreaming}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-foreground text-background transition-opacity hover:opacity-80 disabled:opacity-30"
             aria-label="Send message"
           >
-            <Send className="h-4 w-4" />
+            <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
           </button>
         </div>
       </form>
@@ -101,10 +106,10 @@ function MessageBubble({ message }: { message: ChatMessage }) {
     <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'max-w-[85%] rounded-lg px-3 py-2 text-sm',
+          'max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed',
           isUser
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-muted text-foreground'
+            ? 'rounded-br-md bg-foreground text-background'
+            : 'rounded-bl-md bg-muted text-foreground'
         )}
       >
         {message.content}

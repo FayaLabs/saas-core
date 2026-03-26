@@ -18,6 +18,8 @@ export function useAuth() {
     adapter.getSession().then((result) => {
       if (result) {
         store.setSession(result.session)
+      } else {
+        store.setPendingEmailVerification(false)
       }
       store.setInitialized(true)
       store.setLoading(false)
@@ -26,6 +28,7 @@ export function useAuth() {
     const unsubscribe = adapter.onAuthStateChange((user) => {
       if (user) {
         store.setUser(user)
+        store.setPendingEmailVerification(false)
       } else {
         store.setUser(null)
         store.setSession(null)
@@ -43,6 +46,7 @@ export function useAuth() {
     try {
       const session = await adapter.signIn(email, password)
       store.setSession(session)
+      store.setPendingEmailVerification(false)
     } finally {
       store.setLoading(false)
     }
@@ -53,7 +57,16 @@ export function useAuth() {
     store.setLoading(true)
     try {
       const session = await adapter.signUp(email, password, fullName)
+      const requiresEmailVerification = !session.accessToken
+      if (requiresEmailVerification) {
+        store.setSession(null)
+        store.setPendingEmailVerification(true)
+        return { requiresEmailVerification: true }
+      }
+
       store.setSession(session)
+      store.setPendingEmailVerification(false)
+      return { requiresEmailVerification: false }
     } finally {
       store.setLoading(false)
     }
@@ -86,6 +99,7 @@ export function useAuth() {
     session: store.session,
     loading: store.loading,
     initialized: store.initialized,
+    pendingEmailVerification: store.pendingEmailVerification,
     signIn,
     signUp,
     signOut,

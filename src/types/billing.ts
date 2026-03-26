@@ -3,14 +3,19 @@ export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
 
 export interface Plan {
   id: string
+  verticalId?: string
   name: string
-  description: string
+  description?: string
+  tier: number
+  priceMonthly: number
+  priceYearly: number
+  currency: string
   features: string[]
-  prices: {
-    monthly: number
-    yearly: number
-  }
-  limits?: Record<string, number>
+  limits: Record<string, number>
+  isActive: boolean
+  createdAt: string
+  /** @deprecated Use priceMonthly/priceYearly */
+  prices?: { monthly: number; yearly: number }
   popular?: boolean
 }
 

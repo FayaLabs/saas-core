@@ -6,8 +6,19 @@ export interface Organization {
   name: string
   slug: string
   logoUrl?: string
+  verticalId?: string
+  plan?: string
+  settings?: Record<string, unknown>
   createdAt: string
   updatedAt: string
+}
+
+export interface CreateOrgOptions {
+  verticalId?: string
+  timezone?: string
+  currency?: string
+  locale?: string
+  teamSize?: string
 }
 
 export interface OrgMember {
@@ -37,7 +48,7 @@ export interface OrgMembership {
 export interface OrgAdapter {
   listUserOrgs(userId: string): Promise<OrgMembership[]>
   getOrg(orgId: string): Promise<Organization>
-  createOrg(name: string, userId: string): Promise<Organization>
+  createOrg(name: string, userId: string, options?: CreateOrgOptions): Promise<Organization>
   updateOrg(orgId: string, data: Partial<Organization>): Promise<Organization>
 
   listMembers(orgId: string): Promise<OrgMember[]>

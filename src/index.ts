@@ -7,6 +7,7 @@ import { createSupabaseClient } from './lib/supabase'
 import { ToastProvider } from './components/notifications/ToastProvider'
 import { RouterProvider, setGlobalRouter, hashRouterAdapter, type RouterAdapter } from './lib/router'
 import { AppShell } from './components/layout/AppShell'
+import { WidgetSlot } from './components/plugins/WidgetSlot'
 import { SettingsPage } from './components/settings/SettingsPage'
 import { BillingPage } from './components/billing/BillingPage'
 import { ChatFab } from './components/chat/ChatFab'
@@ -18,20 +19,32 @@ import { OrgAdapterProvider } from './lib/org-context'
 import { createMockAuthAdapter } from './lib/auth-adapters/mock'
 import { createSupabaseAuthAdapter } from './lib/auth-adapters/supabase'
 import { createMockOrgAdapter } from './lib/org-adapters/mock'
+import { createSupabaseOrgAdapter } from './lib/org-adapters/supabase'
 import { OrgSwitcher } from './components/organization/OrgSwitcher'
 import { OrgInitializer } from './components/organization/OrgInitializer'
 import { PermissionGate } from './components/organization/PermissionGate'
 import { TeamTab } from './components/organization/TeamTab'
 import { PermissionProfilesTab } from './components/organization/PermissionProfilesTab'
+import { resolvePluginRuntime, PluginRuntimeProvider } from './lib/plugins'
 import type { AuthAdapter } from './types/auth-adapter'
 import type { OrgAdapter } from './types/org-adapter'
-import type { ThemeTokens } from './config/theme/tokens'
 import type { NavigationItem } from './types/layout'
 import type { Plan } from './types/billing'
-import type { PluginManifest } from './types/plugins'
+import type {
+  PluginManifest,
+  PluginPermissionRequirement,
+  ResolvedPluginManifest,
+  PluginSettingsTab,
+  TenantPluginBinding,
+} from './types/plugins'
 import type { CreateThemeOptions } from './config/theme/utils'
+import { resolveTheme } from './config/theme/utils'
+import type { SaasTheme } from './config/theme/tokens'
 import type { AuthProvider } from './types/auth'
 import type { PermissionsConfig, PermissionAction } from './types/permissions'
+import { useOrganizationStore } from './stores/organization.store'
+import { usePermission } from './hooks/usePermission'
+import { useTenantPlugins } from './hooks/useTenantPlugins'
 
 // ---------------------------------------------------------------------------
 // Page config — unifies navigation + routing in one declaration
@@ -53,6 +66,9 @@ export interface PageConfig {
   badge?: string | number
   /** Permission required to access this page */
   permission?: { feature: string; action: PermissionAction }
+  /** Child pages — renders as a dropdown in topbar, collapsible in sidebar.
+   *  Children can omit `component` to be navigation-only links (pointing to routes the parent handles). */
+  children?: Array<Omit<PageConfig, 'component'> & { component?: React.ComponentType }>
 }
 
 // ---------------------------------------------------------------------------
@@ -67,14 +83,24 @@ export interface SaasAppConfig {
   supabaseUrl?: string
   /** Supabase anon key */
   supabaseAnonKey?: string
-  /** Theme overrides — use `brand` shorthand or granular colors/perception */
-  theme?: CreateThemeOptions
+  /** Theme overrides — use SaasTheme (friendly) or CreateThemeOptions (granular) */
+  theme?: CreateThemeOptions | SaasTheme
   /** Layout variant (default: 'sidebar') */
   layout?: 'sidebar' | 'topbar' | 'minimal'
+  /** When true (sidebar layout only), content area floats in a rounded frame over the sidebar background */
+  sidebarFrame?: boolean
   /** Vertical-specific pages */
   pages: PageConfig[]
   /** Plugins to register */
   plugins?: PluginManifest[]
+  /** Runtime plugin activation for tenant-aware apps */
+  pluginRuntime?: {
+    tenantPlugins?: TenantPluginBinding[]
+    resolveTenantPlugins?: (context: {
+      tenant: { id: string; slug: string; verticalId?: string; plan?: string } | null
+      user: { id: string } | null
+    }) => TenantPluginBinding[] | undefined
+  }
   /** Router adapter (default: hashRouterAdapter) */
   router?: RouterAdapter
   /** Billing configuration */
@@ -131,12 +157,30 @@ export interface SaasAppConfig {
 // ---------------------------------------------------------------------------
 // Internal: build NavigationItem[] from PageConfig[] + built-ins
 // ---------------------------------------------------------------------------
+type RouteEntry = {
+  component: React.ComponentType<any>
+  permission?: PluginPermissionRequirement
+  plugin?: ResolvedPluginManifest
+}
+
+function sortNavigation(
+  navigation: (NavigationItem & { permission?: PluginPermissionRequirement })[],
+): (NavigationItem & { permission?: PluginPermissionRequirement })[] {
+  return [...navigation].sort((a, b) => {
+    const sectionOrder = { main: 0, secondary: 1, settings: 2 }
+    const sa = sectionOrder[a.section] ?? 1
+    const sb = sectionOrder[b.section] ?? 1
+    if (sa !== sb) return sa - sb
+    return a.position - b.position
+  })
+}
+
 function buildNavigation(
   pages: PageConfig[],
   config: SaasAppConfig
-): { navigation: (NavigationItem & { permission?: { feature: string; action: PermissionAction } })[]; routes: Map<string, { component: React.ComponentType; permission?: { feature: string; action: PermissionAction } }> } {
-  const navigation: (NavigationItem & { permission?: { feature: string; action: PermissionAction } })[] = []
-  const routes = new Map<string, { component: React.ComponentType; permission?: { feature: string; action: PermissionAction } }>()
+): { navigation: (NavigationItem & { permission?: PluginPermissionRequirement })[]; routes: Map<string, RouteEntry> } {
+  const navigation: (NavigationItem & { permission?: PluginPermissionRequirement })[] = []
+  const routes = new Map<string, RouteEntry>()
 
   // Vertical pages
   let mainPos = 0
@@ -144,8 +188,32 @@ function buildNavigation(
   for (const page of pages) {
     const section = page.section ?? 'main'
     const position = page.position ?? (section === 'main' ? mainPos++ : secondaryPos++)
+
+    // Build child navigation items + routes
+    const childNavItems: NavigationItem[] = []
+    if (page.children) {
+      for (const child of page.children) {
+        childNavItems.push({
+          id: child.path.slice(1).replace(/\//g, '-'),
+          label: child.label,
+          icon: child.icon,
+          route: child.path,
+          section,
+          position: 0,
+          badge: child.badge,
+        })
+        // Only register route if child has its own component and path isn't already handled
+        if (child.component && !routes.has(child.path)) {
+          if ((child.component as any)?.__isCrudPage) {
+            ;(child.component as any).__crudBasePath = child.path
+          }
+          routes.set(child.path, { component: child.component, permission: child.permission })
+        }
+      }
+    }
+
     navigation.push({
-      id: page.path === '/' ? 'home' : page.path.slice(1),
+      id: page.path === '/' ? 'home' : page.path.slice(1).replace(/\//g, '-'),
       label: page.label,
       icon: page.icon,
       route: page.path,
@@ -153,6 +221,7 @@ function buildNavigation(
       position,
       badge: page.badge,
       permission: page.permission,
+      ...(childNavItems.length > 0 ? { children: childNavItems } : {}),
     })
     // Set basePath on CRUD pages so they know their mount point
     if ((page.component as any)?.__isCrudPage) {
@@ -170,56 +239,10 @@ function buildNavigation(
   // Built-in Settings page (route exists but no sidebar nav item — accessed via user dropdown)
   const showSettings = config.showSettings !== false
   if (showSettings) {
-    // Build settings tabs: default + org tabs (if configured) + custom
-    const settingsTabs: { id: string; label: string; component: React.ReactNode }[] = []
-
-    // Auto-inject Team and Permissions tabs when org is configured
-    if (config.organization) {
-      settingsTabs.push(
-        { id: 'team', label: 'Team', component: React.createElement(TeamTab) },
-        { id: 'permissions', label: 'Permissions', component: React.createElement(PermissionProfilesTab) },
-      )
-    }
-
-    // Add user's custom tabs
-    if (config.settingsTabs) {
-      settingsTabs.push(...config.settingsTabs)
-    }
-
-    const SettingsWithTabs: React.FC = () =>
-      React.createElement(SettingsPage, { tabs: settingsTabs.length > 0 ? undefined : undefined, extraTabs: settingsTabs })
-    // SettingsPage doesn't have extraTabs — we merge into tabs prop
-    const mergedSettingsComponent: React.FC = () =>
-      React.createElement(SettingsPage, settingsTabs.length > 0 ? { extraTabs: settingsTabs } : undefined)
-
-    routes.set('/settings', { component: mergedSettingsComponent })
+    routes.set('/settings', { component: SettingsPage })
   }
 
-  // Plugin navigation
-  if (config.plugins) {
-    for (const plugin of config.plugins) {
-      for (const nav of plugin.navigation) {
-        navigation.push({
-          id: `${plugin.id}-${nav.route}`,
-          label: nav.label,
-          icon: plugin.icon,
-          route: nav.route,
-          section: nav.section,
-          position: nav.position,
-        })
-      }
-    }
-  }
-
-  navigation.sort((a, b) => {
-    const sectionOrder = { main: 0, secondary: 1, settings: 2 }
-    const sa = sectionOrder[a.section] ?? 1
-    const sb = sectionOrder[b.section] ?? 1
-    if (sa !== sb) return sa - sb
-    return a.position - b.position
-  })
-
-  return { navigation, routes }
+  return { navigation: sortNavigation(navigation), routes }
 }
 
 // ---------------------------------------------------------------------------
@@ -258,8 +281,43 @@ function resolveOrgAdapter(config: SaasAppConfig): OrgAdapter | null {
   if (config.organization.adapter === 'mock') {
     return createMockOrgAdapter(config.permissions?.defaultProfiles)
   }
-  // TODO: supabase org adapter
+  if (config.organization.adapter === 'supabase') {
+    return createSupabaseOrgAdapter()
+  }
   return null
+}
+
+function buildSettingsTabs(
+  config: SaasAppConfig,
+  pluginTabs: PluginSettingsTab[],
+  can: (feature: string, action: PermissionAction) => boolean,
+): { id: string; label: string; component: React.ReactNode }[] {
+  const settingsTabs: { id: string; label: string; component: React.ReactNode }[] = []
+
+  if (config.organization) {
+    settingsTabs.push(
+      { id: 'team', label: 'Team', component: React.createElement(TeamTab) },
+      { id: 'permissions', label: 'Permissions', component: React.createElement(PermissionProfilesTab) },
+    )
+  }
+
+  if (config.settingsTabs) {
+    settingsTabs.push(...config.settingsTabs)
+  }
+
+  for (const tab of pluginTabs) {
+    if (tab.permission && !can(tab.permission.feature, tab.permission.action)) {
+      continue
+    }
+
+    settingsTabs.push({
+      id: tab.id,
+      label: tab.label,
+      component: React.createElement(tab.component),
+    })
+  }
+
+  return settingsTabs
 }
 
 // ---------------------------------------------------------------------------
@@ -274,7 +332,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
   const routerAdapter = config.router ?? hashRouterAdapter()
   setGlobalRouter(routerAdapter)
 
-  const { navigation, routes } = buildNavigation(config.pages, config)
+  const { navigation: baseNavigation, routes: baseRoutes } = buildNavigation(config.pages, config)
   const layout = config.layout ?? 'sidebar'
   const logoNode = renderLogo(config.name, config.logo)
 
@@ -283,27 +341,6 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
   const orgAdapter = resolveOrgAdapter(config)
   const requireAuth = config.auth?.requireAuth ?? !!authAdapter
 
-  // Collect floatingUI from plugins
-  const floatingUI: { component: React.ComponentType; position: string }[] = []
-  if (config.plugins) {
-    for (const plugin of config.plugins) {
-      if (plugin.floatingUI) {
-        floatingUI.push(...plugin.floatingUI)
-      }
-    }
-  }
-
-  // The internal router hook for hash-based routing
-  function useHashRoute() {
-    const [route, setRoute] = React.useState(window.location.hash.slice(1) || '/')
-    React.useEffect(() => {
-      const handler = () => setRoute(window.location.hash.slice(1) || '/')
-      window.addEventListener('hashchange', handler)
-      return () => window.removeEventListener('hashchange', handler)
-    }, [])
-    return route
-  }
-
   // Login page component
   const LoginPageWrapper: React.FC = () => {
     return React.createElement(LoginPage, {
@@ -311,14 +348,18 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
       logo: config.auth?.loginLogo ?? logoNode,
       showOAuth: config.auth?.showOAuth,
       oauthProviders: config.auth?.oauthProviders,
-      onSuccess: () => { window.location.hash = '/' },
+      onSuccess: () => { routerAdapter.navigate('/') },
     })
   }
 
   // The inner app (authenticated content)
   const AppContent: React.FC = () => {
-    const route = useHashRoute()
+    const route = routerAdapter.usePathname()
     const authUser = useAuthStore((s) => s.user)
+    const currentOrg = useOrganizationStore((s) => s.currentOrg)
+    const currentProfile = usePermissionsStore((s) => s.currentProfile)
+    const { can } = usePermission()
+    const { tenantPlugins: hydratedTenantPlugins } = useTenantPlugins()
 
     // Derive display user from auth or config fallback
     const user = authUser
@@ -328,6 +369,67 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
     // If we're on the login route, render login page
     if (route === '/login') {
       return React.createElement(LoginPageWrapper)
+    }
+
+    const tenantPluginBindings = config.pluginRuntime?.resolveTenantPlugins?.({
+      tenant: currentOrg
+        ? {
+            id: currentOrg.id,
+            slug: currentOrg.slug,
+            verticalId: currentOrg.verticalId,
+            plan: currentOrg.plan,
+          }
+        : null,
+      user: authUser ? { id: authUser.id } : null,
+    }) ?? config.pluginRuntime?.tenantPlugins ?? hydratedTenantPlugins
+    const usesHydratedTenantBindings = !config.pluginRuntime?.resolveTenantPlugins && !config.pluginRuntime?.tenantPlugins && !!currentOrg
+
+    const initialPluginRuntime = resolvePluginRuntime({
+      plugins: config.plugins,
+      tenantPlugins: tenantPluginBindings,
+      hasTenantBindings: usesHydratedTenantBindings ? true : undefined,
+      context: {
+        tenant: currentOrg
+          ? {
+              id: currentOrg.id,
+              slug: currentOrg.slug,
+              verticalId: currentOrg.verticalId,
+              plan: currentOrg.plan,
+            }
+          : null,
+        user: authUser
+          ? {
+              id: authUser.id,
+              role: currentProfile?.id,
+            }
+          : null,
+        currentPath: route,
+        matchedPath: route,
+        layout,
+        hasPermission: (requirement) => can(requirement.feature, requirement.action),
+      },
+    })
+
+    const navigation = sortNavigation([
+      ...baseNavigation,
+      ...initialPluginRuntime.navigation.map((item) => ({
+        id: item.id ?? item.route,
+        label: item.label,
+        icon: item.icon ?? 'Package',
+        route: item.route,
+        section: item.section,
+        position: item.position,
+        badge: item.badge,
+        permission: item.permission,
+      })),
+    ])
+    const routes = new Map(baseRoutes)
+    for (const pluginRoute of initialPluginRuntime.routes) {
+      routes.set(pluginRoute.path, {
+        component: pluginRoute.component,
+        permission: pluginRoute.permission,
+        plugin: pluginRoute.plugin,
+      })
     }
 
     // Resolve page: exact match first, then prefix match for CRUD sub-routes
@@ -343,9 +445,17 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
         }
       }
     }
+    const pluginRuntime = {
+      ...initialPluginRuntime,
+      context: {
+        ...initialPluginRuntime.context,
+        matchedPath,
+      },
+    }
     const PageComponent = routeEntry?.component ?? routes.get('/')?.component ?? (() => null)
     const pagePermission = routeEntry?.permission
     const pageTitle = navigation.find((n) => n.route === matchedPath)?.label ?? navigation.find((n) => n.route === route)?.label ?? navigation[0]?.label ?? ''
+    const settingsTabs = buildSettingsTabs(config, pluginRuntime.settingsTabs, can)
 
     const handleSignOut = async () => {
       if (authAdapter) {
@@ -356,13 +466,43 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
         } catch {
           // ignore sign out errors
         }
-        window.location.hash = '/login'
+        routerAdapter.navigate('/login')
       }
     }
 
+    const renderedPage = matchedPath === '/settings' && config.showSettings !== false
+      ? React.createElement(SettingsPage, {
+          extraTabs: settingsTabs,
+          beforeContent: React.createElement(WidgetSlot, {
+            zone: 'settings.before',
+            className: 'space-y-4',
+            contextOverrides: { matchedPath },
+          }),
+          afterContent: React.createElement(WidgetSlot, {
+            zone: 'settings.after',
+            className: 'space-y-4',
+            contextOverrides: { matchedPath },
+          }),
+        })
+      : React.createElement(PageComponent, routeEntry?.plugin ? {
+          plugin: routeEntry.plugin,
+          runtime: pluginRuntime.context,
+          config: routeEntry.plugin.config,
+        } : undefined)
+
     // Build page element — wrap in PermissionGate if page has permission config
-    const pageContent = React.createElement('div', { className: 'p-4 md:p-6' },
-      React.createElement(PageComponent)
+    const pageContent = React.createElement('div', { className: 'p-4 md:p-6 space-y-6' },
+      React.createElement(WidgetSlot, {
+        zone: 'page.before',
+        className: 'space-y-4',
+        contextOverrides: { matchedPath },
+      }),
+      renderedPage,
+      React.createElement(WidgetSlot, {
+        zone: 'page.after',
+        className: 'space-y-4',
+        contextOverrides: { matchedPath },
+      }),
     )
     const pageElement: React.ReactNode = pagePermission
       ? React.createElement(
@@ -387,46 +527,71 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
       : undefined
 
     const content = React.createElement(
-      React.Fragment,
-      null,
+      PluginRuntimeProvider,
+      { value: pluginRuntime },
       React.createElement(
-        AppShell,
-        {
-          variant: layout,
-          navigation,
-          user,
-          pageTitle,
-          currentPath: matchedPath,
-          onNavigate: (path: string) => { window.location.hash = path },
-          onSignOut: authAdapter ? handleSignOut : () => console.log('sign out'),
-          onProfile: () => { window.location.hash = '/settings' },
-          onSettings: () => { window.location.hash = '/settings' },
-          onBilling: routes.has('/billing') ? () => { window.location.hash = '/billing' } : undefined,
-          logo: logoNode,
-          orgSwitcher: orgSwitcherElement,
-        },
-        pageElement,
+        React.Fragment,
+        null,
+        React.createElement(
+          AppShell,
+          {
+            variant: layout,
+            sidebarFrame: config.sidebarFrame,
+            navigation,
+            user,
+            pageTitle,
+            currentPath: matchedPath,
+            onNavigate: (path: string) => { routerAdapter.navigate(path) },
+            onSignOut: authAdapter ? handleSignOut : () => console.log('sign out'),
+            onProfile: () => { routerAdapter.navigate('/settings') },
+            onSettings: () => { routerAdapter.navigate('/settings') },
+            onBilling: routes.has('/billing') ? () => { routerAdapter.navigate('/billing') } : undefined,
+            logo: logoNode,
+            orgSwitcher: orgSwitcherElement,
+            topbarStart: React.createElement(WidgetSlot, {
+              zone: 'shell.topbar.start',
+              className: 'flex items-center gap-2',
+              contextOverrides: { matchedPath },
+            }),
+            topbarEnd: React.createElement(WidgetSlot, {
+              zone: 'shell.topbar.end',
+              className: 'flex items-center gap-2',
+              contextOverrides: { matchedPath },
+            }),
+            sidebarTopContent: React.createElement(WidgetSlot, {
+              zone: 'shell.sidebar.before-nav',
+              className: 'space-y-2',
+              contextOverrides: { matchedPath },
+            }),
+            sidebarFooterContent: React.createElement(WidgetSlot, {
+              zone: 'shell.sidebar.footer',
+              className: 'space-y-2',
+              contextOverrides: { matchedPath },
+            }),
+          },
+          pageElement,
+        ),
+        // Org initializer
+        orgAdapter ? React.createElement(OrgInitializer) : null,
+        // Chat
+        config.chat?.enabled !== false && config.chat
+          ? React.createElement(React.Fragment, null,
+              React.createElement(ChatFab),
+              React.createElement(ChatPanel, { title: config.chat.title }),
+            )
+          : null,
+        React.createElement(WidgetSlot, {
+          zone: 'shell.floating',
+          contextOverrides: { matchedPath },
+        }),
       ),
-      // Org initializer
-      orgAdapter ? React.createElement(OrgInitializer) : null,
-      // Chat
-      config.chat?.enabled !== false && config.chat
-        ? React.createElement(React.Fragment, null,
-            React.createElement(ChatFab),
-            React.createElement(ChatPanel, { title: config.chat.title }),
-          )
-        : null,
-      // Plugin floating UI
-      ...floatingUI.map((ui, i) =>
-        React.createElement(ui.component, { key: `floating-${i}` })
-      )
     )
 
     // Wrap in ProtectedRoute if auth is required
     if (requireAuth && authAdapter) {
       return React.createElement(
         ProtectedRoute,
-        { onUnauthenticated: () => { window.location.hash = '/login' } },
+        { onUnauthenticated: () => { routerAdapter.navigate('/login') } },
         content,
       )
     }
@@ -443,7 +608,10 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
 
     React.useEffect(() => {
       if (config.theme) {
-        setOverrides(config.theme)
+        // SaasTheme has `brand` as required + friendly fields; CreateThemeOptions has it optional
+        const isSaasTheme = 'brand' in config.theme && ('radius' in config.theme || 'sidebar' in config.theme || 'font' in config.theme)
+        const resolved = isSaasTheme ? resolveTheme(config.theme as SaasTheme) : config.theme as CreateThemeOptions
+        setOverrides(resolved)
       }
       initialize()
     }, [initialize, setOverrides])

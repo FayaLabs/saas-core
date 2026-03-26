@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { CrudFormPage } from './CrudFormPage'
+import { CrudDetailPage } from './CrudDetailPage'
 import { CrudCardGrid } from './CrudCardGrid'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 import { fieldToColumns } from './fieldToColumn'
@@ -35,7 +37,7 @@ function useSubRoute(basePath: string) {
     return () => window.removeEventListener('hashchange', handler)
   }, [basePath])
 
-  return sub // '' = list, '/new' = create, '/:id' = edit
+  return sub // '' = list, '/new' = create, '/:id' = detail, '/:id/edit' = edit
 }
 
 function CrudTableView<T extends { id: string }>({
@@ -52,6 +54,7 @@ function CrudTableView<T extends { id: string }>({
   feature?: string
 }) {
   const columns = fieldToColumns(entityDef.fields)
+  const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
 
   const handleSort = (key: string) => {
     const currentSort = store.query.sortBy
@@ -87,34 +90,47 @@ function CrudTableView<T extends { id: string }>({
             </tr>
           </thead>
           <tbody className="divide-y">
-            {store.items.map((item) => (
-              <tr key={(item as any).id} className="hover:bg-muted/30 transition-colors">
-                {columns.map((col) => (
-                  <td key={col.key} className="p-4 text-sm">
-                    {col.render((item as any)[col.key], item)}
+            {store.items.map((item) => {
+              const id = (item as any).id
+              return (
+                <tr
+                  key={id}
+                  className="hover:bg-muted/30 transition-colors cursor-pointer"
+                  onClick={() => { window.location.hash = `${basePath}/${id}` }}
+                >
+                  {columns.map((col) => (
+                    <td key={col.key} className="p-4 text-sm">
+                      {col.key === displayField ? (
+                        <span className="font-medium text-foreground">
+                          {col.render((item as any)[col.key], item)}
+                        </span>
+                      ) : (
+                        col.render((item as any)[col.key], item)
+                      )}
+                    </td>
+                  ))}
+                  <td className="p-4 text-sm text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1">
+                      {feature ? (
+                        <>
+                          <PermissionGate feature={feature} action="edit">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { window.location.hash = `${basePath}/${id}/edit` }}><Pencil className="h-4 w-4" /></Button>
+                          </PermissionGate>
+                          <PermissionGate feature={feature} action="delete">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(item)}><Trash2 className="h-4 w-4" /></Button>
+                          </PermissionGate>
+                        </>
+                      ) : (
+                        <>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { window.location.hash = `${basePath}/${id}/edit` }}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(item)}><Trash2 className="h-4 w-4" /></Button>
+                        </>
+                      )}
+                    </div>
                   </td>
-                ))}
-                <td className="p-4 text-sm text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    {feature ? (
-                      <>
-                        <PermissionGate feature={feature} action="edit">
-                          <Button variant="ghost" size="sm" onClick={() => { window.location.hash = `${basePath}/${(item as any).id}` }}>Edit</Button>
-                        </PermissionGate>
-                        <PermissionGate feature={feature} action="delete">
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete(item)}>Delete</Button>
-                        </PermissionGate>
-                      </>
-                    ) : (
-                      <>
-                        <Button variant="ghost" size="sm" onClick={() => { window.location.hash = `${basePath}/${(item as any).id}` }}>Edit</Button>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete(item)}>Delete</Button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -153,9 +169,9 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
     )
   }
 
-  // /:id — edit form
-  if (sub.startsWith('/') && sub.length > 1) {
-    const id = sub.slice(1)
+  // /:id/edit — edit form
+  if (sub.endsWith('/edit')) {
+    const id = sub.slice(1, -5) // remove leading / and trailing /edit
     const item = store.getById(id)
 
     if (!item && store.loading) {
@@ -188,11 +204,54 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
         mode="edit"
         initialData={item as any}
         namePlural={namePlural}
-        onCancel={navigateToList}
+        onCancel={() => { window.location.hash = `${basePath}/${id}` }}
         onSubmit={async (data) => {
           await store.update(id, data as Partial<T>)
-          navigateToList()
+          window.location.hash = `${basePath}/${id}`
         }}
+      />
+    )
+  }
+
+  // /:id — detail view
+  if (sub.startsWith('/') && sub.length > 1) {
+    const id = sub.slice(1)
+    const item = store.getById(id)
+
+    if (!item && store.loading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        </div>
+      )
+    }
+
+    if (!item) {
+      return (
+        <div className="space-y-6">
+          <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <button type="button" onClick={navigateToList} className="hover:text-foreground transition-colors">{namePlural}</button>
+            <span>/</span>
+            <span className="text-foreground font-medium">Not Found</span>
+          </nav>
+          <div className="text-center py-12">
+            <p className="text-muted-foreground mb-4">{entityDef.name} not found.</p>
+            <Button onClick={navigateToList}>Back to {namePlural}</Button>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <CrudDetailPage
+        entityDef={entityDef}
+        item={item as any}
+        namePlural={namePlural}
+        basePath={basePath}
+        onBack={navigateToList}
+        onEdit={() => { window.location.hash = `${basePath}/${id}/edit` }}
+        onDelete={() => setDeleteItem(item)}
+        feature={feature}
       />
     )
   }
@@ -207,6 +266,7 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
     if (deleteItem) {
       store.remove((deleteItem as any).id)
       setDeleteItem(null)
+      navigateToList()
     }
   }
 

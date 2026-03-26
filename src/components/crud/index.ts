@@ -1,5 +1,6 @@
 export { createCrudPage } from './createCrudPage'
 export { CrudPage } from './CrudPage'
 export { CrudFormPage } from './CrudFormPage'
+export { CrudDetailPage } from './CrudDetailPage'
 export { CrudCardGrid } from './CrudCardGrid'
 export { DeleteConfirmDialog } from './DeleteConfirmDialog'

@@ -1,6 +1,6 @@
 # @fayz/saas-core
 
-Reusable vertical SaaS foundation. Auth, billing, tenancy, layout, notifications — everything you need to launch a micro-niche SaaS.
+Reusable vertical SaaS foundation. Auth, billing, tenancy, layout, notifications, plugin runtime, and widget slots for building vertical apps from one core.
 
 ## Quick Start
 
@@ -10,29 +10,70 @@ pnpm add @fayz/saas-core
 
 ```tsx
 import { createSaasApp } from '@fayz/saas-core'
-import { AppShell } from '@fayz/saas-core/components'
 import '@fayz/saas-core/styles.css'
 
-const { Provider, config } = createSaasApp({
+const App = createSaasApp({
+  name: 'Salao',
   supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
   supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
   layout: 'sidebar',
-  navigation: [
-    { id: 'dashboard', label: 'Dashboard', icon: 'Home', route: '/', section: 'main', position: 0 },
-    { id: 'settings', label: 'Settings', icon: 'Settings', route: '/settings', section: 'settings', position: 100 },
+  pages: [
+    {
+      path: '/',
+      label: 'Dashboard',
+      icon: 'Home',
+      component: DashboardPage,
+    },
   ],
 })
 
-function App() {
-  return (
-    <Provider>
-      <AppShell variant={config.config.layout || 'sidebar'} navigation={config.config.navigation}>
-        {/* Your routes here */}
-      </AppShell>
-    </Provider>
-  )
-}
+export default App
 ```
+
+## Plugin Runtime
+
+`saas-core` now resolves plugin navigation, routes, settings tabs, and widgets from a shared runtime.
+
+```tsx
+import { createPlugin } from '@fayz/saas-core'
+
+const financialPlugin = createPlugin({
+  id: 'financial',
+  name: 'Financial',
+  icon: 'CreditCard',
+  version: '1.0.0',
+  navigation: [
+    { section: 'main', position: 30, label: 'Financeiro', route: '/financeiro' },
+  ],
+  routes: [
+    { path: '/financeiro', component: FinancialPage },
+  ],
+  widgets: [
+    {
+      id: 'cashflow-summary',
+      zone: 'page.before',
+      component: CashflowSummaryWidget,
+      visibility: { routes: ['/financeiro/*', '/financeiro'] },
+    },
+  ],
+})
+```
+
+Use `pluginRuntime.tenantPlugins` or `pluginRuntime.resolveTenantPlugins()` to control activation by tenant. Dependencies are activated automatically.
+
+## Widget Zones
+
+Built-in zones:
+
+- `shell.sidebar.before-nav`
+- `shell.sidebar.footer`
+- `shell.topbar.start`
+- `shell.topbar.end`
+- `page.before`
+- `page.after`
+- `settings.before`
+- `settings.after`
+- `shell.floating`
 
 ## Subpath Exports
 
