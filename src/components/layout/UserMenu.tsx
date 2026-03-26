@@ -90,7 +90,7 @@ export function UserMenu({
           {/* Profile & Help */}
           {onProfile && (
             <DropdownMenu.Item
-              className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent focus:bg-accent"
+              className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted"
               onSelect={onProfile}
             >
               <User className="h-4 w-4" />
@@ -99,7 +99,7 @@ export function UserMenu({
           )}
           {onSettings && (
             <DropdownMenu.Item
-              className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent focus:bg-accent"
+              className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted"
               onSelect={onSettings}
             >
               <Settings className="h-4 w-4" />
@@ -108,18 +108,18 @@ export function UserMenu({
           )}
           {onBilling && (
             <DropdownMenu.Item
-              className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent focus:bg-accent"
+              className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted"
               onSelect={onBilling}
             >
               <CreditCard className="h-4 w-4" />
               Billing
             </DropdownMenu.Item>
           )}
-          <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent focus:bg-accent">
+          <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted">
             <HelpCircle className="h-4 w-4" />
             Help
           </DropdownMenu.Item>
-          <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent focus:bg-accent">
+          <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted">
             <Keyboard className="h-4 w-4" />
             Keyboard Shortcuts
           </DropdownMenu.Item>
@@ -131,7 +131,7 @@ export function UserMenu({
               {extraItems.map((item) => (
                 <DropdownMenu.Item
                   key={item.label}
-                  className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent focus:bg-accent"
+                  className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted"
                   onSelect={item.onClick}
                 >
                   {item.icon}
@@ -145,7 +145,7 @@ export function UserMenu({
 
           {/* Theme Toggle */}
           <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent focus:bg-accent data-[state=open]:bg-accent">
+            <DropdownMenu.SubTrigger className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted data-[state=open]:bg-muted">
               {mode === 'dark' ? (
                 <Moon className="h-4 w-4" />
               ) : mode === 'light' ? (
@@ -163,7 +163,7 @@ export function UserMenu({
               >
                 <DropdownMenu.Item
                   className={cn(
-                    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent focus:bg-accent',
+                    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted',
                     mode === 'light' && 'text-primary'
                   )}
                   onSelect={() => setMode('light')}
@@ -173,7 +173,7 @@ export function UserMenu({
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className={cn(
-                    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent focus:bg-accent',
+                    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted',
                     mode === 'dark' && 'text-primary'
                   )}
                   onSelect={() => setMode('dark')}
@@ -183,7 +183,7 @@ export function UserMenu({
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className={cn(
-                    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent focus:bg-accent',
+                    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted',
                     mode === 'system' && 'text-primary'
                   )}
                   onSelect={() => setMode('system')}

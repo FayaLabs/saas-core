@@ -121,8 +121,8 @@ function NavDropdown({ item, currentPath, onNavigate }: {
                 className={cn(
                   'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
                   isActive
-                    ? 'bg-accent font-medium text-accent-foreground'
-                    : 'text-popover-foreground hover:bg-accent/50'
+                    ? 'bg-muted font-medium text-foreground'
+                    : 'text-popover-foreground hover:bg-muted/70'
                 )}
               >
                 <ChildIcon className="h-4 w-4 text-muted-foreground" />

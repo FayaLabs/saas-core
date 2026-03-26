@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss'
+import plugin from 'tailwindcss/plugin'
 
 const saasPreset: Partial<Config> = {
   darkMode: 'class',
@@ -72,8 +73,90 @@ const saasPreset: Partial<Config> = {
         md: 'var(--shadow-md)',
         lg: 'var(--shadow-lg)',
       },
+      keyframes: {
+        'fade-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'fade-out': {
+          from: { opacity: '1' },
+          to: { opacity: '0' },
+        },
+        'zoom-in': {
+          from: { transform: 'scale(0.95)', opacity: '0' },
+          to: { transform: 'scale(1)', opacity: '1' },
+        },
+        'zoom-out': {
+          from: { transform: 'scale(1)', opacity: '1' },
+          to: { transform: 'scale(0.95)', opacity: '0' },
+        },
+        'slide-in-from-top': {
+          from: { transform: 'translateY(-4px)', opacity: '0' },
+          to: { transform: 'translateY(0)', opacity: '1' },
+        },
+        'slide-in-from-bottom': {
+          from: { transform: 'translateY(4px)', opacity: '0' },
+          to: { transform: 'translateY(0)', opacity: '1' },
+        },
+        'slide-out-to-top': {
+          from: { transform: 'translateY(0)', opacity: '1' },
+          to: { transform: 'translateY(-4px)', opacity: '0' },
+        },
+        'page-in': {
+          from: { opacity: '0', transform: 'translateY(6px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 200ms ease-out',
+        'fade-out': 'fade-out 150ms ease-in',
+        'zoom-in': 'zoom-in 200ms ease-out',
+        'zoom-out': 'zoom-out 150ms ease-in',
+        'slide-in-from-top': 'slide-in-from-top 200ms ease-out',
+        'slide-in-from-bottom': 'slide-in-from-bottom 200ms ease-out',
+        'slide-out-to-top': 'slide-out-to-top 150ms ease-in',
+        'page-in': 'page-in 250ms ease-out',
+      },
     },
   },
+  plugins: [
+    // Radix-compatible animation utilities (animate-in, animate-out, fade-in-0, zoom-in-95, etc.)
+    plugin(({ addUtilities }) => {
+      addUtilities({
+        '.animate-in': {
+          'animation-name': 'enter',
+          'animation-duration': '200ms',
+          'animation-timing-function': 'ease-out',
+          '--tw-enter-opacity': '1',
+          '--tw-enter-scale': '1',
+          '--tw-enter-translate-x': '0',
+          '--tw-enter-translate-y': '0',
+        },
+        '.animate-out': {
+          'animation-name': 'exit',
+          'animation-duration': '150ms',
+          'animation-timing-function': 'ease-in',
+          '--tw-exit-opacity': '1',
+          '--tw-exit-scale': '1',
+          '--tw-exit-translate-x': '0',
+          '--tw-exit-translate-y': '0',
+        },
+        '.fade-in-0': { '--tw-enter-opacity': '0' },
+        '.fade-out-0': { '--tw-exit-opacity': '0' },
+        '.zoom-in-95': { '--tw-enter-scale': '0.95' },
+        '.zoom-out-95': { '--tw-exit-scale': '0.95' },
+        '.slide-in-from-top-2': { '--tw-enter-translate-y': '-0.5rem' },
+        '.slide-in-from-bottom-2': { '--tw-enter-translate-y': '0.5rem' },
+        '.slide-in-from-bottom-4': { '--tw-enter-translate-y': '1rem' },
+        '.slide-in-from-left-1\\/2': { '--tw-enter-translate-x': '-50%' },
+        '.slide-in-from-right-2': { '--tw-enter-translate-x': '0.5rem' },
+        '.slide-in-from-top-\\[48\\%\\]': { '--tw-enter-translate-y': '-48%' },
+        '.slide-out-to-left-1\\/2': { '--tw-exit-translate-x': '-50%' },
+        '.slide-out-to-top-\\[48\\%\\]': { '--tw-exit-translate-y': '-48%' },
+        '.slide-out-to-top-2': { '--tw-exit-translate-y': '-0.5rem' },
+      })
+    }),
+  ],
 }
 
 export default saasPreset

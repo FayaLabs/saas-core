@@ -15,6 +15,29 @@ import {
   PanelLeftClose,
   PanelLeft,
   Search,
+  DollarSign,
+  Megaphone,
+  ShoppingCart,
+  Target,
+  Wrench,
+  ClipboardList,
+  Briefcase,
+  UserCog,
+  BookOpen,
+  MessageCircle,
+  Globe,
+  Percent,
+  Tag,
+  Camera,
+  UtensilsCrossed,
+  MapPin,
+  Handshake,
+  Contact,
+  Building2,
+  Filter,
+  Plus,
+  List,
+  ChevronDown,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
@@ -32,6 +55,7 @@ interface NavigationItem {
   section: 'main' | 'secondary' | 'settings'
   badge?: string | number
   permission?: { feature: string; action: 'read' | 'create' | 'edit' | 'delete' }
+  children?: NavigationItem[]
 }
 
 interface SidebarUser {
@@ -56,19 +80,16 @@ interface SidebarProps {
   orgSwitcher?: React.ReactNode
   topContent?: React.ReactNode
   footerContent?: React.ReactNode
+  /** When true, removes all borders for a cleaner framed look */
+  borderless?: boolean
 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
-  Home,
-  Users,
-  Settings,
-  CreditCard,
-  Bell,
-  Calendar,
-  Package,
-  BarChart3,
-  FileText,
-  Mail,
+  Home, Users, Settings, CreditCard, Bell, Calendar, Package, BarChart3,
+  FileText, Mail, DollarSign, Megaphone, ShoppingCart, Target, Wrench,
+  ClipboardList, Briefcase, UserCog, BookOpen, MessageCircle, Globe,
+  Percent, Tag, Camera, UtensilsCrossed, MapPin, Handshake, Contact,
+  Building2, Filter, Plus, List, Search,
 }
 
 function getIcon(name: string): LucideIcon {
@@ -140,6 +161,91 @@ function NavItem({
   return content
 }
 
+function NavGroup({
+  item,
+  collapsed,
+  currentPath,
+  onNavigate,
+}: {
+  item: NavigationItem
+  collapsed: boolean
+  currentPath: string
+  onNavigate: (route: string) => void
+}) {
+  const [open, setOpen] = React.useState(() =>
+    item.children?.some((c) => currentPath === c.route || currentPath.startsWith(c.route + '/')) ?? false
+  )
+  const Icon = getIcon(item.icon)
+  const isChildActive = item.children?.some(
+    (c) => currentPath === c.route || currentPath.startsWith(c.route + '/')
+  )
+
+  if (collapsed) {
+    return (
+      <Tooltip.Root delayDuration={0}>
+        <Tooltip.Trigger asChild>
+          <button
+            onClick={() => onNavigate(item.route)}
+            className={cn(
+              'flex w-full items-center justify-center rounded-md px-2 py-2 text-sm font-medium transition-colors',
+              'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+              isChildActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-muted'
+            )}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+          </button>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content side="right" sideOffset={8} className="z-50 rounded-md bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md">
+            {item.label}
+            <Tooltip.Arrow className="fill-popover" />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    )
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className={cn(
+          'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+          'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+          isChildActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-muted'
+        )}
+      >
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="flex-1 truncate text-left">{item.label}</span>
+        <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div className="ml-4 mt-0.5 space-y-0.5 border-l border-sidebar-border/50 pl-3">
+          {item.children?.map((child) => {
+            const ChildIcon = getIcon(child.icon)
+            const isActive = currentPath === child.route || currentPath.startsWith(child.route + '/')
+            return (
+              <button
+                key={child.id}
+                onClick={() => onNavigate(child.route)}
+                className={cn(
+                  'flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors',
+                  isActive
+                    ? 'font-medium text-sidebar-accent-foreground'
+                    : 'text-sidebar-muted hover:text-sidebar-accent-foreground'
+                )}
+              >
+                <ChildIcon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{child.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Sidebar({
   navigation,
   logo,
@@ -156,6 +262,7 @@ export function Sidebar({
   orgSwitcher,
   topContent,
   footerContent,
+  borderless,
 }: SidebarProps) {
   const router = useRouter()
   const routerPath = router.usePathname()
@@ -185,14 +292,16 @@ export function Sidebar({
     <Tooltip.Provider>
       <aside
         className={cn(
-          'flex h-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-200',
+          'flex h-full flex-col bg-sidebar text-sidebar-foreground transition-all duration-200',
+          !borderless && 'border-r border-sidebar-border',
           collapsed ? 'w-16' : 'w-64'
         )}
       >
         {/* Logo + Collapse Toggle */}
         <div
           className={cn(
-            'flex h-14 items-center justify-between border-b border-sidebar-border px-4',
+            'flex h-14 items-center justify-between px-4',
+            !borderless && 'border-b border-sidebar-border',
             collapsed && 'justify-center px-2'
           )}
         >
@@ -225,33 +334,35 @@ export function Sidebar({
 
           {mainItems.length > 0 && (
             <div className="space-y-1">
-              {mainItems.map((item) => (
-                <NavItem
-                  key={item.id}
-                  item={item}
-                  collapsed={collapsed}
-                  isActive={currentPath === item.route || currentPath.startsWith(item.route + '/')}
-                  onNavigate={handleNavigate}
-                />
-              ))}
+              {mainItems.map((item) =>
+                item.children && item.children.length > 0 ? (
+                  <NavGroup key={item.id} item={item} collapsed={collapsed} currentPath={currentPath} onNavigate={handleNavigate} />
+                ) : (
+                  <NavItem
+                    key={item.id}
+                    item={item}
+                    collapsed={collapsed}
+                    isActive={currentPath === item.route || currentPath.startsWith(item.route + '/')}
+                    onNavigate={handleNavigate}
+                  />
+                )
+              )}
             </div>
           )}
 
           {secondaryItems.length > 0 && (
             <div className="mt-6 space-y-1">
-              {!collapsed && (
-                <p className="px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-muted">
-                  Secondary
-                </p>
-              )}
-              {secondaryItems.map((item) => (
-                <NavItem
-                  key={item.id}
-                  item={item}
-                  collapsed={collapsed}
-                  isActive={currentPath === item.route || currentPath.startsWith(item.route + '/')}
-                  onNavigate={handleNavigate}
-                />
+              {secondaryItems.map((item) =>
+                item.children && item.children.length > 0 ? (
+                  <NavGroup key={item.id} item={item} collapsed={collapsed} currentPath={currentPath} onNavigate={handleNavigate} />
+                ) : (
+                  <NavItem
+                    key={item.id}
+                    item={item}
+                    collapsed={collapsed}
+                    isActive={currentPath === item.route || currentPath.startsWith(item.route + '/')}
+                    onNavigate={handleNavigate}
+                  />
               ))}
             </div>
           )}
@@ -259,7 +370,7 @@ export function Sidebar({
 
         {/* Settings nav items */}
         {settingsItems.length > 0 && (
-          <div className="border-t border-sidebar-border p-2 space-y-1">
+          <div className={cn('p-2 space-y-1', !borderless && 'border-t border-sidebar-border')}>
             {settingsItems.map((item) => (
               <NavItem
                 key={item.id}
@@ -273,7 +384,7 @@ export function Sidebar({
         )}
 
         {footerContent && (
-          <div className="border-t border-sidebar-border p-2">
+          <div className={cn('p-2', !borderless && 'border-t border-sidebar-border')}>
             <div className="space-y-2">{footerContent}</div>
           </div>
         )}
@@ -284,7 +395,7 @@ export function Sidebar({
           : orgSwitcher}
 
         {/* Bottom: User row with inline action icons */}
-        <div className="border-t border-sidebar-border p-2">
+        <div className={cn('p-2', !borderless && 'border-t border-sidebar-border')}>
           <div className={cn(
             'flex items-center rounded-md',
             collapsed ? 'flex-col gap-1' : 'gap-1 px-1'
