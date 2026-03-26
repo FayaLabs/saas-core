@@ -67,7 +67,7 @@ function TopbarActions({
     <div className="flex items-center gap-1">
       {showSearch && (
         <button
-          className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          className="inline-flex items-center justify-center rounded-md p-2 text-sidebar-foreground/70 hover:bg-sidebar/30 hover:text-sidebar-foreground"
           aria-label="Search"
         >
           <Search className="h-5 w-5" />
@@ -78,7 +78,7 @@ function TopbarActions({
       <Popover.Root>
         <Popover.Trigger asChild>
           <div>
-            <NotificationBell unreadCount={unreadCount} />
+            <NotificationBell unreadCount={unreadCount} className="text-sidebar-foreground/70 hover:bg-sidebar/30 hover:text-sidebar-foreground" />
           </div>
         </Popover.Trigger>
         <Popover.Portal>
@@ -104,6 +104,7 @@ function TopbarActions({
           onProfile={onProfile}
           onSettings={onSettings}
           extraItems={userMenuExtras}
+          className="text-sidebar-foreground/70 hover:bg-sidebar/30 hover:text-sidebar-foreground"
         />
       )}
     </div>
@@ -196,6 +197,7 @@ export function AppShell({
           logo={logo}
           user={user}
           onNavigate={onNavigate}
+          frame={sidebarFrame}
           leftContent={topbarStart}
           rightContent={
             <div className="flex items-center gap-1">

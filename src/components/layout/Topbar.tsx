@@ -40,6 +40,7 @@ import {
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useRouter } from '../../lib/router'
+import { useLayoutStore } from '../../stores/layout.store'
 
 interface NavigationItem {
   id: string
@@ -93,8 +94,8 @@ function NavDropdown({ item, currentPath, onNavigate }: {
           className={cn(
             'flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-sm transition-colors',
             isChildActive
-              ? 'border-primary font-semibold text-foreground'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'border-sidebar-accent-foreground font-semibold text-sidebar-foreground'
+              : 'border-transparent text-sidebar-muted hover:text-sidebar-foreground'
           )}
         >
           <Icon className="h-4 w-4" />
@@ -139,40 +140,42 @@ function NavDropdown({ item, currentPath, onNavigate }: {
 export function Topbar({ navigation, logo, onMenuClick, leftContent, rightContent }: TopbarProps) {
   const router = useRouter()
   const currentPath = router.usePathname()
+  const setCommandPaletteOpen = useLayoutStore((s) => s.setCommandPaletteOpen)
   const mainNav = navigation.filter((item) => item.section === 'main')
   const secondaryNav = navigation.filter((item) => item.section === 'secondary')
   const allNav = [...mainNav, ...secondaryNav]
 
   return (
     <header className="sticky top-0 z-50 w-full shrink-0">
-      {/* Row 1: Logo + Search + Actions */}
-      <div className="border-b border-border/40 bg-background/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      {/* Row 1: Logo + Search + Actions — lighter brand */}
+      <div className="bg-sidebar-accent text-sidebar-foreground backdrop-blur-xl">
         <div className="flex h-14 w-full items-center justify-between px-4 md:px-6">
           {/* Left: Mobile menu + Logo */}
           <div className="flex items-center gap-3">
             <button
               onClick={onMenuClick}
-              className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground md:hidden"
+              className="inline-flex items-center justify-center rounded-md p-2 text-sidebar-foreground/70 hover:bg-sidebar/30 hover:text-sidebar-foreground md:hidden"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <div className="flex shrink-0 items-center">
+            <div className="hidden shrink-0 items-center md:flex">
               {logo ?? <span className="text-lg font-bold">App</span>}
             </div>
           </div>
 
-          {/* Center: Search (desktop only) */}
-          <div className="mx-8 hidden max-w-xl flex-1 md:flex">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <div className="flex h-9 w-full items-center rounded-md border border-input bg-background px-3 pl-9 text-sm text-muted-foreground">
-                <span>Search...</span>
-                <kbd className="ml-auto hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline-block">
-                  ⌘K
-                </kbd>
-              </div>
-            </div>
+          {/* Center: Search (desktop only) — opens command palette */}
+          <div className="mx-8 hidden max-w-sm flex-1 md:flex">
+            <button
+              onClick={() => setCommandPaletteOpen(true)}
+              className="relative flex h-8 w-full items-center rounded-md bg-sidebar/60 px-3 pl-8 text-sm text-sidebar-muted transition-colors hover:bg-sidebar/80"
+            >
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-sidebar-muted" />
+              <span className="text-xs">Search...</span>
+              <kbd className="ml-auto hidden rounded bg-sidebar/60 px-1.5 py-0.5 text-[10px] font-medium text-sidebar-muted sm:inline-block">
+                ⌘K
+              </kbd>
+            </button>
           </div>
 
           {/* Right: Actions */}
@@ -183,8 +186,8 @@ export function Topbar({ navigation, logo, onMenuClick, leftContent, rightConten
         </div>
       </div>
 
-      {/* Row 2: Navigation (desktop only) */}
-      <div className="hidden border-b border-border/40 bg-muted/50 md:block">
+      {/* Row 2: Navigation (desktop only) — darker */}
+      <div className="hidden bg-sidebar md:block">
         <div className="flex h-11 w-full items-center px-4 md:px-6">
           <nav className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
             {allNav.map((item) => {
@@ -214,8 +217,8 @@ export function Topbar({ navigation, logo, onMenuClick, leftContent, rightConten
                   className={cn(
                     'flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-sm transition-colors',
                     isActive
-                      ? 'border-primary font-semibold text-foreground'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                      ? 'border-primary font-semibold text-sidebar-foreground'
+                      : 'border-transparent text-sidebar-muted hover:text-sidebar-foreground'
                   )}
                 >
                   <Icon className="h-4 w-4" />

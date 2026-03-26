@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
@@ -22,22 +22,36 @@ interface CrudPageProps<T extends { id: string }> {
   feature?: string
 }
 
+function getRouteDepth(sub: string): number {
+  if (sub === '' || sub === '/') return 0        // list
+  if (sub === '/new') return 1                    // create
+  if (sub.endsWith('/edit')) return 2             // edit
+  return 1                                        // detail
+}
+
 function useSubRoute(basePath: string) {
-  const [sub, setSub] = useState(() => {
+  const getSub = () => {
     const hash = window.location.hash.slice(1) || '/'
     return hash.startsWith(basePath) ? hash.slice(basePath.length) : ''
-  })
+  }
+
+  const [sub, setSub] = useState(getSub)
+  const [direction, setDirection] = useState<'forward' | 'back'>('forward')
+  const prevDepthRef = useRef(getRouteDepth(getSub()))
 
   useEffect(() => {
     const handler = () => {
-      const hash = window.location.hash.slice(1) || '/'
-      setSub(hash.startsWith(basePath) ? hash.slice(basePath.length) : '')
+      const next = getSub()
+      const nextDepth = getRouteDepth(next)
+      setDirection(nextDepth > prevDepthRef.current ? 'forward' : 'back')
+      prevDepthRef.current = nextDepth
+      setSub(next)
     }
     window.addEventListener('hashchange', handler)
     return () => window.removeEventListener('hashchange', handler)
   }, [basePath])
 
-  return sub // '' = list, '/new' = create, '/:id' = detail, '/:id/edit' = edit
+  return { sub, direction }
 }
 
 function CrudTableView<T extends { id: string }>({
@@ -140,7 +154,7 @@ function CrudTableView<T extends { id: string }>({
 
 export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePath, display, feature }: CrudPageProps<T>) {
   const store = useStore()
-  const sub = useSubRoute(basePath)
+  const { sub, direction } = useSubRoute(basePath)
   const [deleteItem, setDeleteItem] = useState<T | null>(null)
   const [searchInput, setSearchInput] = useState('')
 
@@ -152,10 +166,15 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
   }, [])
 
   const navigateToList = () => { window.location.hash = basePath }
+  const animClass = direction === 'forward' ? 'saas-nav-forward' : 'saas-nav-back'
 
-  // /new — create form
+  // Determine which view to show
+  let viewKey = 'list'
+  let content: React.ReactNode = null
+
   if (sub === '/new') {
-    return (
+    viewKey = 'new'
+    content = (
       <CrudFormPage
         entityDef={entityDef}
         mode="create"
@@ -167,23 +186,19 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
         }}
       />
     )
-  }
-
-  // /:id/edit — edit form
-  if (sub.endsWith('/edit')) {
-    const id = sub.slice(1, -5) // remove leading / and trailing /edit
+  } else if (sub.endsWith('/edit')) {
+    const id = sub.slice(1, -5)
     const item = store.getById(id)
+    viewKey = `edit-${id}`
 
     if (!item && store.loading) {
-      return (
+      content = (
         <div className="flex items-center justify-center py-12">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
         </div>
       )
-    }
-
-    if (!item) {
-      return (
+    } else if (!item) {
+      content = (
         <div className="space-y-6">
           <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <button type="button" onClick={navigateToList} className="hover:text-foreground transition-colors">{namePlural}</button>
@@ -196,38 +211,34 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
           </div>
         </div>
       )
+    } else {
+      content = (
+        <CrudFormPage
+          entityDef={entityDef}
+          mode="edit"
+          initialData={item as any}
+          namePlural={namePlural}
+          onCancel={() => { window.location.hash = `${basePath}/${id}` }}
+          onSubmit={async (data) => {
+            await store.update(id, data as Partial<T>)
+            window.location.hash = `${basePath}/${id}`
+          }}
+        />
+      )
     }
-
-    return (
-      <CrudFormPage
-        entityDef={entityDef}
-        mode="edit"
-        initialData={item as any}
-        namePlural={namePlural}
-        onCancel={() => { window.location.hash = `${basePath}/${id}` }}
-        onSubmit={async (data) => {
-          await store.update(id, data as Partial<T>)
-          window.location.hash = `${basePath}/${id}`
-        }}
-      />
-    )
-  }
-
-  // /:id — detail view
-  if (sub.startsWith('/') && sub.length > 1) {
+  } else if (sub.startsWith('/') && sub.length > 1) {
     const id = sub.slice(1)
     const item = store.getById(id)
+    viewKey = `detail-${id}`
 
     if (!item && store.loading) {
-      return (
+      content = (
         <div className="flex items-center justify-center py-12">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
         </div>
       )
-    }
-
-    if (!item) {
-      return (
+    } else if (!item) {
+      content = (
         <div className="space-y-6">
           <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <button type="button" onClick={navigateToList} className="hover:text-foreground transition-colors">{namePlural}</button>
@@ -240,26 +251,80 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
           </div>
         </div>
       )
+    } else {
+      content = (
+        <CrudDetailPage
+          entityDef={entityDef}
+          item={item as any}
+          namePlural={namePlural}
+          basePath={basePath}
+          onBack={navigateToList}
+          onEdit={() => { window.location.hash = `${basePath}/${id}/edit` }}
+          onDelete={() => setDeleteItem(item)}
+          feature={feature}
+        />
+      )
+    }
+  } else {
+    // List view
+    const handleSearch = (value: string) => {
+      setSearchInput(value)
+      store.setQuery({ search: value || undefined })
     }
 
-    return (
-      <CrudDetailPage
-        entityDef={entityDef}
-        item={item as any}
-        namePlural={namePlural}
-        basePath={basePath}
-        onBack={navigateToList}
-        onEdit={() => { window.location.hash = `${basePath}/${id}/edit` }}
-        onDelete={() => setDeleteItem(item)}
-        feature={feature}
-      />
-    )
-  }
+    const isEmpty = store.items.length === 0 && !store.loading
 
-  // List view
-  const handleSearch = (value: string) => {
-    setSearchInput(value)
-    store.setQuery({ search: value || undefined })
+    content = (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">{namePlural}</h1>
+            <p className="text-muted-foreground">{store.total} total {namePlural.toLowerCase()}</p>
+          </div>
+          {feature ? (
+            <PermissionGate feature={feature} action="create">
+              <Button onClick={() => { window.location.hash = `${basePath}/new` }}>+ Add {entityDef.name}</Button>
+            </PermissionGate>
+          ) : (
+            <Button onClick={() => { window.location.hash = `${basePath}/new` }}>+ Add {entityDef.name}</Button>
+          )}
+        </div>
+
+        {entityDef.fields.some((f) => f.searchable) && (
+          <Input
+            type="text"
+            placeholder={`Search ${namePlural.toLowerCase()}...`}
+            value={searchInput}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="max-w-sm"
+          />
+        )}
+
+        {isEmpty ? (
+          <Card>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-muted-foreground mb-4">No {namePlural.toLowerCase()} yet</p>
+              <Button onClick={() => { window.location.hash = `${basePath}/new` }}>Add your first {entityDef.name.toLowerCase()}</Button>
+            </div>
+          </Card>
+        ) : display === 'cards' ? (
+          <CrudCardGrid
+            items={store.items}
+            entityDef={entityDef as EntityDef<any>}
+            onEdit={(item) => { window.location.hash = `${basePath}/${(item as any).id}` }}
+            onDelete={(item) => setDeleteItem(item)}
+          />
+        ) : (
+          <CrudTableView
+            entityDef={entityDef}
+            store={store}
+            basePath={basePath}
+            onDelete={(item) => setDeleteItem(item)}
+            feature={feature}
+          />
+        )}
+      </div>
+    )
   }
 
   const handleDeleteConfirm = () => {
@@ -270,62 +335,11 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
     }
   }
 
-  const isEmpty = store.items.length === 0 && !store.loading
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{namePlural}</h1>
-          <p className="text-muted-foreground">{store.total} total {namePlural.toLowerCase()}</p>
-        </div>
-        {feature ? (
-          <PermissionGate feature={feature} action="create">
-            <Button onClick={() => { window.location.hash = `${basePath}/new` }}>+ Add {entityDef.name}</Button>
-          </PermissionGate>
-        ) : (
-          <Button onClick={() => { window.location.hash = `${basePath}/new` }}>+ Add {entityDef.name}</Button>
-        )}
+    <>
+      <div key={viewKey} className={animClass}>
+        {content}
       </div>
-
-      {/* Search */}
-      {entityDef.fields.some((f) => f.searchable) && (
-        <Input
-          type="text"
-          placeholder={`Search ${namePlural.toLowerCase()}...`}
-          value={searchInput}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="max-w-sm"
-        />
-      )}
-
-      {/* Empty state */}
-      {isEmpty ? (
-        <Card>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-muted-foreground mb-4">No {namePlural.toLowerCase()} yet</p>
-            <Button onClick={() => { window.location.hash = `${basePath}/new` }}>Add your first {entityDef.name.toLowerCase()}</Button>
-          </div>
-        </Card>
-      ) : display === 'cards' ? (
-        <CrudCardGrid
-          items={store.items}
-          entityDef={entityDef as EntityDef<any>}
-          onEdit={(item) => { window.location.hash = `${basePath}/${(item as any).id}` }}
-          onDelete={(item) => setDeleteItem(item)}
-        />
-      ) : (
-        <CrudTableView
-          entityDef={entityDef}
-          store={store}
-          basePath={basePath}
-          onDelete={(item) => setDeleteItem(item)}
-          feature={feature}
-        />
-      )}
-
-      {/* Delete Confirm */}
       <DeleteConfirmDialog
         open={deleteItem !== null}
         onClose={() => setDeleteItem(null)}
@@ -333,6 +347,6 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
         entityName={entityDef.name}
         displayValue={deleteItem ? (deleteItem as any)[displayField] : undefined}
       />
-    </div>
+    </>
   )
 }

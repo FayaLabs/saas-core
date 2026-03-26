@@ -74,6 +74,7 @@ export function SidebarLayout({
           logo={logo}
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          borderless={!!frame}
           onNavigate={handleNavigate}
           currentPath={currentPath}
           user={user}
@@ -93,7 +94,7 @@ export function SidebarLayout({
         <div className={cn('flex flex-1 flex-col overflow-hidden bg-content', frame && !isMobile && 'rounded-[1.25rem]')}>
           {/* Optional topbar content (page title, etc.) */}
           {topbarContent && (
-            <header className="flex h-12 items-center justify-between border-b border-border/50 px-6">
+            <header className={cn('flex h-12 items-center justify-between px-6', !frame && 'border-b border-border/50')}>
               {topbarContent}
             </header>
           )}

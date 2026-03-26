@@ -93,7 +93,7 @@ export function OrgSwitcher({ collapsed }: OrgSwitcherProps) {
 
   return (
     <>
-      <div className={cn('border-t border-sidebar-border', collapsed ? 'px-1 py-2' : 'px-3 py-2')}>
+      <div className={cn(collapsed ? 'px-1 py-2' : 'px-3 py-2')}>
         <Dropdown>
           <DropdownTrigger asChild>
             <button

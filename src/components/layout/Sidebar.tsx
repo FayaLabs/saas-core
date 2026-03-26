@@ -42,6 +42,7 @@ import {
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useRouter } from '../../lib/router'
+import { useLayoutStore } from '../../stores/layout.store'
 import { UserMenu } from './UserMenu'
 import { NotificationInbox } from '../notifications/NotificationInbox'
 import { useNotificationStore } from '../../stores/notifications.store'
@@ -269,6 +270,7 @@ export function Sidebar({
   const currentPath = currentPathProp ?? routerPath
   const { notifications, unreadCount, markRead, markAllRead } = useNotificationStore()
   const { can } = usePermission()
+  const setCommandPaletteOpen = useLayoutStore((s) => s.setCommandPaletteOpen)
 
   // Filter navigation items by permission
   const visibleNavigation = navigation.filter((item) => {
@@ -416,8 +418,9 @@ export function Sidebar({
             {/* Spacer pushes icons to right when expanded */}
             {!collapsed && <div className="flex-1" />}
 
-            {/* Search */}
+            {/* Search — opens command palette */}
             <button
+              onClick={() => setCommandPaletteOpen(true)}
               className="inline-flex shrink-0 items-center justify-center rounded-md p-2 text-sidebar-muted transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
               aria-label="Search"
             >

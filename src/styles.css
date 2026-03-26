@@ -119,12 +119,120 @@
 
 /* Page transition */
 @keyframes page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Radix animation utilities (replaces tailwindcss-animate plugin) */
+.animate-in {
+  animation-name: enter;
+  animation-duration: 200ms;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+.animate-out {
+  animation-name: exit;
+  animation-duration: 150ms;
+  animation-timing-function: ease-in;
+  animation-fill-mode: both;
+}
+.fade-in-0 { --tw-enter-opacity: 0; }
+.fade-out-0 { --tw-exit-opacity: 0; }
+.zoom-in-95 { --tw-enter-scale: 0.95; }
+.zoom-out-95 { --tw-exit-scale: 0.95; }
+.slide-in-from-top-2 { --tw-enter-translate-y: -0.5rem; }
+.slide-in-from-bottom-2 { --tw-enter-translate-y: 0.5rem; }
+.slide-in-from-bottom-4 { --tw-enter-translate-y: 1rem; }
+.slide-in-from-left-1\/2 { --tw-enter-translate-x: -50%; }
+.slide-in-from-right-2 { --tw-enter-translate-x: 0.5rem; }
+.slide-in-from-top-\[48\%\] { --tw-enter-translate-y: -48%; }
+.slide-out-to-left-1\/2 { --tw-exit-translate-x: -50%; }
+.slide-out-to-top-\[48\%\] { --tw-exit-translate-y: -48%; }
+.slide-out-to-top-2 { --tw-exit-translate-y: -0.5rem; }
+.duration-200 { animation-duration: 200ms; }
+.duration-300 { animation-duration: 300ms; }
+
+/* Modal & overlay animations */
+.saas-overlay[data-state="open"] {
+  animation: saas-fade-in 200ms ease-out both;
+}
+.saas-overlay[data-state="closed"] {
+  animation: saas-fade-out 150ms ease-in both;
+}
+.saas-modal[data-state="open"] {
+  animation: saas-modal-in 250ms ease-out both;
+}
+.saas-modal[data-state="closed"] {
+  animation: saas-modal-out 150ms ease-in both;
+}
+
+@keyframes saas-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes saas-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes saas-modal-in {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes saas-modal-out {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+}
+
+/* Page content transition */
+.saas-page-enter {
+  animation: page-enter 250ms ease-out both;
+}
+
+/* Mobile drawer animation */
+.saas-drawer[data-state="open"] {
+  animation: saas-drawer-in 250ms ease-out both;
+}
+.saas-drawer[data-state="closed"] {
+  animation: saas-drawer-out 200ms ease-in both;
+}
+@keyframes saas-drawer-in {
+  from { opacity: 0; transform: translateX(-100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes saas-drawer-out {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-100%); }
+}
+
+/* Command palette animation */
+.saas-cmd-palette[data-state="open"] {
+  animation: saas-cmd-in 200ms ease-out both;
+}
+.saas-cmd-palette[data-state="closed"] {
+  animation: saas-cmd-out 150ms ease-in both;
+}
+@keyframes saas-cmd-in {
+  from { opacity: 0; transform: translateX(-50%) scale(0.96) translateY(-8px); }
+  to { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+}
+@keyframes saas-cmd-out {
+  from { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+  to { opacity: 0; transform: translateX(-50%) scale(0.96) translateY(-8px); }
+}
+
+/* CRUD navigation transitions */
+.saas-nav-forward {
+  animation: saas-slide-forward 200ms ease-out both;
+}
+.saas-nav-back {
+  animation: saas-slide-back 200ms ease-out both;
+}
+
+@keyframes saas-slide-forward {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes saas-slide-back {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
 }

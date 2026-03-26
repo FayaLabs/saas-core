@@ -12,6 +12,8 @@ import { SettingsPage } from './components/settings/SettingsPage'
 import { BillingPage } from './components/billing/BillingPage'
 import { ChatFab } from './components/chat/ChatFab'
 import { ChatPanel } from './components/chat/ChatPanel'
+import { CommandPalette, type CommandItem } from './components/layout/CommandPalette'
+import { useLayoutStore } from './stores/layout.store'
 import { LoginPage } from './components/auth/LoginPage'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { AuthAdapterProvider } from './lib/auth-context'
@@ -248,6 +250,46 @@ function buildNavigation(
 // ---------------------------------------------------------------------------
 // Internal: render logo from string or ReactNode
 // ---------------------------------------------------------------------------
+function CommandPaletteWrapper({ navigation, routerAdapter }: { navigation: NavigationItem[]; routerAdapter: RouterAdapter }) {
+  const { commandPaletteOpen, setCommandPaletteOpen } = useLayoutStore()
+
+  const commands: CommandItem[] = React.useMemo(() => {
+    const items: CommandItem[] = []
+    for (const nav of navigation) {
+      items.push({
+        id: nav.id,
+        label: nav.label,
+        icon: nav.icon,
+        group: 'Pages',
+        action: () => routerAdapter.navigate(nav.route),
+      })
+      if ((nav as any).children) {
+        for (const child of (nav as any).children) {
+          items.push({
+            id: child.id,
+            label: child.label,
+            icon: child.icon,
+            group: nav.label,
+            action: () => routerAdapter.navigate(child.route),
+          })
+        }
+      }
+    }
+    // System actions
+    items.push(
+      { id: 'settings', label: 'Settings', icon: 'Settings', group: 'System', action: () => routerAdapter.navigate('/settings') },
+      { id: 'billing', label: 'Billing', icon: 'CreditCard', group: 'System', action: () => routerAdapter.navigate('/billing') },
+    )
+    return items
+  }, [navigation, routerAdapter])
+
+  return React.createElement(CommandPalette, {
+    commands,
+    open: commandPaletteOpen,
+    onOpenChange: setCommandPaletteOpen,
+  })
+}
+
 function renderLogo(name: string, logo?: string | React.ReactNode): React.ReactNode {
   if (logo && typeof logo !== 'string') return logo
   const initial = typeof logo === 'string' ? logo : name.charAt(0).toUpperCase()
@@ -491,7 +533,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
         } : undefined)
 
     // Build page element — wrap in PermissionGate if page has permission config
-    const pageContent = React.createElement('div', { className: 'p-4 md:p-6 space-y-6' },
+    const pageContent = React.createElement('div', { key: matchedPath, className: 'saas-page-enter space-y-6' },
       React.createElement(WidgetSlot, {
         zone: 'page.before',
         className: 'space-y-4',
@@ -584,6 +626,8 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
           zone: 'shell.floating',
           contextOverrides: { matchedPath },
         }),
+        // Command palette
+        React.createElement(CommandPaletteWrapper, { navigation, routerAdapter }),
       ),
     )
 

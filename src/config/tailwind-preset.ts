@@ -1,5 +1,4 @@
 import type { Config } from 'tailwindcss'
-import plugin from 'tailwindcss/plugin'
 
 const saasPreset: Partial<Config> = {
   darkMode: 'class',
@@ -119,44 +118,6 @@ const saasPreset: Partial<Config> = {
       },
     },
   },
-  plugins: [
-    // Radix-compatible animation utilities (animate-in, animate-out, fade-in-0, zoom-in-95, etc.)
-    plugin(({ addUtilities }) => {
-      addUtilities({
-        '.animate-in': {
-          'animation-name': 'enter',
-          'animation-duration': '200ms',
-          'animation-timing-function': 'ease-out',
-          '--tw-enter-opacity': '1',
-          '--tw-enter-scale': '1',
-          '--tw-enter-translate-x': '0',
-          '--tw-enter-translate-y': '0',
-        },
-        '.animate-out': {
-          'animation-name': 'exit',
-          'animation-duration': '150ms',
-          'animation-timing-function': 'ease-in',
-          '--tw-exit-opacity': '1',
-          '--tw-exit-scale': '1',
-          '--tw-exit-translate-x': '0',
-          '--tw-exit-translate-y': '0',
-        },
-        '.fade-in-0': { '--tw-enter-opacity': '0' },
-        '.fade-out-0': { '--tw-exit-opacity': '0' },
-        '.zoom-in-95': { '--tw-enter-scale': '0.95' },
-        '.zoom-out-95': { '--tw-exit-scale': '0.95' },
-        '.slide-in-from-top-2': { '--tw-enter-translate-y': '-0.5rem' },
-        '.slide-in-from-bottom-2': { '--tw-enter-translate-y': '0.5rem' },
-        '.slide-in-from-bottom-4': { '--tw-enter-translate-y': '1rem' },
-        '.slide-in-from-left-1\\/2': { '--tw-enter-translate-x': '-50%' },
-        '.slide-in-from-right-2': { '--tw-enter-translate-x': '0.5rem' },
-        '.slide-in-from-top-\\[48\\%\\]': { '--tw-enter-translate-y': '-48%' },
-        '.slide-out-to-left-1\\/2': { '--tw-exit-translate-x': '-50%' },
-        '.slide-out-to-top-\\[48\\%\\]': { '--tw-exit-translate-y': '-48%' },
-        '.slide-out-to-top-2': { '--tw-exit-translate-y': '-0.5rem' },
-      })
-    }),
-  ],
 }
 
 export default saasPreset

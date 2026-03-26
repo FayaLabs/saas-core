@@ -56,7 +56,7 @@ export interface UIPerceptionTokens {
 export type ThemeRadius = 'sharp' | 'soft' | 'round'
 export type ThemeDensity = 'compact' | 'comfortable' | 'spacious'
 export type ThemeShadow = 'none' | 'subtle' | 'medium' | 'bold'
-export type ThemeFont = 'system' | 'inter' | 'dm-sans' | 'poppins' | 'geist' | 'plus-jakarta' | 'outfit'
+export type ThemeFont = 'system' | 'inter' | 'dm-sans' | 'poppins' | 'geist' | 'plus-jakarta' | 'outfit' | 'nunito' | 'source-sans' | 'raleway' | 'manrope'
 
 export interface SaasTheme {
   name: string

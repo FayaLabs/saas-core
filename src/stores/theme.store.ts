@@ -7,6 +7,8 @@ import type { CreateThemeOptions } from '../config/theme/utils'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
+const STORAGE_KEY = 'saas-core:theme-mode'
+
 interface ThemeState {
   mode: ThemeMode
   resolvedMode: 'light' | 'dark'
@@ -17,6 +19,13 @@ interface ThemeState {
   initialize: () => void
   // Keep old API name working
   setCustomTheme: (theme: ThemeTokens | null) => void
+}
+
+function getSavedMode(): ThemeMode {
+  if (typeof window === 'undefined') return 'system'
+  const saved = localStorage.getItem(STORAGE_KEY)
+  if (saved === 'light' || saved === 'dark' || saved === 'system') return saved
+  return 'system'
 }
 
 function resolveMode(mode: ThemeMode): 'light' | 'dark' {
@@ -79,13 +88,18 @@ function createThemeStore(): UseBoundStore<StoreApi<ThemeState>> {
   }
 
   const store = create<ThemeState>((set, get) => ({
-    mode: 'system',
+    mode: getSavedMode(),
     resolvedMode: 'light',
     overrides: null,
 
     setMode: (mode) => {
       const resolvedMode = resolveMode(mode)
       set({ mode, resolvedMode })
+
+      // Persist to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, mode)
+      }
 
       const { overrides } = get()
       const baseTheme = resolvedMode === 'dark' ? darkTheme : lightTheme

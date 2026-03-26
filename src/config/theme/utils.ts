@@ -42,6 +42,10 @@ const FONT_MAP: Record<ThemeFont, string> = {
   'geist':        '"Geist", ui-sans-serif, system-ui, -apple-system, sans-serif',
   'plus-jakarta': '"Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, sans-serif',
   'outfit':       '"Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+  'nunito':       '"Nunito", ui-sans-serif, system-ui, -apple-system, sans-serif',
+  'source-sans':  '"Source Sans 3", ui-sans-serif, system-ui, -apple-system, sans-serif',
+  'raleway':      '"Raleway", ui-sans-serif, system-ui, -apple-system, sans-serif',
+  'manrope':      '"Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif',
 }
 
 /**
