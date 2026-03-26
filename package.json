@@ -47,7 +47,7 @@
       "import": "./dist/types/index.js",
       "require": "./dist/types/index.cjs"
     },
-    "./styles.css": "./dist/styles.css"
+    "./styles.css": "./src/styles.css"
   },
   "files": [
     "dist",
