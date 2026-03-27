@@ -1,118 +1,55 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 /**
- * Two Supabase clients:
- * - `core` — shared platform DB (auth, tenants, billing, plugins, permissions)
- * - `project` — per-SaaS project DB (clients, appointments, products, etc.)
+ * Single Supabase client per SaaS.
  *
- * Env vars:
- * - VITE_SAAS_CORE_SUPABASE_URL / VITE_SAAS_CORE_ANON_KEY — platform DB
- * - VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY — project DB
+ * One Supabase project, two schemas:
+ * - `saas_core` schema: platform tables (tenants, auth, billing, plugins)
+ * - `public` schema: project tables (per-SaaS data — clients, orders, patients, etc.)
  *
- * If only one set is provided, it's used for both (single-DB mode).
+ * Env vars: VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
  */
 
-let coreClient: SupabaseClient | null = null
-let projectClient: SupabaseClient | null = null
+let client: SupabaseClient | null = null
 
-function envVar(name: string): string {
-  // Vite uses import.meta.env at compile time, but we receive values via createSupabaseClient params
-  // This fallback handles Node/SSR environments
-  return (typeof process !== 'undefined' && process.env?.[name]) || ''
-}
+/** Schema name for core platform tables */
+export const CORE_SCHEMA = 'saas_core'
 
-/** Initialize the core (platform) Supabase client */
-export function createCoreSupabaseClient(url?: string, anonKey?: string): SupabaseClient {
-  if (coreClient) return coreClient
+export function createSupabaseClient(url?: string, anonKey?: string): SupabaseClient {
+  if (client) return client
 
-  const supabaseUrl = url || envVar('VITE_SAAS_CORE_SUPABASE_URL') || envVar('VITE_SUPABASE_URL')
-  const supabaseKey = anonKey || envVar('VITE_SAAS_CORE_ANON_KEY') || envVar('VITE_SUPABASE_ANON_KEY')
+  const supabaseUrl = url || ''
+  const supabaseKey = anonKey || ''
 
   if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Core Supabase URL and anon key are required.')
+    throw new Error('Supabase URL and anon key are required. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
   }
 
-  coreClient = createClient(supabaseUrl, supabaseKey, {
+  client = createClient(supabaseUrl, supabaseKey, {
     auth: { autoRefreshToken: true, persistSession: true },
   })
 
-  return coreClient
+  return client
 }
 
-/** Initialize the project (per-SaaS) Supabase client */
-export function createProjectSupabaseClient(url?: string, anonKey?: string): SupabaseClient {
-  if (projectClient) return projectClient
-
-  const supabaseUrl = url || envVar('VITE_SUPABASE_URL')
-  const supabaseKey = anonKey || envVar('VITE_SUPABASE_ANON_KEY')
-
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Project Supabase URL and anon key are required.')
-  }
-
-  projectClient = createClient(supabaseUrl, supabaseKey, {
-    auth: { autoRefreshToken: true, persistSession: true },
-  })
-
-  return projectClient
-}
-
-/**
- * Legacy: createSupabaseClient initializes BOTH clients.
- * If coreUrl/coreKey are provided, uses separate DBs.
- * Otherwise, single-DB mode (same client for both).
- */
-export function createSupabaseClient(
-  url?: string,
-  anonKey?: string,
-  coreUrl?: string,
-  coreAnonKey?: string,
-): SupabaseClient {
-  // Core client — uses dedicated core URL if provided, otherwise falls back to project URL
-  const resolvedCoreUrl = coreUrl || url
-  const resolvedCoreKey = coreAnonKey || anonKey
-
-  if (resolvedCoreUrl && resolvedCoreKey) {
-    createCoreSupabaseClient(resolvedCoreUrl, resolvedCoreKey)
-  }
-
-  // Project client
-  if (url && anonKey) {
-    createProjectSupabaseClient(url, anonKey)
-  }
-
-  // In single-DB mode, both point to the same client
-  if (!projectClient && coreClient) {
-    projectClient = coreClient
-  }
-  if (!coreClient && projectClient) {
-    coreClient = projectClient
-  }
-
-  return coreClient ?? projectClient!
-}
-
-/** Get the core (platform) client — throws if not initialized */
-export function getCoreSupabaseClient(): SupabaseClient {
-  if (!coreClient) throw new Error('Core Supabase client not initialized.')
-  return coreClient
-}
-
-/** Get the project (per-SaaS) client — throws if not initialized */
-export function getProjectSupabaseClient(): SupabaseClient {
-  if (!projectClient) throw new Error('Project Supabase client not initialized.')
-  return projectClient
-}
-
-/** Legacy: getSupabaseClient returns core client for backward compat */
+/** Get the Supabase client — throws if not initialized */
 export function getSupabaseClient(): SupabaseClient {
-  if (!coreClient && !projectClient) {
+  if (!client) {
     throw new Error('Supabase client not initialized. Call createSupabaseClient() first.')
   }
-  return coreClient ?? projectClient!
+  return client
 }
 
-/** Optional getter — returns null if not initialized (used by CRUD data provider) */
+/** Optional getter — returns null if not initialized */
 export function getSupabaseClientOptional(): SupabaseClient | null {
-  return projectClient ?? coreClient
+  return client
 }
+
+/** Get a client scoped to the core platform schema */
+export function getCoreClient(): ReturnType<SupabaseClient['schema']> {
+  return getSupabaseClient().schema(CORE_SCHEMA)
+}
+
+// Legacy aliases for backward compatibility
+export const getCoreSupabaseClient = getSupabaseClient
+export const getProjectSupabaseClient = getSupabaseClient

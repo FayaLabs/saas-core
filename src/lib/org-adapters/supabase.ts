@@ -1,7 +1,7 @@
 import type { OrgAdapter, Organization, OrgMember, OrgMembership, CreateOrgOptions } from '../../types/org-adapter'
 import type { PermissionProfile, SystemPermission, PermissionAction } from '../../types/permissions'
 import type { Invite } from '../../types/invite'
-import { getCoreSupabaseClient } from '../supabase'
+import { getSupabaseClient, getCoreClient, CORE_SCHEMA } from '../supabase'
 
 // ---------------------------------------------------------------------------
 // Request dedup — prevents duplicate in-flight requests (React StrictMode, etc.)
@@ -202,7 +202,9 @@ function buildPermissionProfiles(
 // ---------------------------------------------------------------------------
 
 export function createSupabaseOrgAdapter(): OrgAdapter {
-  const supabase = getCoreSupabaseClient()
+  const supabase = getSupabaseClient()
+  /** Core-schema scoped queries */
+  const core = () => supabase.schema(CORE_SCHEMA)
 
   return {
     async listUserOrgs(userId: string): Promise<OrgMembership[]> {
@@ -240,15 +242,16 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
     },
 
     async createOrg(name: string, userId: string, options?: CreateOrgOptions): Promise<Organization> {
-      // Insert tenant
-      const { data: tenant, error: tenantError } = await supabase
-        .from('tenants')
-        .insert({
-          name,
-          slug: slugify(name),
-          plan: 'free',
-          vertical_id: options?.verticalId ?? null,
-          settings: {
+      // Use SECURITY DEFINER RPC to create tenant + owner in one atomic operation
+      // This bypasses RLS chicken-and-egg: can't SELECT tenant without membership, can't add membership without tenant ID
+      const { data: tenant, error } = await supabase
+        .rpc('create_tenant_with_owner', {
+          p_name: name,
+          p_slug: slugify(name),
+          p_user_id: userId,
+          p_vertical_id: options?.verticalId ?? null,
+          p_plan: 'free',
+          p_settings: {
             timezone: options?.timezone ?? 'America/Sao_Paulo',
             currency: options?.currency ?? 'BRL',
             locale: options?.locale ?? 'pt-BR',
@@ -256,25 +259,12 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
             branding: {},
           },
         })
-        .select()
-        .single()
 
-      if (tenantError) throw tenantError
-
-      // Insert creator as owner
-      const { error: memberError } = await supabase
-        .from('tenant_members')
-        .insert({
-          tenant_id: tenant.id,
-          user_id: userId,
-          role: 'owner',
-        })
-
-      if (memberError) throw memberError
+      if (error) throw error
 
       // Provision default plugins based on vertical
       if (options?.verticalId) {
-        await supabase.rpc('provision_tenant_plugins', { p_tenant_id: tenant.id })
+        await core().rpc('provision_tenant_plugins', { p_tenant_id: tenant.id })
       }
 
       return mapTenantToOrg(tenant)
@@ -333,9 +323,9 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
     async listProfiles(orgId: string): Promise<PermissionProfile[]> {
       // Fetch all permissions, default role mappings, and tenant overrides in parallel
       const [permsResult, rolePermsResult, overridesResult] = await Promise.all([
-        supabase.from('permissions').select('id, category'),
-        supabase.from('role_permissions').select('role, permission_id'),
-        supabase.from('tenant_role_overrides').select('role, permission_id, granted').eq('tenant_id', orgId),
+        core().from('permissions').select('id, category'),
+        core().from('role_permissions').select('role, permission_id'),
+        core().from('tenant_role_overrides').select('role, permission_id, granted').eq('tenant_id', orgId),
       ])
 
       if (permsResult.error) throw permsResult.error

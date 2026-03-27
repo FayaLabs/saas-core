@@ -81,14 +81,10 @@ export interface SaasAppConfig {
   name: string
   /** Logo — string renders as initial badge, ReactNode renders as-is */
   logo?: string | React.ReactNode
-  /** Supabase project URL (per-SaaS DB for plugin data) */
+  /** Supabase project URL — one project per SaaS (core in saas_core schema, data in public) */
   supabaseUrl?: string
-  /** Supabase anon key (per-SaaS DB) */
+  /** Supabase anon key */
   supabaseAnonKey?: string
-  /** Core platform Supabase URL (auth, tenants, billing, plugins). Falls back to supabaseUrl if not set. */
-  coreSupabaseUrl?: string
-  /** Core platform Supabase anon key. Falls back to supabaseAnonKey if not set. */
-  coreSupabaseAnonKey?: string
   /** Theme overrides — use SaasTheme (friendly) or CreateThemeOptions (granular) */
   theme?: CreateThemeOptions | SaasTheme
   /** Default theme mode: 'light' or 'dark'. User can toggle. Default: 'light' */
@@ -155,6 +151,8 @@ export interface SaasAppConfig {
     adapter?: OrgAdapter | 'mock' | 'supabase'
     multiOrg?: boolean
   }
+  /** Vertical/niche ID — auto-set on tenant creation, skips niche selection in onboarding */
+  verticalId?: string
   /** Permission profiles configuration */
   permissions?: PermissionsConfig
   /** Additional settings tabs to merge with built-in ones */
@@ -375,19 +373,9 @@ function buildSettingsTabs(
 // createSaasApp — returns a ready-to-render App component
 // ---------------------------------------------------------------------------
 export function createSaasApp(config: SaasAppConfig): React.FC {
-  // Initialize Supabase — supports dual-DB (core + project) or single-DB mode
+  // Initialize Supabase — single project, core tables in saas_core schema
   if (config.supabaseUrl && config.supabaseAnonKey) {
-    createSupabaseClient(
-      config.supabaseUrl,
-      config.supabaseAnonKey,
-      config.coreSupabaseUrl,
-      config.coreSupabaseAnonKey,
-    )
-  } else if (config.coreSupabaseUrl && config.coreSupabaseAnonKey) {
-    createSupabaseClient(
-      config.coreSupabaseUrl,
-      config.coreSupabaseAnonKey,
-    )
+    createSupabaseClient(config.supabaseUrl, config.supabaseAnonKey)
   }
 
   const routerAdapter = config.router ?? hashRouterAdapter()
@@ -636,7 +624,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
           pageElement,
         ),
         // Org initializer
-        orgAdapter ? React.createElement(OrgInitializer) : null,
+        orgAdapter ? React.createElement(OrgInitializer, { verticalId: config.verticalId }) : null,
         // Chat
         config.chat?.enabled !== false && config.chat
           ? React.createElement(React.Fragment, null,
