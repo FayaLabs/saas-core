@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
@@ -161,7 +161,12 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
   const namePlural = entityDef.namePlural ?? entityDef.name + 's'
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
 
+  const fetchedRef = useRef(false)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => {
+    if (fetchedRef.current) return
+    fetchedRef.current = true
     store.fetch()
   }, [])
 
@@ -269,7 +274,10 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
     // List view
     const handleSearch = (value: string) => {
       setSearchInput(value)
-      store.setQuery({ search: value || undefined })
+      if (searchTimer.current) clearTimeout(searchTimer.current)
+      searchTimer.current = setTimeout(() => {
+        store.setQuery({ search: value || undefined })
+      }, 350)
     }
 
     const isEmpty = store.items.length === 0 && !store.loading

@@ -1,11 +1,16 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { Loader2 } from 'lucide-react'
 import { useAuthStore } from '../../stores/auth.store'
 import { useOrganizationStore, getPersistedOrgId } from '../../stores/organization.store'
 import { usePermissionsStore } from '../../stores/permissions.store'
 import { useOrgAdapterOptional } from '../../lib/org-context'
 import { TenantOnboarding } from './TenantOnboarding'
 
-export function OrgInitializer({ verticalId }: { verticalId?: string } = {}) {
+interface OrgInitializerProps {
+  verticalId?: string
+}
+
+export function OrgInitializer({ verticalId }: OrgInitializerProps) {
   const adapter = useOrgAdapterOptional()
   const user = useAuthStore((s) => s.user)
   const currentOrg = useOrganizationStore((s) => s.currentOrg)
@@ -20,7 +25,6 @@ export function OrgInitializer({ verticalId }: { verticalId?: string } = {}) {
 
   useEffect(() => {
     if (!adapter || !user) return
-
     let cancelled = false
 
     async function init() {
@@ -37,8 +41,6 @@ export function OrgInitializer({ verticalId }: { verticalId?: string } = {}) {
         }
 
         setNeedsOnboarding(false)
-
-        // Select persisted org or first
         const persistedId = getPersistedOrgId()
         const targetOrg = orgs.find((o) => o.orgId === persistedId) ?? orgs[0]
 
@@ -51,23 +53,18 @@ export function OrgInitializer({ verticalId }: { verticalId?: string } = {}) {
           adapter!.listProfiles(org.id),
         ])
         if (cancelled) return
-
         setMembers(members)
         setProfiles(profiles)
 
-        // Resolve current user's profile
         const myMembership = members.find((m) => m.userId === user!.id)
         if (myMembership) {
           const profile = profiles.find((p) => p.id === myMembership.profileId)
           setCurrentProfile(profile ?? null)
         }
       } catch {
-        // ignore init errors
+        // ignore
       } finally {
-        if (!cancelled) {
-          setLoading(false)
-          setInitialized(true)
-        }
+        if (!cancelled) { setLoading(false); setInitialized(true) }
       }
     }
 
@@ -75,15 +72,21 @@ export function OrgInitializer({ verticalId }: { verticalId?: string } = {}) {
     return () => { cancelled = true }
   }, [adapter, user?.id])
 
-  // Hide onboarding once org is set (after TenantOnboarding creates one)
   useEffect(() => {
-    if (currentOrg && needsOnboarding) {
-      setNeedsOnboarding(false)
-    }
+    if (currentOrg && needsOnboarding) setNeedsOnboarding(false)
   }, [currentOrg])
 
   if (!initialized || !user) return null
-  if (needsOnboarding) return <TenantOnboarding verticalId={verticalId} />
+
+  if (needsOnboarding) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm">
+        <div className="saas-page-enter w-full max-w-md px-6">
+          <TenantOnboarding verticalId={verticalId} />
+        </div>
+      </div>
+    )
+  }
 
   return null
 }

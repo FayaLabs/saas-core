@@ -162,7 +162,7 @@ export function AppShell({
           user={user}
           onNavigate={onNavigate}
           currentPath={currentPath}
-          topbarContent={sidebarTopbar}
+          topbarContent={undefined}
           onSignOut={onSignOut}
           onProfile={onProfile}
           onSettings={onSettings}

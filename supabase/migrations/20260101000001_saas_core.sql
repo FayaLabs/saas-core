@@ -322,6 +322,10 @@ GRANT ALL ON ALL TABLES IN SCHEMA saas_core TO authenticated, service_role;
 GRANT SELECT ON ALL TABLES IN SCHEMA saas_core TO anon;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA saas_core TO anon, authenticated, service_role;
 
+-- Expose saas_core schema to PostgREST API
+ALTER ROLE authenticator SET pgrst.db_schemas = 'public, saas_core';
+NOTIFY pgrst, 'reload config';
+
 -- Public schema wrappers (PostgREST only exposes public by default)
 CREATE OR REPLACE FUNCTION public.create_tenant_with_owner(
   p_name text, p_slug text, p_user_id uuid,

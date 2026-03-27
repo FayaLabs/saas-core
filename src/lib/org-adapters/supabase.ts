@@ -209,7 +209,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
   return {
     async listUserOrgs(userId: string): Promise<OrgMembership[]> {
       return dedup(`listUserOrgs:${userId}`, async () => {
-        const { data, error } = await supabase
+        const { data, error } = await core()
           .from('tenant_members')
           .select('tenant_id, role, tenant:tenants(id, name, slug, logo_url)')
           .eq('user_id', userId)
@@ -231,7 +231,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
     },
 
     async getOrg(orgId: string): Promise<Organization> {
-      const { data, error } = await supabase
+      const { data, error } = await core()
         .from('tenants')
         .select('*')
         .eq('id', orgId)
@@ -276,7 +276,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
       if (updates.plan !== undefined) row.plan = updates.plan
       if (updates.settings !== undefined) row.settings = updates.settings
 
-      const { data, error } = await supabase
+      const { data, error } = await core()
         .from('tenants')
         .update(row)
         .eq('id', orgId)
@@ -288,17 +288,29 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
     },
 
     async listMembers(orgId: string): Promise<OrgMember[]> {
-      const { data, error } = await supabase
+      const { data, error } = await core()
         .from('tenant_members')
-        .select('*, profile:profiles(id, full_name, avatar_url, email)')
+        .select('*')
         .eq('tenant_id', orgId)
 
       if (error) throw error
-      return (data ?? []).map(mapMemberRow)
+
+      // Fetch profiles separately (no direct FK between tenant_members and profiles)
+      const userIds = (data ?? []).map((m: any) => m.user_id)
+      const { data: profiles } = userIds.length > 0
+        ? await core().from('profiles').select('id, full_name, avatar_url, email').in('id', userIds)
+        : { data: [] }
+
+      const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]))
+
+      return (data ?? []).map((row: any) => {
+        const profile = profileMap.get(row.user_id) ?? {}
+        return mapMemberRow({ ...row, profile })
+      })
     },
 
     async updateMemberProfile(orgId: string, memberId: string, profileId: string): Promise<void> {
-      const { error } = await supabase
+      const { error } = await core()
         .from('tenant_members')
         .update({ role: profileId })
         .eq('id', memberId)
@@ -308,7 +320,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
     },
 
     async removeMember(orgId: string, memberId: string): Promise<void> {
-      const { error } = await supabase
+      const { error } = await core()
         .from('tenant_members')
         .delete()
         .eq('id', memberId)
@@ -344,7 +356,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
       // profileId is a role name — update overrides for this role
       if (data.grants) {
         // Delete existing overrides for this role, then re-insert
-        await supabase
+        await core()
           .from('tenant_role_overrides')
           .delete()
           .eq('tenant_id', orgId)
@@ -370,7 +382,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
         }
 
         if (overrides.length > 0) {
-          const { error } = await supabase
+          const { error } = await core()
             .from('tenant_role_overrides')
             .insert(overrides)
 
@@ -390,7 +402,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
     },
 
     async listInvites(orgId: string): Promise<Invite[]> {
-      const { data, error } = await supabase
+      const { data, error } = await core()
         .from('invitations')
         .select('*')
         .eq('tenant_id', orgId)
@@ -401,7 +413,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
     },
 
     async createInvite(orgId: string, email: string, profileId: string, invitedBy: string): Promise<Invite> {
-      const { data, error } = await supabase
+      const { data, error } = await core()
         .from('invitations')
         .insert({
           tenant_id: orgId,
@@ -424,7 +436,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
         invited_by: invitedBy,
       }))
 
-      const { data, error } = await supabase
+      const { data, error } = await core()
         .from('invitations')
         .insert(rows)
         .select()
@@ -434,7 +446,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
     },
 
     async revokeInvite(orgId: string, inviteId: string): Promise<void> {
-      const { error } = await supabase
+      const { error } = await core()
         .from('invitations')
         .update({ status: 'revoked' })
         .eq('id', inviteId)
@@ -444,7 +456,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
     },
 
     async resendInvite(orgId: string, inviteId: string): Promise<Invite> {
-      const { data, error } = await supabase
+      const { data, error } = await core()
         .from('invitations')
         .update({
           status: 'pending',

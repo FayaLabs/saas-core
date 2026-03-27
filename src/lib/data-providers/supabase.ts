@@ -95,7 +95,7 @@ export function createSupabaseProvider<T extends { id: string }>(
       // Search
       if (query.search && searchCols.length > 0) {
         const term = `%${query.search}%`
-        const orClause = searchCols.map((col) => `${col}.ilike.${term}`).join(',')
+        const orClause = searchCols.map((col) => `${camelToSnake(col)}.ilike.${term}`).join(',')
         q = q.or(orClause)
       }
 

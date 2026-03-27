@@ -591,7 +591,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
             sidebarFrame: config.sidebarFrame !== false,
             navigation,
             user,
-            pageTitle,
+            pageTitle: undefined,
             currentPath: matchedPath,
             onNavigate: (path: string) => { routerAdapter.navigate(path) },
             onSignOut: authAdapter ? handleSignOut : () => console.log('sign out'),

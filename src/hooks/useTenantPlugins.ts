@@ -50,7 +50,11 @@ export function useTenantPlugins() {
           p_tenant_id: orgId,
         })
 
-        if (error) throw error
+        if (error) {
+          // Plugin system not available in this project — skip silently
+          if (!cancelled) { setLoading(false) }
+          return
+        }
         if (cancelled) return
 
         setTenantPlugins(

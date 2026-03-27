@@ -22,8 +22,6 @@ export type CrudStore<T> = CrudState<T> & CrudActions<T>
 export function createCrudStore<T extends { id: string }>(
   dataProvider: DataProvider<T>,
 ) {
-  let fetchInFlight: Promise<void> | null = null
-
   return create<CrudStore<T>>((set, get) => ({
     items: [],
     total: 0,
@@ -31,19 +29,13 @@ export function createCrudStore<T extends { id: string }>(
     query: {},
 
     async fetch() {
-      // Dedup: if a fetch is already in flight, reuse it
-      if (fetchInFlight) return fetchInFlight
       set({ loading: true })
-      fetchInFlight = (async () => {
-        try {
-          const result = await dataProvider.list(get().query)
-          set({ items: result.data, total: result.total })
-        } finally {
-          set({ loading: false })
-          fetchInFlight = null
-        }
-      })()
-      return fetchInFlight
+      try {
+        const result = await dataProvider.list(get().query)
+        set({ items: result.data, total: result.total, loading: false })
+      } catch {
+        set({ loading: false })
+      }
     },
 
     async create(data) {
@@ -65,7 +57,8 @@ export function createCrudStore<T extends { id: string }>(
 
     setQuery(partial) {
       set((s) => ({ query: { ...s.query, ...partial } }))
-      get().fetch()
+      // Use queueMicrotask to ensure state is committed before fetch
+      queueMicrotask(() => get().fetch())
     },
 
     getById(id) {
