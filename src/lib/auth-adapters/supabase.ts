@@ -1,6 +1,6 @@
 import type { AuthAdapter } from '../../types/auth-adapter'
 import type { AuthUser, AuthSession, AuthProvider } from '../../types/auth'
-import { getSupabaseClient } from '../supabase'
+import { getCoreSupabaseClient } from '../supabase'
 
 function mapSupabaseUser(supabaseUser: any): AuthUser {
   return {
@@ -25,7 +25,7 @@ function mapSupabaseSession(session: any): AuthSession {
 }
 
 export function createSupabaseAuthAdapter(): AuthAdapter {
-  const supabase = getSupabaseClient()
+  const supabase = getCoreSupabaseClient()
 
   return {
     async getSession() {

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { CrudPage } from './CrudPage'
 import { createCrudStore } from '../../stores/createCrudStore'
 import { createMockProvider } from '../../lib/data-providers/mock'
@@ -21,11 +21,24 @@ export function createCrudPage<T extends { id: string }>(
   entityDef: EntityDef<T>,
   options?: CreateCrudPageOptions<T>,
 ): React.ComponentType & { __crudBasePath?: string } {
-  const provider = options?.dataProvider
-    ?? (() => {
+  const display = options?.display ?? 'table'
+
+  // If an explicit dataProvider was given, use it eagerly (no lazy resolution needed)
+  let eagerStore: ReturnType<typeof createCrudStore<T>> | null = null
+  if (options?.dataProvider) {
+    eagerStore = createCrudStore(options.dataProvider)
+  }
+
+  const GeneratedCrudPage: React.FC & { __crudBasePath?: string } = () => {
+    // Lazy provider resolution — runs at render time when Supabase is already initialized
+    const useStore = useMemo(() => {
+      if (eagerStore) return eagerStore
+
       const client = getSupabaseClientOptional()
+      let provider: DataProvider<T>
+
       if (client && entityDef.data?.table) {
-        return createSupabaseProvider<T>(entityDef.data.table, {
+        provider = createSupabaseProvider<T>(entityDef.data.table, {
           schema: entityDef.data.schema,
           tenantId: entityDef.data.tenantScoped === false
             ? undefined
@@ -37,16 +50,13 @@ export function createCrudPage<T extends { id: string }>(
           selectColumns: entityDef.data.selectColumns,
           columnMap: entityDef.data.columnMap,
         })
+      } else {
+        provider = createMockProvider(entityDef, options?.mockData)
       }
 
-      return createMockProvider(entityDef, options?.mockData)
-    })()
-  const useStore = createCrudStore(provider)
-  const display = options?.display ?? 'table'
+      return createCrudStore(provider)
+    }, [])
 
-  const GeneratedCrudPage: React.FC & { __crudBasePath?: string } = () => {
-    // Resolve basePath from the hash — the component is mounted at a known path
-    // We read it from the static property set by createSaasApp
     const basePath = GeneratedCrudPage.__crudBasePath ?? '/'
     return (
       <CrudPage
@@ -60,7 +70,6 @@ export function createCrudPage<T extends { id: string }>(
   }
 
   GeneratedCrudPage.displayName = `CrudPage(${entityDef.name})`
-  // Mark as CRUD page for prefix routing in createSaasApp
   ;(GeneratedCrudPage as any).__isCrudPage = true
   return GeneratedCrudPage
 }

@@ -1,7 +1,7 @@
 import type { OrgAdapter, Organization, OrgMember, OrgMembership, CreateOrgOptions } from '../../types/org-adapter'
 import type { PermissionProfile, SystemPermission, PermissionAction } from '../../types/permissions'
 import type { Invite } from '../../types/invite'
-import { getSupabaseClient } from '../supabase'
+import { getCoreSupabaseClient } from '../supabase'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -186,7 +186,7 @@ function buildPermissionProfiles(
 // ---------------------------------------------------------------------------
 
 export function createSupabaseOrgAdapter(): OrgAdapter {
-  const supabase = getSupabaseClient()
+  const supabase = getCoreSupabaseClient()
 
   return {
     async listUserOrgs(userId: string): Promise<OrgMembership[]> {
