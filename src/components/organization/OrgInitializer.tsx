@@ -5,7 +5,7 @@ import { usePermissionsStore } from '../../stores/permissions.store'
 import { useOrgAdapterOptional } from '../../lib/org-context'
 import { TenantOnboarding } from './TenantOnboarding'
 
-export function OrgInitializer() {
+export function OrgInitializer({ verticalId }: { verticalId?: string } = {}) {
   const adapter = useOrgAdapterOptional()
   const user = useAuthStore((s) => s.user)
   const currentOrg = useOrganizationStore((s) => s.currentOrg)
@@ -83,7 +83,7 @@ export function OrgInitializer() {
   }, [currentOrg])
 
   if (!initialized || !user) return null
-  if (needsOnboarding) return <TenantOnboarding />
+  if (needsOnboarding) return <TenantOnboarding verticalId={verticalId} />
 
   return null
 }

@@ -262,10 +262,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
 
       if (error) throw error
 
-      // Provision default plugins based on vertical
-      if (options?.verticalId) {
-        await core().rpc('provision_tenant_plugins', { p_tenant_id: tenant.id })
-      }
+      // Plugin provisioning handled by Fayz platform — not per-SaaS
 
       return mapTenantToOrg(tenant)
     },

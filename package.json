@@ -92,9 +92,9 @@
     "sonner": "^1.5.0",
     "stripe": "^16.0.0",
     "tailwind-merge": "^2.4.0",
-    "zustand": "^4.5.0",
     "tsup": "^8.2.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",

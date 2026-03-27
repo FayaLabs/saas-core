@@ -270,7 +270,12 @@ function RegionalStep({
 
 const TOTAL_STEPS = 3
 
-export function TenantOnboarding() {
+interface TenantOnboardingProps {
+  /** Pre-set vertical — skips niche selection step */
+  verticalId?: string
+}
+
+export function TenantOnboarding({ verticalId: presetVerticalId }: TenantOnboardingProps = {}) {
   const adapter = useOrgAdapter()
   const user = useAuthStore((s) => s.user)
   const setCurrentOrg = useOrganizationStore((s) => s.setCurrentOrg)
@@ -279,12 +284,13 @@ export function TenantOnboarding() {
   const setProfiles = usePermissionsStore((s) => s.setProfiles)
   const setCurrentProfile = usePermissionsStore((s) => s.setCurrentProfile)
 
-  const [step, setStep] = React.useState(0)
+  const skipVerticalStep = !!presetVerticalId
+  const [step, setStep] = React.useState(skipVerticalStep ? 1 : 0)
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState('')
 
   const [data, setData] = React.useState<WizardData>({
-    verticalId: '',
+    verticalId: presetVerticalId ?? '',
     companyName: '',
     timezone: 'America/Sao_Paulo',
     currency: 'BRL',

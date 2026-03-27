@@ -1,71 +1,89 @@
 #!/usr/bin/env node
 
 /**
- * saas-core migration sync
+ * saas-core migration sync + push
  *
- * Copies core migrations from @fayz/saas-core into the SaaS project's
- * supabase/migrations/ folder (prefixed with 0000x_ to run before project migrations).
- * Then runs `supabase db push` to apply them.
+ * 1. Copies core migrations from saas-core to the SaaS project's supabase/migrations/
+ * 2. Runs `supabase db push` using SUPABASE_ACCESS_TOKEN
  *
- * Usage in package.json:
- *   "scripts": {
- *     "migrate": "node node_modules/@fayz/saas-core/scripts/migrate.mjs && supabase db push",
- *     "dev": "npm run migrate && vite --port 5182"
- *   }
- *
- * Or for local dev with linked saas-core:
- *   "dev": "node ../saas-core/scripts/migrate.mjs && vite --port 5182"
+ * Env:
+ *   SUPABASE_ACCESS_TOKEN or SUPABASE_MANAGEMENT_TOKEN (from saas-core/.env)
+ *   VITE_SUPABASE_URL (from SaaS project .env — extracts project ref)
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, copyFileSync } from 'fs'
-import { resolve, dirname, basename } from 'path'
+import { readFileSync, existsSync, mkdirSync, readdirSync, copyFileSync } from 'fs'
+import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { execSync } from 'child_process'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const cwd = process.cwd()
 
-// Core migrations source (from saas-core package)
-const coreMigrationsDir = resolve(__dirname, '..', 'supabase', 'migrations')
+function loadEnv(path) {
+  if (!existsSync(path)) return
+  for (const line of readFileSync(path, 'utf-8').split('\n')) {
+    const t = line.trim()
+    if (!t || t.startsWith('#')) continue
+    const eq = t.indexOf('=')
+    if (eq === -1) continue
+    const k = t.slice(0, eq).trim()
+    const v = t.slice(eq + 1).trim().replace(/^["']|["']$/g, '')
+    if (!process.env[k]) process.env[k] = v
+  }
+}
 
-// Target: the SaaS project's supabase/migrations folder
-const targetDir = resolve(cwd, 'supabase', 'migrations')
+const projectDir = process.argv.includes('--project-dir')
+  ? resolve(process.argv[process.argv.indexOf('--project-dir') + 1])
+  : process.cwd()
 
-if (!existsSync(coreMigrationsDir)) {
-  console.log('[migrate] No core migrations found at', coreMigrationsDir)
+// Load envs
+loadEnv(resolve(__dirname, '..', '.env'))  // saas-core (for token)
+loadEnv(resolve(projectDir, '.env'))        // SaaS project (for VITE_SUPABASE_URL)
+
+// Step 1: Sync core migrations
+const coreDir = resolve(__dirname, '..', 'supabase', 'migrations')
+const targetDir = resolve(projectDir, 'supabase', 'migrations')
+
+if (existsSync(coreDir)) {
+  mkdirSync(targetDir, { recursive: true })
+  const existing = new Set(readdirSync(targetDir))
+
+  for (const f of readdirSync(coreDir).filter(f => f.endsWith('.sql')).sort()) {
+    if (!existing.has(f)) {
+      copyFileSync(resolve(coreDir, f), resolve(targetDir, f))
+      console.log(`[migrate] + ${f}`)
+    }
+  }
+}
+
+// Step 2: supabase db push
+const token = process.env.SUPABASE_ACCESS_TOKEN || process.env.SUPABASE_MANAGEMENT_TOKEN
+const url = process.env.VITE_SUPABASE_URL
+if (!token || !url) {
+  console.log('[migrate] No token or VITE_SUPABASE_URL — skipping push')
   process.exit(0)
 }
 
-// Ensure target directory exists
-mkdirSync(targetDir, { recursive: true })
+const ref = url.replace('https://', '').split('.')[0]
 
-// Get existing files in target to avoid duplicates
-const existingFiles = new Set(readdirSync(targetDir))
-
-// Copy core migrations with a `core_` prefix to distinguish from project migrations
-const coreFiles = readdirSync(coreMigrationsDir)
-  .filter(f => f.endsWith('.sql'))
-  .sort()
-
-let copied = 0
-for (const file of coreFiles) {
-  const targetName = `core_${file}`
-
-  if (existingFiles.has(targetName)) {
-    continue // Already copied
-  }
-
-  const src = resolve(coreMigrationsDir, file)
-  const dst = resolve(targetDir, targetName)
-
-  copyFileSync(src, dst)
-  copied++
-  console.log(`[migrate] Copied: ${file} → ${targetName}`)
+// Ensure supabase init + link
+if (!existsSync(resolve(projectDir, 'supabase', 'config.toml'))) {
+  execSync('npx supabase init', { cwd: projectDir, stdio: 'inherit' })
 }
 
-if (copied === 0) {
-  console.log('[migrate] Core migrations already synced')
-} else {
-  console.log(`[migrate] Synced ${copied} core migration(s)`)
-}
+try {
+  execSync(`npx supabase link --project-ref ${ref}`, {
+    cwd: projectDir,
+    stdio: 'inherit',
+    env: { ...process.env, SUPABASE_ACCESS_TOKEN: token },
+  })
+} catch {}
 
-console.log('[migrate] Run "supabase db push" to apply migrations')
+try {
+  execSync('npx supabase db push', {
+    cwd: projectDir,
+    stdio: 'inherit',
+    env: { ...process.env, SUPABASE_ACCESS_TOKEN: token },
+  })
+} catch (e) {
+  console.error('[migrate] db push had issues — some migrations may need repair')
+}
