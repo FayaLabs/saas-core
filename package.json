@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Reusable vertical SaaS foundation — auth, billing, tenancy, layout, and more",
   "type": "module",
+  "bin": {
+    "saas-core-migrate": "./scripts/migrate.mjs"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -52,6 +55,8 @@
   "files": [
     "dist",
     "src",
+    "scripts",
+    "supabase/migrations",
     "tailwind.config.ts"
   ],
   "scripts": {
