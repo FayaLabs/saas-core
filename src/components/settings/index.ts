@@ -1,4 +1,6 @@
 export { SettingsPage } from './SettingsPage'
 export { CompanySettings } from './CompanySettings'
 export { UserProfile } from './UserProfile'
+export { SecuritySettings } from './SecuritySettings'
 export { BrandingSettings } from './BrandingSettings'
+export { LocationsOverview } from './LocationsOverview'

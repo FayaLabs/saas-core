@@ -27,6 +27,8 @@ import { OrgInitializer } from './components/organization/OrgInitializer'
 import { PermissionGate } from './components/organization/PermissionGate'
 import { TeamTab } from './components/organization/TeamTab'
 import { PermissionProfilesTab } from './components/organization/PermissionProfilesTab'
+import { ConnectedLocationsOverview } from './components/settings/ConnectedLocationsOverview'
+import { Users, ShieldCheck, MapPin } from 'lucide-react'
 import { resolvePluginRuntime, PluginRuntimeProvider } from './lib/plugins'
 import type { AuthAdapter } from './types/auth-adapter'
 import type { OrgAdapter } from './types/org-adapter'
@@ -340,13 +342,14 @@ function buildSettingsTabs(
   config: SaasAppConfig,
   pluginTabs: PluginSettingsTab[],
   can: (feature: string, action: PermissionAction) => boolean,
-): { id: string; label: string; component: React.ReactNode }[] {
-  const settingsTabs: { id: string; label: string; component: React.ReactNode }[] = []
+): { id: string; label: string; icon?: React.ReactNode; component: React.ReactNode }[] {
+  const settingsTabs: { id: string; label: string; icon?: React.ReactNode; component: React.ReactNode }[] = []
 
   if (config.organization) {
     settingsTabs.push(
-      { id: 'team', label: 'Team', component: React.createElement(TeamTab) },
-      { id: 'permissions', label: 'Permissions', component: React.createElement(PermissionProfilesTab) },
+      { id: 'team', label: 'Team', icon: React.createElement(Users, { className: 'h-4 w-4' }), component: React.createElement(TeamTab) },
+      { id: 'permissions', label: 'Permissions', icon: React.createElement(ShieldCheck, { className: 'h-4 w-4' }), component: React.createElement(PermissionProfilesTab) },
+      { id: 'locations', label: 'Locations', icon: React.createElement(MapPin, { className: 'h-4 w-4' }), component: React.createElement(ConnectedLocationsOverview) },
     )
   }
 
@@ -595,7 +598,6 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
             currentPath: matchedPath,
             onNavigate: (path: string) => { routerAdapter.navigate(path) },
             onSignOut: authAdapter ? handleSignOut : () => console.log('sign out'),
-            onProfile: () => { routerAdapter.navigate('/settings') },
             onSettings: () => { routerAdapter.navigate('/settings') },
             onBilling: routes.has('/billing') ? () => { routerAdapter.navigate('/billing') } : undefined,
             logo: logoNode,
@@ -725,3 +727,5 @@ export { createCrudPage } from './components/crud/createCrudPage'
 export { createCrudStore } from './stores/createCrudStore'
 export { PermissionGate } from './components/organization/PermissionGate'
 export { usePermission } from './hooks/usePermission'
+export { ModulePage } from './components/layout/ModulePage'
+export type { ModuleNavItem } from './components/layout/ModulePage'

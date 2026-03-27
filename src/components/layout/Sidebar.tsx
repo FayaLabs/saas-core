@@ -38,6 +38,15 @@ import {
   Plus,
   List,
   ChevronDown,
+  Dog,
+  Cat,
+  PawPrint,
+  Heart,
+  LayoutTemplate,
+  LeafyGreen,
+  Apple,
+  Egg,
+  Wheat,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
@@ -90,7 +99,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   FileText, Mail, DollarSign, Megaphone, ShoppingCart, Target, Wrench,
   ClipboardList, Briefcase, UserCog, BookOpen, MessageCircle, Globe,
   Percent, Tag, Camera, UtensilsCrossed, MapPin, Handshake, Contact,
-  Building2, Filter, Plus, List, Search,
+  Building2, Filter, Plus, List, Search, Dog, Cat, PawPrint, Heart, LayoutTemplate, LeafyGreen, Apple, Egg, Wheat,
 }
 
 function getIcon(name: string): LucideIcon {

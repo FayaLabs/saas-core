@@ -1,6 +1,6 @@
 import React from 'react'
+import * as LucideIcons from 'lucide-react'
 import { Card } from '../ui/card'
-import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import type { FieldDef, EntityDef } from '../../types/crud'
 
@@ -26,9 +26,9 @@ function formatValue(field: FieldDef, value: any): React.ReactNode {
     case 'boolean':
       return value ? 'Yes' : 'No'
     case 'select':
-      return <Badge variant="secondary">{String(value)}</Badge>
+      return <Badge variant="secondary" className="text-[10px]">{String(value)}</Badge>
     case 'image':
-      return null // images rendered separately as hero
+      return null
     default:
       return String(value)
   }
@@ -37,45 +37,51 @@ function formatValue(field: FieldDef, value: any): React.ReactNode {
 export function CrudCardGrid<T extends { id: string }>({ items, entityDef, onEdit, onDelete }: CrudCardGridProps<T>) {
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
   const imageField = entityDef.imageField
+  const entityIcon = entityDef.icon
+  const IconComponent = (LucideIcons as any)[entityIcon] ?? LucideIcons.Package
   const visibleFields = entityDef.fields.filter(
     (f) => f.showInTable !== false && f.key !== displayField && f.key !== imageField && f.type !== 'image'
   )
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((item) => {
         const record = item as any
         const imageUrl = imageField ? record[imageField] : null
 
         return (
-          <Card key={record.id} className="flex flex-col overflow-hidden">
-            {imageUrl && (
-              <div className="aspect-[16/10] overflow-hidden bg-muted">
-                <img
-                  src={imageUrl}
-                  alt={record[displayField] ?? ''}
-                  className="h-full w-full object-cover"
-                />
+          <Card
+            key={record.id}
+            className="flex items-center gap-4 p-3 cursor-pointer hover:bg-muted/30 transition-colors"
+            onClick={() => onEdit(item)}
+          >
+            {/* Thumbnail or icon */}
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={record[displayField] ?? ''}
+                className="h-14 w-14 shrink-0 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted/50">
+                <IconComponent className="h-6 w-6 text-muted-foreground/40" />
               </div>
             )}
-            <div className="p-5 flex-1">
-              <h3 className="font-semibold text-base mb-3">{record[displayField] ?? record.id}</h3>
-              <dl className="space-y-1.5">
-                {visibleFields.slice(0, 4).map((field) => {
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold truncate">{record[displayField] ?? record.id}</h3>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                {visibleFields.slice(0, 3).map((field) => {
                   const val = formatValue(field, record[field.key])
                   if (val == null) return null
                   return (
-                    <div key={field.key} className="flex items-center justify-between text-sm">
-                      <dt className="text-muted-foreground">{field.label}</dt>
-                      <dd className="font-medium">{val}</dd>
-                    </div>
+                    <span key={field.key} className="text-xs text-muted-foreground">
+                      {val}
+                    </span>
                   )
                 })}
-              </dl>
-            </div>
-            <div className="flex items-center gap-1 border-t px-5 py-3">
-              <Button variant="ghost" size="sm" onClick={() => onEdit(item)}>Edit</Button>
-              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete(item)}>Delete</Button>
+              </div>
             </div>
           </Card>
         )

@@ -6,18 +6,16 @@ import { toast } from '../notifications/ToastProvider'
 export function ConnectedUserProfile() {
   const user = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
-  const handleSave = async (data: { fullName: string; currentPassword?: string; newPassword?: string }) => {
+  const handleSave = async (data: { fullName: string }) => {
     try {
       const supabase = getSupabaseClient()
 
-      // Update profile name
       if (data.fullName !== user?.fullName) {
         const { error: metaError } = await supabase.auth.updateUser({
           data: { full_name: data.fullName },
         })
         if (metaError) throw metaError
 
-        // Also update profiles table
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ full_name: data.fullName })
@@ -25,14 +23,6 @@ export function ConnectedUserProfile() {
         if (profileError) throw profileError
 
         setUser(user ? { ...user, fullName: data.fullName } : null)
-      }
-
-      // Update password
-      if (data.newPassword) {
-        const { error: pwError } = await supabase.auth.updateUser({
-          password: data.newPassword,
-        })
-        if (pwError) throw pwError
       }
 
       toast.success('Profile updated')

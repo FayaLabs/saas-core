@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as Avatar from '@radix-ui/react-avatar'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { LogOut, User, Settings, CreditCard, HelpCircle, Keyboard, Moon, Sun } from 'lucide-react'
+import { LogOut, User, Settings, CreditCard, HelpCircle, Moon, Sun } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useThemeStore } from '../../stores/theme.store'
 
@@ -119,11 +119,6 @@ export function UserMenu({
             <HelpCircle className="h-4 w-4" />
             Help
           </DropdownMenu.Item>
-          <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted">
-            <Keyboard className="h-4 w-4" />
-            Keyboard Shortcuts
-          </DropdownMenu.Item>
-
           {/* Extra items from vertical */}
           {extraItems && extraItems.length > 0 && (
             <>

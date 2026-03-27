@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
+import { useOrganizationStore } from '../../stores/organization.store'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -161,14 +162,12 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
   const namePlural = entityDef.namePlural ?? entityDef.name + 's'
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
 
-  const fetchedRef = useRef(false)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const currentOrgId = useOrganizationStore((s) => s.currentOrg?.id)
 
   useEffect(() => {
-    if (fetchedRef.current) return
-    fetchedRef.current = true
     store.fetch()
-  }, [])
+  }, [currentOrgId])
 
   const navigateToList = () => { window.location.hash = basePath }
   const animClass = direction === 'forward' ? 'saas-nav-forward' : 'saas-nav-back'
@@ -281,13 +280,19 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
     }
 
     const isEmpty = store.items.length === 0 && !store.loading
+    const isInitialLoad = store.loading && store.items.length === 0
+    const columns = fieldToColumns(entityDef.fields)
 
     content = (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">{namePlural}</h1>
-            <p className="text-muted-foreground">{store.total} total {namePlural.toLowerCase()}</p>
+            {isInitialLoad ? (
+              <div className="h-5 w-32 animate-pulse rounded bg-muted mt-1" />
+            ) : (
+              <p className="text-muted-foreground">{store.total} total {namePlural.toLowerCase()}</p>
+            )}
           </div>
           {feature ? (
             <PermissionGate feature={feature} action="create">
@@ -308,7 +313,59 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
           />
         )}
 
-        {isEmpty ? (
+        {isInitialLoad ? (
+          display === 'cards' ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <div className="p-5 space-y-3">
+                    <div className="h-5 w-2/3 animate-pulse rounded bg-muted" />
+                    <div className="space-y-2">
+                      <div className="flex justify-between"><div className="h-4 w-20 animate-pulse rounded bg-muted" /><div className="h-4 w-16 animate-pulse rounded bg-muted" /></div>
+                      <div className="flex justify-between"><div className="h-4 w-24 animate-pulse rounded bg-muted" /><div className="h-4 w-12 animate-pulse rounded bg-muted" /></div>
+                      <div className="flex justify-between"><div className="h-4 w-16 animate-pulse rounded bg-muted" /><div className="h-4 w-20 animate-pulse rounded bg-muted" /></div>
+                    </div>
+                  </div>
+                  <div className="border-t px-5 py-3">
+                    <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      {columns.map((col) => (
+                        <th key={col.key} className="text-left p-4 text-sm font-medium text-muted-foreground">{col.label}</th>
+                      ))}
+                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i}>
+                        {columns.map((col, ci) => (
+                          <td key={col.key} className="p-4">
+                            <div className={`h-4 animate-pulse rounded bg-muted ${ci === 0 ? 'w-32' : 'w-20'}`} />
+                          </td>
+                        ))}
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <div className="h-8 w-8 animate-pulse rounded bg-muted" />
+                            <div className="h-8 w-8 animate-pulse rounded bg-muted" />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )
+        ) : isEmpty ? (
           <Card>
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-muted-foreground mb-4">No {namePlural.toLowerCase()} yet</p>

@@ -1,4 +1,5 @@
 import type { OrgAdapter, Organization, OrgMember, OrgMembership, CreateOrgOptions } from '../../types/org-adapter'
+import type { Location } from '../../types/tenant'
 import type { PermissionProfile, SystemPermission, PermissionAction } from '../../types/permissions'
 import type { Invite } from '../../types/invite'
 import { getSupabaseClient, getCoreClient, CORE_SCHEMA } from '../supabase'
@@ -59,6 +60,29 @@ function mapMemberRow(row: any): OrgMember {
   }
 }
 
+function mapLocationRow(row: any): Location {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    kind: row.kind ?? 'branch',
+    name: row.name,
+    email: row.email ?? undefined,
+    phone: row.phone ?? undefined,
+    address: row.address ?? undefined,
+    city: row.city ?? undefined,
+    state: row.state ?? undefined,
+    country: row.country ?? 'BR',
+    postalCode: row.postal_code ?? undefined,
+    isHeadquarters: row.is_headquarters ?? false,
+    isActive: row.is_active ?? true,
+    tags: row.tags ?? [],
+    notes: row.notes ?? undefined,
+    metadata: row.metadata ?? row.settings ?? {},
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
 function mapInviteRow(row: any): Invite {
   return {
     id: row.id,
@@ -68,7 +92,7 @@ function mapInviteRow(row: any): Invite {
     locationIds: row.location_ids ?? undefined,
     invitedBy: row.invited_by,
     token: row.token,
-    status: row.status,
+    status: row.status ?? 'pending',
     expiresAt: row.expires_at,
     acceptedAt: row.accepted_at ?? undefined,
     createdAt: row.created_at,
@@ -151,9 +175,15 @@ function buildPermissionProfiles(
         systemPermissions.push(sp)
       }
     }
-    // Owner always gets manage_permissions
-    if (role === 'owner' && !seenSystem.has('manage_permissions')) {
-      systemPermissions.push('manage_permissions')
+    // Owner always gets all system permissions
+    if (role === 'owner') {
+      const allSystem: SystemPermission[] = ['manage_team', 'manage_billing', 'manage_settings', 'manage_permissions']
+      for (const sp of allSystem) {
+        if (!seenSystem.has(sp)) {
+          seenSystem.add(sp)
+          systemPermissions.push(sp)
+        }
+      }
     }
 
     // Grants: group non-system permissions by category → actions
@@ -469,6 +499,38 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
 
       if (error) throw error
       return mapInviteRow(data)
+    },
+
+    async listLocations(orgId: string): Promise<Location[]> {
+      const { data, error } = await core()
+        .from('locations')
+        .select('*')
+        .eq('tenant_id', orgId)
+        .order('is_headquarters', { ascending: false })
+        .order('name')
+
+      if (error) throw error
+      return (data ?? []).map(mapLocationRow)
+    },
+
+    async createLocation(orgId: string, input: { name: string; address?: string; city?: string; state?: string; country?: string; phone?: string; isHeadquarters?: boolean }): Promise<Location> {
+      const { data, error } = await core()
+        .from('locations')
+        .insert({
+          tenant_id: orgId,
+          name: input.name,
+          address: input.address || null,
+          city: input.city || null,
+          state: input.state || null,
+          country: input.country || 'BR',
+          phone: input.phone || null,
+          is_headquarters: input.isHeadquarters ?? false,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      return mapLocationRow(data)
     },
   }
 }

@@ -36,6 +36,15 @@ import {
   Building2,
   Plus,
   List,
+  Dog,
+  Cat,
+  PawPrint,
+  Heart,
+  LayoutTemplate,
+  LeafyGreen,
+  Apple,
+  Egg,
+  Wheat,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
@@ -66,7 +75,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   FileText, Mail, DollarSign, Megaphone, ShoppingCart, Target, Wrench,
   ClipboardList, Briefcase, UserCog, BookOpen, MessageCircle, Globe,
   Percent, Tag, Camera, UtensilsCrossed, Search, MapPin, Handshake,
-  Contact, Building2, ChevronDown, Filter, Plus, List,
+  Contact, Building2, ChevronDown, Filter, Plus, List, Dog, Cat, PawPrint, Heart, LayoutTemplate, LeafyGreen, Apple, Egg, Wheat,
 }
 
 // Also add to BottomNav

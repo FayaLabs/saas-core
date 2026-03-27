@@ -13,20 +13,20 @@ export interface Tenant {
 export interface Location {
   id: string
   tenantId: string
+  kind: string
   name: string
-  slug: string
-  addressLine1?: string
-  addressLine2?: string
+  email?: string
+  phone?: string
+  address?: string
   city?: string
   state?: string
-  postalCode?: string
   country: string
-  phone?: string
-  email?: string
-  timezone: string
+  postalCode?: string
   isHeadquarters: boolean
   isActive: boolean
-  settings: Record<string, unknown>
+  tags: string[]
+  notes?: string
+  metadata: Record<string, unknown>
   createdAt: string
   updatedAt: string
 }

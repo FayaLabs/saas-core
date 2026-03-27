@@ -135,7 +135,9 @@ CREATE TABLE saas_core.invitations (
   tenant_id uuid NOT NULL REFERENCES saas_core.tenants(id) ON DELETE CASCADE,
   email text NOT NULL,
   role text NOT NULL DEFAULT 'staff',
+  location_ids uuid[] DEFAULT '{}',
   token text UNIQUE NOT NULL DEFAULT replace(gen_random_uuid()::text, '-', ''),
+  status text NOT NULL DEFAULT 'pending',
   invited_by uuid REFERENCES auth.users(id),
   accepted_at timestamptz,
   expires_at timestamptz NOT NULL DEFAULT (now() + interval '7 days'),
@@ -156,15 +158,20 @@ CREATE TABLE saas_core.payment_events (
 CREATE TABLE saas_core.locations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id uuid NOT NULL REFERENCES saas_core.tenants(id) ON DELETE CASCADE,
+  kind text NOT NULL DEFAULT 'branch',
   name text NOT NULL,
+  email text,
+  phone text,
   address text,
   city text,
   state text,
   country text DEFAULT 'BR',
-  phone text,
+  postal_code text,
   is_headquarters boolean DEFAULT false,
   is_active boolean DEFAULT true,
-  settings jsonb DEFAULT '{}',
+  tags text[] DEFAULT '{}',
+  notes text,
+  metadata jsonb DEFAULT '{}',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -283,8 +290,12 @@ CREATE POLICY "overrides_manage" ON saas_core.tenant_role_overrides FOR ALL
 
 -- Invitations: admins manage, anyone can read (to accept)
 CREATE POLICY "invites_select" ON saas_core.invitations FOR SELECT TO authenticated USING (true);
-CREATE POLICY "invites_manage" ON saas_core.invitations FOR INSERT
+CREATE POLICY "invites_insert" ON saas_core.invitations FOR INSERT
   WITH CHECK (saas_core.is_tenant_admin(tenant_id));
+CREATE POLICY "invites_update" ON saas_core.invitations FOR UPDATE
+  USING (saas_core.is_tenant_admin(tenant_id));
+CREATE POLICY "invites_delete" ON saas_core.invitations FOR DELETE
+  USING (saas_core.is_tenant_admin(tenant_id));
 
 -- Locations: tenant members can see, admins manage
 CREATE POLICY "locations_select" ON saas_core.locations FOR SELECT

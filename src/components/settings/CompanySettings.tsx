@@ -23,13 +23,18 @@ interface CompanySettingsProps {
 }
 
 const TIMEZONES = [
-  { value: 'America/New_York', label: 'Eastern (US & Canada)' },
-  { value: 'America/Chicago', label: 'Central (US & Canada)' },
-  { value: 'America/Denver', label: 'Mountain (US & Canada)' },
-  { value: 'America/Los_Angeles', label: 'Pacific (US & Canada)' },
+  { value: 'America/Sao_Paulo', label: 'Brasilia (BRT)' },
+  { value: 'America/New_York', label: 'Eastern (US)' },
+  { value: 'America/Chicago', label: 'Central (US)' },
+  { value: 'America/Denver', label: 'Mountain (US)' },
+  { value: 'America/Los_Angeles', label: 'Pacific (US)' },
+  { value: 'America/Mexico_City', label: 'Mexico City' },
+  { value: 'America/Buenos_Aires', label: 'Buenos Aires' },
   { value: 'Europe/London', label: 'London' },
   { value: 'Europe/Paris', label: 'Paris' },
   { value: 'Europe/Berlin', label: 'Berlin' },
+  { value: 'Europe/Madrid', label: 'Madrid' },
+  { value: 'Europe/Lisbon', label: 'Lisbon' },
   { value: 'Asia/Tokyo', label: 'Tokyo' },
   { value: 'Asia/Shanghai', label: 'Shanghai' },
   { value: 'Australia/Sydney', label: 'Sydney' },
@@ -37,12 +42,15 @@ const TIMEZONES = [
 ]
 
 const CURRENCIES = [
-  { value: 'usd', label: 'USD - US Dollar' },
-  { value: 'eur', label: 'EUR - Euro' },
-  { value: 'gbp', label: 'GBP - British Pound' },
-  { value: 'jpy', label: 'JPY - Japanese Yen' },
-  { value: 'cad', label: 'CAD - Canadian Dollar' },
-  { value: 'aud', label: 'AUD - Australian Dollar' },
+  { value: 'BRL', label: 'BRL - Real' },
+  { value: 'USD', label: 'USD - US Dollar' },
+  { value: 'EUR', label: 'EUR - Euro' },
+  { value: 'GBP', label: 'GBP - British Pound' },
+  { value: 'JPY', label: 'JPY - Japanese Yen' },
+  { value: 'CAD', label: 'CAD - Canadian Dollar' },
+  { value: 'AUD', label: 'AUD - Australian Dollar' },
+  { value: 'MXN', label: 'MXN - Mexican Peso' },
+  { value: 'ARS', label: 'ARS - Argentine Peso' },
 ]
 
 const LOCALES = [
@@ -58,7 +66,7 @@ const LOCALES = [
 export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
   const [name, setName] = React.useState(tenant?.name ?? '')
   const [timezone, setTimezone] = React.useState(tenant?.settings?.timezone ?? 'UTC')
-  const [currency, setCurrency] = React.useState(tenant?.settings?.currency ?? 'usd')
+  const [currency, setCurrency] = React.useState(tenant?.settings?.currency ?? 'USD')
   const [locale, setLocale] = React.useState(tenant?.settings?.locale ?? 'en-US')
   const [saving, setSaving] = React.useState(false)
 
@@ -66,7 +74,7 @@ export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
     if (tenant) {
       setName(tenant.name)
       setTimezone(tenant.settings?.timezone ?? 'UTC')
-      setCurrency(tenant.settings?.currency ?? 'usd')
+      setCurrency(tenant.settings?.currency ?? 'USD')
       setLocale(tenant.settings?.locale ?? 'en-US')
     }
   }, [tenant])
@@ -157,7 +165,7 @@ export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
           </div>
         </CardContent>
 
-        <CardFooter>
+        <CardFooter className="justify-end">
           <Button type="submit" disabled={saving}>
             <Save className="mr-2 h-4 w-4" />
             {saving ? 'Saving...' : 'Save Changes'}

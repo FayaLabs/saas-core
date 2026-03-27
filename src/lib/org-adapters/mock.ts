@@ -1,7 +1,7 @@
 import type { OrgAdapter, Organization, OrgMember, OrgMembership, CreateOrgOptions } from '../../types/org-adapter'
 import type { PermissionProfile } from '../../types/permissions'
 import type { Invite } from '../../types/invite'
-import type { TenantSettings } from '../../types/tenant'
+import type { TenantSettings, Location } from '../../types/tenant'
 
 const STORAGE_KEY = 'saas-core:mock-orgs'
 
@@ -289,6 +289,30 @@ export function createMockOrgAdapter(defaultProfiles?: PermissionProfile[]): Org
       invite.status = 'pending'
       setStored(data)
       return invite
+    },
+
+    async listLocations(_orgId: string): Promise<Location[]> {
+      return []
+    },
+
+    async createLocation(_orgId: string, data: any): Promise<Location> {
+      return {
+        id: crypto.randomUUID(),
+        tenantId: _orgId,
+        kind: 'branch',
+        name: data.name,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        country: data.country ?? 'BR',
+        phone: data.phone,
+        isHeadquarters: data.isHeadquarters ?? false,
+        isActive: true,
+        tags: [],
+        metadata: {},
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
     },
   }
 }

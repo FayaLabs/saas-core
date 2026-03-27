@@ -1,4 +1,5 @@
 import type React from 'react'
+import type { EntityArchetype } from './entities'
 
 export type FieldType =
   | 'text' | 'email' | 'phone' | 'url' | 'image'
@@ -47,10 +48,14 @@ export interface DetailTab {
   component?: React.ComponentType<{ item: any; entityDef: EntityDef }>
 }
 
+export type FormLayout = 'person' | 'product' | 'service' | 'location' | 'order' | 'subject' | 'generic'
+
 export interface EntityDef<T = Record<string, any>> {
   name: string
   namePlural?: string
   icon: string
+  /** Form/detail layout preset. Determines the archetype-specific form layout. */
+  layout?: FormLayout
   fields: FieldDef[]
   /** Named groups for organizing fields in forms and detail views */
   fieldGroups?: FieldGroup[]
@@ -64,6 +69,14 @@ export interface EntityDef<T = Record<string, any>> {
     searchColumns?: string[]
     selectColumns?: string
     columnMap?: Record<string, string>
+    /** Which saas_core archetype this entity extends (requires a project extension table) */
+    archetype?: EntityArchetype
+    /** The `kind` discriminator value for the archetype table */
+    archetypeKind?: string
+    /** Static filters applied to all queries (e.g. { kind: 'supplier' }) */
+    filters?: Record<string, string>
+    /** Default values merged into every create payload */
+    defaults?: Record<string, unknown>
   }
   defaultSort?: string
   defaultSortDir?: 'asc' | 'desc'

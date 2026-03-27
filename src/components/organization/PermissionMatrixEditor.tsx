@@ -3,9 +3,16 @@ import { Card } from '../ui/card'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
+import { Checkbox, type CheckboxColor } from '../ui/checkbox'
 import type { FeatureDeclaration, PermissionAction, PermissionProfile, SystemPermission } from '../../types/permissions'
 
 const ACTIONS: PermissionAction[] = ['read', 'create', 'edit', 'delete']
+const ACTION_COLORS: Record<PermissionAction, CheckboxColor> = {
+  read: 'primary',
+  create: 'success',
+  edit: 'warning',
+  delete: 'destructive',
+}
 const SYSTEM_PERMISSIONS: { id: SystemPermission; label: string }[] = [
   { id: 'manage_team', label: 'Manage Team' },
   { id: 'manage_billing', label: 'Manage Billing' },
@@ -77,12 +84,10 @@ export function PermissionMatrixEditor({ features, profile, onSave, onCancel, sa
         <h3 className="text-sm font-semibold mb-3">System Permissions</h3>
         <div className="grid gap-2 sm:grid-cols-2">
           {SYSTEM_PERMISSIONS.map((sp) => (
-            <label key={sp.id} className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
+            <label key={sp.id} className="flex items-center gap-2.5 text-sm cursor-pointer">
+              <Checkbox
                 checked={systemPerms.includes(sp.id)}
                 onChange={() => toggleSystemPerm(sp.id)}
-                className="h-4 w-4 rounded border-input"
               />
               {sp.label}
             </label>
@@ -117,12 +122,13 @@ export function PermissionMatrixEditor({ features, profile, onSave, onCancel, sa
                       <td className="p-3 text-sm font-medium">{feature.label}</td>
                       {ACTIONS.map((action) => (
                         <td key={action} className="p-3 text-center">
-                          <input
-                            type="checkbox"
-                            checked={grants[feature.id]?.includes(action) ?? false}
-                            onChange={() => toggleGrant(feature.id, action)}
-                            className="h-4 w-4 rounded border-input cursor-pointer"
-                          />
+                          <div className="flex justify-center">
+                            <Checkbox
+                              checked={grants[feature.id]?.includes(action) ?? false}
+                              onChange={() => toggleGrant(feature.id, action)}
+                              color={ACTION_COLORS[action]}
+                            />
+                          </div>
                         </td>
                       ))}
                     </tr>

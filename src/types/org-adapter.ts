@@ -1,5 +1,6 @@
 import type { PermissionProfile } from './permissions'
 import type { Invite } from './invite'
+import type { Location } from './tenant'
 
 export interface Organization {
   id: string
@@ -65,4 +66,7 @@ export interface OrgAdapter {
   bulkInvite(orgId: string, emails: string[], profileId: string, invitedBy: string): Promise<Invite[]>
   revokeInvite(orgId: string, inviteId: string): Promise<void>
   resendInvite(orgId: string, inviteId: string): Promise<Invite>
+
+  listLocations(orgId: string): Promise<Location[]>
+  createLocation(orgId: string, data: { name: string; address?: string; city?: string; state?: string; country?: string; phone?: string; isHeadquarters?: boolean }): Promise<Location>
 }

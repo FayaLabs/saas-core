@@ -40,6 +40,8 @@ export function usePermission() {
   const can = useCallback(
     (featureId: string, action: PermissionAction): boolean => {
       if (!currentProfile) return true // no permissions configured = allow all
+      // Owner bypasses all feature checks
+      if (currentProfile.id === 'owner') return true
       return currentProfile.grants[featureId]?.includes(action) ?? false
     },
     [currentProfile],

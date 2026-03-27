@@ -9,7 +9,7 @@ import type { AuthUser } from '../../types'
 
 interface UserProfileProps {
   user?: AuthUser | null
-  onSave?: (data: { fullName: string; currentPassword?: string; newPassword?: string }) => void
+  onSave?: (data: { fullName: string }) => void
   onAvatarChange?: (file: File) => void
 }
 
@@ -25,11 +25,7 @@ function getInitials(name: string): string {
 
 export function UserProfile({ user, onSave, onAvatarChange }: UserProfileProps) {
   const [fullName, setFullName] = React.useState(user?.fullName ?? '')
-  const [currentPassword, setCurrentPassword] = React.useState('')
-  const [newPassword, setNewPassword] = React.useState('')
-  const [confirmPassword, setConfirmPassword] = React.useState('')
   const [saving, setSaving] = React.useState(false)
-  const [passwordError, setPasswordError] = React.useState('')
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
@@ -54,29 +50,11 @@ export function UserProfile({ user, onSave, onAvatarChange }: UserProfileProps) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setPasswordError('')
-
-    if (newPassword && newPassword !== confirmPassword) {
-      setPasswordError('Passwords do not match')
-      return
-    }
-
-    if (newPassword && newPassword.length < 8) {
-      setPasswordError('Password must be at least 8 characters')
-      return
-    }
-
     if (!onSave) return
 
     setSaving(true)
     try {
-      await onSave({
-        fullName,
-        ...(newPassword ? { currentPassword, newPassword } : {}),
-      })
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
+      await onSave({ fullName })
     } finally {
       setSaving(false)
     }
@@ -159,82 +137,10 @@ export function UserProfile({ user, onSave, onAvatarChange }: UserProfileProps) 
           </div>
         </CardContent>
 
-        <CardFooter>
+        <CardFooter className="justify-end">
           <Button type="submit" disabled={saving}>
             <Save className="mr-2 h-4 w-4" />
             {saving ? 'Saving...' : 'Save Profile'}
-          </Button>
-        </CardFooter>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Change Password</CardTitle>
-          <CardDescription>
-            Update your password to keep your account secure.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="current-password" className="text-sm font-medium">
-              Current Password
-            </label>
-            <Input
-              id="current-password"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Enter current password"
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label htmlFor="new-password" className="text-sm font-medium">
-                New Password
-              </label>
-              <Input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => {
-                  setNewPassword(e.target.value)
-                  setPasswordError('')
-                }}
-                placeholder="Enter new password"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="confirm-password" className="text-sm font-medium">
-                Confirm Password
-              </label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value)
-                  setPasswordError('')
-                }}
-                placeholder="Confirm new password"
-              />
-            </div>
-          </div>
-
-          {passwordError && (
-            <p className="text-sm text-destructive">{passwordError}</p>
-          )}
-        </CardContent>
-
-        <CardFooter>
-          <Button
-            type="submit"
-            variant="outline"
-            disabled={saving || (!newPassword && !currentPassword)}
-          >
-            Update Password
           </Button>
         </CardFooter>
       </Card>

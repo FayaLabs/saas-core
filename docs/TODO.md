@@ -1,0 +1,8 @@
+- [ ] Authentication
+- [ ] CRUDs
+- [ ] Permissions
+- [ ] Archetypes
+- [ ] User onboarding (sign up)
+- [ ] Plugins Injection Concept
+- [ ] i18n translations
+- [ ] AI Agent Chat

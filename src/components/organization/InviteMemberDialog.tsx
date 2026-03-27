@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Plus, X } from 'lucide-react'
+import { toast } from '../notifications/ToastProvider'
 import {
   Modal,
   ModalContent,
@@ -64,8 +65,8 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
       const invites = await adapter.listInvites(currentOrg.id)
       setInvites(invites)
       setSent(true)
-    } catch {
-      // ignore
+    } catch (err: any) {
+      toast.error('Failed to send invites', { description: err?.message })
     } finally {
       setSending(false)
     }
@@ -91,10 +92,11 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
 
         {sent ? (
           <div className="py-8 text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Badge variant="default">Sent</Badge>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
+              <svg className="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
             </div>
-            <p className="text-sm text-muted-foreground">Invitations have been sent successfully.</p>
+            <p className="text-sm font-medium">Invitations sent</p>
+            <p className="text-xs text-muted-foreground mt-1">Your team members will receive an email with instructions to join.</p>
           </div>
         ) : (
           <div className="space-y-4 py-4">

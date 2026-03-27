@@ -6,7 +6,12 @@ import { Badge } from '../ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { Separator } from '../ui/separator'
 import { WidgetSlot } from '../plugins/WidgetSlot'
-import type { EntityDef, FieldDef, FieldGroup } from '../../types/crud'
+import { PERSON_DETAIL_TABS } from './archetypes/PersonDetailTabs'
+import { PRODUCT_DETAIL_TABS } from './archetypes/ProductDetailTabs'
+import { SERVICE_DETAIL_TABS } from './archetypes/ServiceDetailTabs'
+import { LOCATION_DETAIL_TABS } from './archetypes/LocationDetailTabs'
+import { SUBJECT_DETAIL_TABS } from './archetypes/SubjectDetailTabs'
+import type { EntityDef, FieldDef, FieldGroup, FormLayout, DetailTab } from '../../types/crud'
 
 interface CrudDetailPageProps {
   entityDef: EntityDef
@@ -172,6 +177,23 @@ function OverviewTab({
   )
 }
 
+function getArchetypeTabs(layout?: FormLayout): DetailTab[] {
+  switch (layout) {
+    case 'person':
+      return PERSON_DETAIL_TABS
+    case 'product':
+      return PRODUCT_DETAIL_TABS
+    case 'service':
+      return SERVICE_DETAIL_TABS
+    case 'location':
+      return LOCATION_DETAIL_TABS
+    case 'subject':
+      return SUBJECT_DETAIL_TABS
+    default:
+      return []
+  }
+}
+
 export function CrudDetailPage({
   entityDef,
   item,
@@ -188,7 +210,9 @@ export function CrudDetailPage({
   const imageValue = entityDef.imageField ? item[entityDef.imageField] : null
   const initial = typeof displayValue === 'string' ? displayValue.charAt(0).toUpperCase() : '?'
 
-  const customTabs = entityDef.detailTabs ?? []
+  // Merge archetype tabs + custom entity tabs
+  const archetypeTabs = getArchetypeTabs(entityDef.layout)
+  const customTabs = [...archetypeTabs, ...(entityDef.detailTabs ?? [])]
   const entityId = entityDef.name.toLowerCase().replace(/\s+/g, '-')
   const widgetZone = `${entityId}.detail.tabs`
 

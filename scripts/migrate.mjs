@@ -45,12 +45,16 @@ const targetDir = resolve(projectDir, 'supabase', 'migrations')
 
 if (existsSync(coreDir)) {
   mkdirSync(targetDir, { recursive: true })
-  const existing = new Set(readdirSync(targetDir))
 
   for (const f of readdirSync(coreDir).filter(f => f.endsWith('.sql')).sort()) {
-    if (!existing.has(f)) {
-      copyFileSync(resolve(coreDir, f), resolve(targetDir, f))
-      console.log(`[migrate] + ${f}`)
+    const src = resolve(coreDir, f)
+    const dst = resolve(targetDir, f)
+    const srcContent = readFileSync(src, 'utf-8')
+    const dstContent = existsSync(dst) ? readFileSync(dst, 'utf-8') : null
+
+    if (srcContent !== dstContent) {
+      copyFileSync(src, dst)
+      console.log(`[migrate] ${dstContent === null ? '+' : '~'} ${f}`)
     }
   }
 }

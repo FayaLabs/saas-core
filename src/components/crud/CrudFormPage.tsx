@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
+import { Checkbox } from '../ui/checkbox'
+import { toast } from '../notifications/ToastProvider'
+import { PersonFormLayout } from './archetypes/PersonFormLayout'
+import { ProductFormLayout } from './archetypes/ProductFormLayout'
+import { ServiceFormLayout } from './archetypes/ServiceFormLayout'
+import { LocationFormLayout } from './archetypes/LocationFormLayout'
+import { SubjectFormLayout } from './archetypes/SubjectFormLayout'
 import type { FieldDef, FieldGroup, EntityDef } from '../../types/crud'
+import type { FormLayout } from '../../types/crud'
 
 interface CrudFormPageProps {
   entityDef: EntityDef
   mode: 'create' | 'edit'
   initialData?: Record<string, any>
-  onSubmit: (data: Record<string, any>) => void
+  onSubmit: (data: Record<string, any>) => void | Promise<void>
   onCancel: () => void
   namePlural: string
 }
@@ -72,12 +80,10 @@ function renderField(field: FieldDef, value: any, onChange: (val: any) => void) 
     }
     case 'boolean':
       return (
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
+        <label className="flex items-center gap-2.5 cursor-pointer">
+          <Checkbox
             checked={!!value}
-            onChange={(e) => onChange(e.target.checked)}
-            className="h-4 w-4 rounded border-input"
+            onChange={(checked) => onChange(checked)}
           />
           <span className="text-sm">{field.label}</span>
         </label>
@@ -172,6 +178,7 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
   const [values, setValues] = useState<Record<string, any>>(() =>
     mode === 'edit' && initialData ? { ...getDefaultValues(formFields), ...initialData } : getDefaultValues(formFields),
   )
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setValues(
@@ -179,9 +186,22 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
     )
   }, [mode, initialData])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(values)
+    setSaving(true)
+    try {
+      // Sanitize: convert empty strings to null so the DB doesn't choke on e.g. empty date fields
+      const sanitized: Record<string, any> = {}
+      for (const [key, val] of Object.entries(values)) {
+        sanitized[key] = val === '' ? null : val
+      }
+      await onSubmit(sanitized)
+    } catch (err: any) {
+      const message = err?.message || 'Something went wrong'
+      toast.error(`Failed to save ${entityDef.name.toLowerCase()}`, { description: message })
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleChange = (key: string, val: any) => {
@@ -208,6 +228,66 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
 
   const hasGroups = groups.length > 0 || groupFieldMap.size > 0
 
+  const archetypeLayoutProps = {
+    fields: formFields,
+    allFields: entityDef.fields,
+    fieldGroups: groups,
+    values,
+    onChange: handleChange,
+    renderField,
+    entityIcon: entityDef.icon,
+  }
+
+  function renderFormBody(layout?: FormLayout) {
+    switch (layout) {
+      case 'person':
+        return <PersonFormLayout {...archetypeLayoutProps} />
+      case 'product':
+        return <ProductFormLayout {...archetypeLayoutProps} />
+      case 'service':
+        return <ServiceFormLayout {...archetypeLayoutProps} />
+      case 'location':
+        return <LocationFormLayout {...archetypeLayoutProps} />
+      case 'subject':
+        return <SubjectFormLayout {...archetypeLayoutProps} />
+      default:
+        // Generic layout — ungrouped + grouped fields
+        return (
+          <>
+            {ungroupedFields.length > 0 && (
+              <Card>
+                <CardContent className="pt-5">
+                  <div className={`grid gap-4 ${!hasGroups ? '' : 'md:grid-cols-2'}`}>
+                    {ungroupedFields.map((field) => (
+                      <FormFieldItem
+                        key={field.key}
+                        field={field}
+                        value={values[field.key]}
+                        onChange={(val) => handleChange(field.key, val)}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {groups.map((group) => {
+              const fields = groupFieldMap.get(group.id)
+              if (!fields || fields.length === 0) return null
+              return (
+                <FormGroup
+                  key={group.id}
+                  group={group}
+                  fields={fields}
+                  values={values}
+                  onChange={handleChange}
+                />
+              )
+            })}
+          </>
+        )
+    }
+  }
+
   return (
     <div className="w-full flex flex-col items-center">
       <div className="w-full max-w-3xl space-y-6">
@@ -231,43 +311,15 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Ungrouped fields */}
-          {ungroupedFields.length > 0 && (
-            <Card>
-              <CardContent className="pt-5">
-                <div className={`grid gap-4 ${!hasGroups ? '' : 'md:grid-cols-2'}`}>
-                  {ungroupedFields.map((field) => (
-                    <FormFieldItem
-                      key={field.key}
-                      field={field}
-                      value={values[field.key]}
-                      onChange={(val) => handleChange(field.key, val)}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Grouped fields */}
-          {groups.map((group) => {
-            const fields = groupFieldMap.get(group.id)
-            if (!fields || fields.length === 0) return null
-            return (
-              <FormGroup
-                key={group.id}
-                group={group}
-                fields={fields}
-                values={values}
-                onChange={handleChange}
-              />
-            )
-          })}
+          {renderFormBody(entityDef.layout)}
 
           {/* Submit */}
           <div className="flex items-center justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-            <Button type="submit">{mode === 'create' ? `Add ${entityDef.name}` : 'Save Changes'}</Button>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
+            <Button type="submit" disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {saving ? 'Saving...' : mode === 'create' ? `Add ${entityDef.name}` : 'Save Changes'}
+            </Button>
           </div>
         </form>
       </div>

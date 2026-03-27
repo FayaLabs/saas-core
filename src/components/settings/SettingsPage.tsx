@@ -1,13 +1,16 @@
 import * as React from 'react'
 import * as TabsPrimitive from '@radix-ui/react-tabs'
+import { Building2, User, Shield, Palette } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { ConnectedCompanySettings } from './ConnectedCompanySettings'
 import { ConnectedUserProfile } from './ConnectedUserProfile'
+import { ConnectedSecuritySettings } from './ConnectedSecuritySettings'
 import { ConnectedBrandingSettings } from './ConnectedBrandingSettings'
 
 interface SettingsTab {
   id: string
   label: string
+  icon?: React.ReactNode
   component: React.ReactNode
 }
 
@@ -21,9 +24,10 @@ interface SettingsPageProps {
 }
 
 const DEFAULT_TABS: SettingsTab[] = [
-  { id: 'general', label: 'General', component: <ConnectedCompanySettings /> },
-  { id: 'profile', label: 'Profile', component: <ConnectedUserProfile /> },
-  { id: 'branding', label: 'Branding', component: <ConnectedBrandingSettings /> },
+  { id: 'general', label: 'General', icon: <Building2 className="h-4 w-4" />, component: <ConnectedCompanySettings /> },
+  { id: 'profile', label: 'Profile', icon: <User className="h-4 w-4" />, component: <ConnectedUserProfile /> },
+  { id: 'security', label: 'Security', icon: <Shield className="h-4 w-4" />, component: <ConnectedSecuritySettings /> },
+  { id: 'branding', label: 'Branding', icon: <Palette className="h-4 w-4" />, component: <ConnectedBrandingSettings /> },
 ]
 
 export function SettingsPage({
@@ -60,6 +64,7 @@ export function SettingsPage({
                 'data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm'
               )}
             >
+              {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
               {tab.label}
             </TabsPrimitive.Trigger>
           ))}

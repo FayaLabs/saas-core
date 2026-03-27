@@ -57,6 +57,7 @@ export {
   CardDescription,
   CardContent,
 } from './card'
+export { Checkbox } from './checkbox'
 export { Skeleton } from './skeleton'
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs'
 export { Separator } from './separator'

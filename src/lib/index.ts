@@ -21,6 +21,8 @@ export { createMockOrgAdapter } from './org-adapters/mock'
 export { createSupabaseOrgAdapter } from './org-adapters/supabase'
 export { createSupabaseProvider } from './data-providers/supabase'
 export type { SupabaseProviderConfig } from './data-providers/supabase'
+export { createArchetypeProvider } from './data-providers/archetype'
+export type { ArchetypeProviderConfig } from './data-providers/archetype'
 export {
   createPlugin,
   getWidgetsForZone,

@@ -14,6 +14,10 @@ export interface SupabaseProviderConfig {
   selectColumns?: string
   /** camelCase ↔ snake_case overrides */
   columnMap?: Record<string, string>
+  /** Static filters applied to all queries (e.g. { kind: 'supplier' }) */
+  filters?: Record<string, string>
+  /** Default values merged into every create payload (e.g. { kind: 'supplier' }) */
+  defaults?: Record<string, unknown>
 }
 
 // ---------------------------------------------------------------------------
@@ -92,6 +96,13 @@ export function createSupabaseProvider<T extends { id: string }>(
         q = q.eq(tenantIdCol, tenantId)
       }
 
+      // Static filters (e.g. kind = 'supplier')
+      if (config?.filters) {
+        for (const [col, val] of Object.entries(config.filters)) {
+          q = q.eq(col, val)
+        }
+      }
+
       // Search
       if (query.search && searchCols.length > 0) {
         const term = `%${query.search}%`
@@ -130,6 +141,13 @@ export function createSupabaseProvider<T extends { id: string }>(
       const tenantId = resolveTenantId()
       if (tenantId) {
         row[tenantIdCol] = tenantId
+      }
+
+      // Merge defaults (e.g. kind = 'supplier')
+      if (config?.defaults) {
+        for (const [col, val] of Object.entries(config.defaults)) {
+          if (row[col] === undefined) row[col] = val
+        }
       }
 
       const { data: created, error } = await getClient()
