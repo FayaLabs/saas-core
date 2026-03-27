@@ -1,5 +1,5 @@
 import type { DataProvider, CrudQuery, CrudResult } from './types'
-import { getSupabaseClient } from '../supabase'
+import { getSupabaseClientOptional } from '../supabase'
 
 export interface SupabaseProviderConfig {
   /** DB schema — default 'public', supports 'plg_*' plugin schemas */
@@ -75,7 +75,8 @@ export function createSupabaseProvider<T extends { id: string }>(
   }
 
   function getClient() {
-    const supabase = getSupabaseClient()
+    const supabase = getSupabaseClientOptional()
+    if (!supabase) throw new Error('Supabase client not available for data provider')
     return schema === 'public' ? supabase : supabase.schema(schema)
   }
 

@@ -4,6 +4,22 @@ import type { Invite } from '../../types/invite'
 import { getCoreSupabaseClient } from '../supabase'
 
 // ---------------------------------------------------------------------------
+// Request dedup — prevents duplicate in-flight requests (React StrictMode, etc.)
+// ---------------------------------------------------------------------------
+const inflightRequests = new Map<string, Promise<any>>()
+
+function dedup<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const existing = inflightRequests.get(key)
+  if (existing) return existing as Promise<T>
+
+  const promise = fn().finally(() => {
+    inflightRequests.delete(key)
+  })
+  inflightRequests.set(key, promise)
+  return promise
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -190,21 +206,26 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
 
   return {
     async listUserOrgs(userId: string): Promise<OrgMembership[]> {
-      const { data, error } = await supabase
-        .from('tenant_members')
-        .select('tenant_id, role, tenant:tenants(id, name, slug, logo_url)')
-        .eq('user_id', userId)
+      return dedup(`listUserOrgs:${userId}`, async () => {
+        const { data, error } = await supabase
+          .from('tenant_members')
+          .select('tenant_id, role, tenant:tenants(id, name, slug, logo_url)')
+          .eq('user_id', userId)
 
-      if (error) throw error
+        if (error) {
+          console.warn('[saas-core] listUserOrgs error:', error.message)
+          return []
+        }
 
-      return (data ?? []).map((row: any) => ({
-        orgId: row.tenant_id,
-        orgName: row.tenant?.name ?? '',
-        orgSlug: row.tenant?.slug ?? '',
-        orgLogoUrl: row.tenant?.logo_url ?? undefined,
-        profileId: row.role,
-        profileName: capitalize(row.role),
-      }))
+        return (data ?? []).map((row: any) => ({
+          orgId: row.tenant_id,
+          orgName: row.tenant?.name ?? '',
+          orgSlug: row.tenant?.slug ?? '',
+          orgLogoUrl: row.tenant?.logo_url ?? undefined,
+          profileId: row.role,
+          profileName: capitalize(row.role),
+        }))
+      })
     },
 
     async getOrg(orgId: string): Promise<Organization> {

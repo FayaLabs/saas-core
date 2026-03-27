@@ -22,6 +22,8 @@ export type CrudStore<T> = CrudState<T> & CrudActions<T>
 export function createCrudStore<T extends { id: string }>(
   dataProvider: DataProvider<T>,
 ) {
+  let fetchInFlight: Promise<void> | null = null
+
   return create<CrudStore<T>>((set, get) => ({
     items: [],
     total: 0,
@@ -29,13 +31,19 @@ export function createCrudStore<T extends { id: string }>(
     query: {},
 
     async fetch() {
+      // Dedup: if a fetch is already in flight, reuse it
+      if (fetchInFlight) return fetchInFlight
       set({ loading: true })
-      try {
-        const result = await dataProvider.list(get().query)
-        set({ items: result.data, total: result.total })
-      } finally {
-        set({ loading: false })
-      }
+      fetchInFlight = (async () => {
+        try {
+          const result = await dataProvider.list(get().query)
+          set({ items: result.data, total: result.total })
+        } finally {
+          set({ loading: false })
+          fetchInFlight = null
+        }
+      })()
+      return fetchInFlight
     },
 
     async create(data) {
