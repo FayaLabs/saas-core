@@ -2,10 +2,10 @@ import { create, type StoreApi, type UseBoundStore } from 'zustand'
 import type { ThemeTokens } from '../config/theme/tokens'
 import { lightTheme } from '../config/theme/light'
 import { darkTheme } from '../config/theme/dark'
-import { applyTheme, getSystemPreference } from '../config/theme/utils'
+import { applyTheme } from '../config/theme/utils'
 import type { CreateThemeOptions } from '../config/theme/utils'
 
-type ThemeMode = 'light' | 'dark' | 'system'
+type ThemeMode = 'light' | 'dark'
 
 const STORAGE_KEY = 'saas-core:theme-mode'
 
@@ -22,17 +22,10 @@ interface ThemeState {
 }
 
 function getSavedMode(): ThemeMode {
-  if (typeof window === 'undefined') return 'system'
+  if (typeof window === 'undefined') return 'light'
   const saved = localStorage.getItem(STORAGE_KEY)
-  if (saved === 'light' || saved === 'dark' || saved === 'system') return saved
-  return 'system'
-}
-
-function resolveMode(mode: ThemeMode): 'light' | 'dark' {
-  if (mode === 'system') {
-    return typeof window !== 'undefined' ? getSystemPreference() : 'light'
-  }
-  return mode
+  if (saved === 'light' || saved === 'dark') return saved
+  return 'light'
 }
 
 /** Merge base theme (light or dark) with user's partial overrides */
@@ -93,8 +86,7 @@ function createThemeStore(): UseBoundStore<StoreApi<ThemeState>> {
     overrides: null,
 
     setMode: (mode) => {
-      const resolvedMode = resolveMode(mode)
-      set({ mode, resolvedMode })
+      set({ mode, resolvedMode: mode })
 
       // Persist to localStorage
       if (typeof window !== 'undefined') {
@@ -102,13 +94,13 @@ function createThemeStore(): UseBoundStore<StoreApi<ThemeState>> {
       }
 
       const { overrides } = get()
-      const baseTheme = resolvedMode === 'dark' ? darkTheme : lightTheme
+      const baseTheme = mode === 'dark' ? darkTheme : lightTheme
       const theme = buildTheme(baseTheme, overrides)
 
       applyTheme(theme)
 
       if (typeof document !== 'undefined') {
-        document.documentElement.classList.toggle('dark', resolvedMode === 'dark')
+        document.documentElement.classList.toggle('dark', mode === 'dark')
       }
     },
 
@@ -128,16 +120,6 @@ function createThemeStore(): UseBoundStore<StoreApi<ThemeState>> {
     initialize: () => {
       const { mode, setMode } = get()
       setMode(mode)
-
-      if (typeof window !== 'undefined') {
-        const mql = window.matchMedia('(prefers-color-scheme: dark)')
-        mql.addEventListener('change', () => {
-          const current = get()
-          if (current.mode === 'system') {
-            current.setMode('system')
-          }
-        })
-      }
     },
   }))
 

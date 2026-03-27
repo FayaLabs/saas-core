@@ -87,6 +87,8 @@ export interface SaasAppConfig {
   supabaseAnonKey?: string
   /** Theme overrides — use SaasTheme (friendly) or CreateThemeOptions (granular) */
   theme?: CreateThemeOptions | SaasTheme
+  /** Default theme mode: 'light' or 'dark'. User can toggle. Default: 'light' */
+  defaultThemeMode?: 'light' | 'dark'
   /** Layout variant (default: 'sidebar') */
   layout?: 'sidebar' | 'topbar' | 'minimal'
   /** Content floats in a rounded frame over the sidebar background (default: true). Set false to disable. */
@@ -138,6 +140,9 @@ export interface SaasAppConfig {
     adapter?: AuthAdapter | 'mock' | 'supabase'
     requireAuth?: boolean
     loginLogo?: React.ReactNode
+    loginLayout?: 'split' | 'centered'
+    loginTagline?: string
+    loginDescription?: string
     showOAuth?: boolean
     oauthProviders?: Exclude<AuthProvider, 'email'>[]
   }
@@ -388,6 +393,9 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
     return React.createElement(LoginPage, {
       appName: config.name,
       logo: config.auth?.loginLogo ?? logoNode,
+      layout: config.auth?.loginLayout ?? 'split',
+      tagline: config.auth?.loginTagline,
+      description: config.auth?.loginDescription,
       showOAuth: config.auth?.showOAuth,
       oauthProviders: config.auth?.oauthProviders,
       onSuccess: () => { routerAdapter.navigate('/') },
@@ -650,15 +658,20 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
     const setPlans = useBillingStore((s) => s.setPlans)
     const setFeatures = usePermissionsStore((s) => s.setFeatures)
 
+    const setMode = useThemeStore((s) => s.setMode)
+
     React.useEffect(() => {
       if (config.theme) {
-        // SaasTheme has `brand` as required + friendly fields; CreateThemeOptions has it optional
         const isSaasTheme = 'brand' in config.theme && ('radius' in config.theme || 'sidebar' in config.theme || 'font' in config.theme)
         const resolved = isSaasTheme ? resolveTheme(config.theme as SaasTheme) : config.theme as CreateThemeOptions
         setOverrides(resolved)
       }
+      // Set default mode if no user preference saved
+      if (config.defaultThemeMode && !localStorage.getItem('saas-core:theme-mode')) {
+        setMode(config.defaultThemeMode)
+      }
       initialize()
-    }, [initialize, setOverrides])
+    }, [initialize, setOverrides, setMode])
 
     React.useEffect(() => {
       if (config.billing?.plans) {

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as Avatar from '@radix-ui/react-avatar'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { LogOut, User, Settings, CreditCard, HelpCircle, Keyboard, Moon, Sun, Monitor } from 'lucide-react'
+import { LogOut, User, Settings, CreditCard, HelpCircle, Keyboard, Moon, Sun } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useThemeStore } from '../../stores/theme.store'
 
@@ -58,7 +58,7 @@ export function UserMenu({
           )}
           aria-label="User menu"
         >
-          <Avatar.Root className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
+          <Avatar.Root className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sidebar-accent border border-sidebar-border/30">
             {user.avatarUrl && (
               <Avatar.Image
                 src={user.avatarUrl}
@@ -66,7 +66,7 @@ export function UserMenu({
                 className="h-full w-full object-cover"
               />
             )}
-            <Avatar.Fallback className="flex h-full w-full items-center justify-center text-[10px] font-medium">
+            <Avatar.Fallback className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-sidebar-accent-foreground">
               {getInitials(user.fullName)}
             </Avatar.Fallback>
           </Avatar.Root>
@@ -143,57 +143,14 @@ export function UserMenu({
 
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
 
-          {/* Theme Toggle */}
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted data-[state=open]:bg-muted">
-              {mode === 'dark' ? (
-                <Moon className="h-4 w-4" />
-              ) : mode === 'light' ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Monitor className="h-4 w-4" />
-              )}
-              Theme
-              <span className="ml-auto text-xs text-muted-foreground capitalize">{mode}</span>
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent
-                sideOffset={4}
-                className="z-50 min-w-[140px] rounded-md border border-border bg-card p-1 shadow-md"
-              >
-                <DropdownMenu.Item
-                  className={cn(
-                    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted',
-                    mode === 'light' && 'text-primary'
-                  )}
-                  onSelect={() => setMode('light')}
-                >
-                  <Sun className="h-4 w-4" />
-                  Light
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  className={cn(
-                    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted',
-                    mode === 'dark' && 'text-primary'
-                  )}
-                  onSelect={() => setMode('dark')}
-                >
-                  <Moon className="h-4 w-4" />
-                  Dark
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  className={cn(
-                    'flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted',
-                    mode === 'system' && 'text-primary'
-                  )}
-                  onSelect={() => setMode('system')}
-                >
-                  <Monitor className="h-4 w-4" />
-                  System
-                </DropdownMenu.Item>
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
+          {/* Theme Toggle — simple light/dark switch */}
+          <DropdownMenu.Item
+            className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted"
+            onSelect={() => setMode(mode === 'dark' ? 'light' : 'dark')}
+          >
+            {mode === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {mode === 'dark' ? 'Light mode' : 'Dark mode'}
+          </DropdownMenu.Item>
 
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
 

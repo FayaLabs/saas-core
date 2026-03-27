@@ -38,7 +38,7 @@ function getDefaultValues(fields: FieldDef[]): Record<string, any> {
 }
 
 function renderField(field: FieldDef, value: any, onChange: (val: any) => void) {
-  const baseClass = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+  const baseClass = 'flex h-10 w-full rounded-input border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
 
   switch (field.type) {
     case 'textarea':
@@ -265,9 +265,9 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
           })}
 
           {/* Submit */}
-          <div className="flex items-center gap-3 pt-2">
-            <Button type="submit">{mode === 'create' ? `Add ${entityDef.name}` : 'Save Changes'}</Button>
+          <div className="flex items-center justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button type="submit">{mode === 'create' ? `Add ${entityDef.name}` : 'Save Changes'}</Button>
           </div>
         </form>
       </div>
