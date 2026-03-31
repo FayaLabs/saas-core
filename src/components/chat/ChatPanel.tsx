@@ -1,8 +1,10 @@
 import * as React from 'react'
-import { ArrowUp } from 'lucide-react'
+import { ArrowUp, Settings2 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useChatStore, type ChatMessage } from '../../stores/chat.store'
 import { useChat } from '../../hooks/useChat'
+import { useAITools } from '../../hooks/useAITools'
+import { ChatSuggestions, ChatToolsPanel } from './ChatSuggestions'
 
 interface ChatPanelProps {
   title?: string
@@ -12,19 +14,33 @@ interface ChatPanelProps {
 }
 
 export function ChatPanel({
-  title = 'Chat',
+  title = 'Assistant',
   apiEndpoint,
   systemPrompt,
   className,
 }: ChatPanelProps) {
   const { isOpen, messages, isStreaming } = useChatStore()
   const { sendMessage } = useChat({ apiEndpoint, systemPrompt })
+  const { suggestions, toolGroups } = useAITools()
   const [input, setInput] = React.useState('')
+  const [showTools, setShowTools] = React.useState(false)
   const scrollRef = React.useRef<HTMLDivElement>(null)
+  const inputRef = React.useRef<HTMLInputElement>(null)
+
+  const hasMessages = messages.length > 0
+  const totalTools = toolGroups.reduce((sum, g) => sum + g.tools.length, 0)
 
   React.useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
+
+  React.useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => inputRef.current?.focus(), 100)
+      return () => clearTimeout(timer)
+    }
+    setShowTools(false)
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -33,65 +49,96 @@ export function ChatPanel({
     const text = input.trim()
     if (!text || isStreaming) return
     setInput('')
+    setShowTools(false)
     sendMessage(text)
   }
 
   return (
     <div
       className={cn(
-        'fixed z-50 flex flex-col overflow-hidden bg-card',
-        'inset-0 bottom-16 rounded-none border-0 shadow-none',
-        'md:inset-auto md:bottom-20 md:right-6 md:w-[22rem] md:rounded-2xl md:border md:border-border/50 md:shadow-2xl sm:md:w-[24rem]',
-        'animate-in slide-in-from-bottom-4 fade-in-0 duration-200',
+        'fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl',
+        'inset-x-3 bottom-16 top-16',
+        'md:inset-auto md:bottom-16 md:right-4 md:w-[22rem] md:max-h-[min(70vh,520px)]',
+        'animate-in slide-in-from-bottom-2 fade-in-0 duration-150',
         className
       )}
-      style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth >= 768 ? 'calc(100vh - 140px)' : undefined }}
     >
       {/* Header */}
-      <div className="flex items-center px-5 py-3.5">
+      <div className="flex items-center justify-between border-b border-border/40 px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-success" />
-          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <span className="text-xs font-semibold text-foreground">{title}</span>
         </div>
+        {totalTools > 0 && (
+          <button
+            onClick={() => setShowTools(!showTools)}
+            className={cn(
+              'inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[10px] transition-colors',
+              showTools
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+            )}
+            title="Available tools"
+          >
+            <Settings2 className="h-3 w-3" />
+            <span className="font-medium">{totalTools}</span>
+          </button>
+        )}
       </div>
 
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pb-3 space-y-2.5" style={{ minHeight: 200, maxHeight: 420 }}>
-        {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <p className="text-sm text-muted-foreground">How can I help you today?</p>
-          </div>
-        )}
-        {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
-        ))}
-        {isStreaming && messages[messages.length - 1]?.content === '' && (
-          <div className="flex items-center gap-1.5 px-3 py-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-pulse" />
-            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-pulse [animation-delay:150ms]" />
-            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-pulse [animation-delay:300ms]" />
-          </div>
-        )}
-      </div>
+      {/* Tools panel overlay */}
+      {showTools ? (
+        <ChatToolsPanel toolGroups={toolGroups} onClose={() => setShowTools(false)} />
+      ) : (
+        /* Messages / suggestions area */
+        <div
+          ref={scrollRef}
+          className={cn(
+            'min-h-0 flex-1 overflow-y-auto',
+            hasMessages && 'space-y-2 px-3 py-3'
+          )}
+        >
+          {!hasMessages && (
+            <ChatSuggestions
+              suggestions={suggestions}
+              onSelect={(suggestion) => {
+                setInput('')
+                sendMessage(suggestion.prompt ?? suggestion.label)
+              }}
+            />
+          )}
+          {messages.map((msg) => (
+            <MessageBubble key={msg.id} message={msg} />
+          ))}
+          {isStreaming && messages[messages.length - 1]?.content === '' && (
+            <div className="flex items-center gap-1 px-2 py-1.5">
+              <span className="h-1 w-1 rounded-full bg-muted-foreground/50 animate-pulse" />
+              <span className="h-1 w-1 rounded-full bg-muted-foreground/50 animate-pulse [animation-delay:150ms]" />
+              <span className="h-1 w-1 rounded-full bg-muted-foreground/50 animate-pulse [animation-delay:300ms]" />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="p-3 pt-0">
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-background p-1.5 pl-4 transition-colors focus-within:border-foreground/20">
+      <form onSubmit={handleSubmit} className="border-t border-border/40 p-2">
+        <div className="flex items-center gap-1.5 rounded-full border border-border bg-background py-1 pl-3.5 pr-1 transition-colors focus-within:border-foreground/20">
           <input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Message..."
-            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
             disabled={isStreaming}
           />
           <button
             type="submit"
             disabled={!input.trim() || isStreaming}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-foreground text-background transition-opacity hover:opacity-80 disabled:opacity-30"
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-80 disabled:opacity-20"
             aria-label="Send message"
           >
-            <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
+            <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} />
           </button>
         </div>
       </form>
@@ -106,10 +153,10 @@ function MessageBubble({ message }: { message: ChatMessage }) {
     <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed',
+          'max-w-[85%] rounded-2xl px-3 py-1.5 text-[13px] leading-relaxed',
           isUser
-            ? 'rounded-br-md bg-foreground text-background'
-            : 'rounded-bl-md bg-muted text-foreground'
+            ? 'rounded-br-sm bg-foreground text-background'
+            : 'rounded-bl-sm bg-muted text-foreground'
         )}
       >
         {message.content}

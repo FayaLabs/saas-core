@@ -4,6 +4,7 @@ import { useOrgAdapterOptional } from '../../lib/org-context'
 import { useOrganizationStore } from '../../stores/organization.store'
 import { usePermission } from '../../hooks/usePermission'
 import { toast } from '../notifications/ToastProvider'
+import { dedup } from '../../lib/dedup'
 import type { Location } from '../../types/tenant'
 
 export function ConnectedLocationsOverview() {
@@ -18,7 +19,7 @@ export function ConnectedLocationsOverview() {
   const fetchLocations = React.useCallback(async () => {
     if (!adapter || !currentOrg) return
     try {
-      const data = await adapter.listLocations(currentOrg.id)
+      const data = await dedup('locations:' + currentOrg.id, () => adapter.listLocations(currentOrg.id))
       setLocations(data)
     } catch {
       // ignore

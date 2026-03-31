@@ -19,8 +19,8 @@ interface CrudDetailPageProps {
   namePlural: string
   basePath: string
   onBack: () => void
-  onEdit: () => void
-  onDelete: () => void
+  onEdit?: () => void
+  onDelete?: () => void
   feature?: string
 }
 
@@ -264,15 +264,21 @@ export function CrudDetailPage({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={onEdit}>
-            <Edit className="h-4 w-4 mr-1.5" />
-            Edit
-          </Button>
-          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        {(onEdit || onDelete) && (
+          <div className="flex items-center gap-2 shrink-0">
+            {onEdit && (
+              <Button variant="outline" size="sm" onClick={onEdit}>
+                <Edit className="h-4 w-4 mr-1.5" />
+                Edit
+              </Button>
+            )}
+            {onDelete && (
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       <Separator />

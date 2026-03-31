@@ -14,6 +14,8 @@ import type {
   ResolvedPluginManifest,
   ResolvedPluginWidget,
   TenantPluginBinding,
+  PluginRegistryDef,
+  PluginAITool,
 } from '../types/plugins'
 
 interface ResolvePluginRuntimeOptions {
@@ -152,6 +154,8 @@ function createEmptyRuntime(context: PluginRuntimeContext = EMPTY_RUNTIME_CONTEX
     settingsTabs: [],
     widgets: [],
     capabilities: [],
+    aiTools: [],
+    registries: new Map(),
     issues: [],
   }
 }
@@ -287,6 +291,8 @@ export function resolvePluginRuntime({
       missingDependencies,
       settingsTabs: normalizeSettingsTabs(plugin),
       widgets: normalizeWidgets(plugin),
+      resolvedRegistries: plugin.registries ?? [],
+      resolvedAITools: plugin.aiTools ?? [],
     })
   }
 
@@ -300,6 +306,8 @@ export function resolvePluginRuntime({
   const settingsTabs: PluginSettingsTab[] = []
   const widgets: ResolvedPluginWidget[] = []
   const capabilities: PluginCapability[] = []
+  const aiTools: PluginAITool[] = []
+  const registries = new Map<string, PluginRegistryDef[]>()
 
   for (const plugin of activePlugins) {
     routes.push(...plugin.routes.map((route) => ({ ...route, plugin })))
@@ -312,6 +320,10 @@ export function resolvePluginRuntime({
     )
     settingsTabs.push(...plugin.settingsTabs)
     capabilities.push(...(plugin.capabilities ?? []))
+    aiTools.push(...plugin.resolvedAITools)
+    if (plugin.resolvedRegistries.length > 0) {
+      registries.set(plugin.id, plugin.resolvedRegistries)
+    }
     widgets.push(
       ...plugin.widgets.map((widget, index) => ({
         ...widget,
@@ -347,6 +359,8 @@ export function resolvePluginRuntime({
     settingsTabs,
     widgets,
     capabilities,
+    aiTools,
+    registries,
     issues,
   }
 }

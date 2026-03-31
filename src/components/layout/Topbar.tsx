@@ -45,6 +45,21 @@ import {
   Apple,
   Egg,
   Wheat,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Landmark,
+  Receipt,
+  TrendingUp,
+  CircleDollarSign,
+  Wallet,
+  Clock,
+  AlertTriangle,
+  Sparkles,
+  Warehouse,
+  Ruler,
+  ArrowUpRight,
+  ArrowDownRight,
+  UserPlus,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
@@ -76,6 +91,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   ClipboardList, Briefcase, UserCog, BookOpen, MessageCircle, Globe,
   Percent, Tag, Camera, UtensilsCrossed, Search, MapPin, Handshake,
   Contact, Building2, ChevronDown, Filter, Plus, List, Dog, Cat, PawPrint, Heart, LayoutTemplate, LeafyGreen, Apple, Egg, Wheat,
+  ArrowDownCircle, ArrowUpCircle, Landmark, Receipt, TrendingUp, CircleDollarSign, Clock, AlertTriangle, Sparkles, Wallet, Warehouse, Ruler, ArrowUpRight, ArrowDownRight, UserPlus,
 }
 
 // Also add to BottomNav
@@ -100,6 +116,7 @@ function NavDropdown({ item, currentPath, onNavigate }: {
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger asChild>
         <button
+          data-nav-active={isChildActive || undefined}
           className={cn(
             'flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-sm transition-colors',
             isChildActive
@@ -195,10 +212,17 @@ export function Topbar({ navigation, logo, onMenuClick, leftContent, rightConten
         </div>
       </div>
 
-      {/* Row 2: Navigation (desktop only) — darker */}
-      <div className="hidden bg-sidebar md:block">
+      {/* Row 2: Navigation — scrollable on mobile, auto-scrolls to active */}
+      <div className="bg-sidebar">
         <div className="flex h-11 w-full items-center px-4 md:px-6">
-          <nav className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
+          <nav ref={(el) => {
+            if (!el) return
+            const active = el.querySelector('[data-nav-active="true"]') as HTMLElement
+            if (active) {
+              const left = active.offsetLeft - el.offsetWidth / 2 + active.offsetWidth / 2
+              el.scrollTo({ left: Math.max(0, left), behavior: 'smooth' })
+            }
+          }} className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
             {allNav.map((item) => {
               // Dropdown for items with children
               if (item.children && item.children.length > 0) {
@@ -222,6 +246,7 @@ export function Topbar({ navigation, logo, onMenuClick, leftContent, rightConten
               return (
                 <button
                   key={item.id}
+                  data-nav-active={isActive || undefined}
                   onClick={() => router.navigate(item.route)}
                   className={cn(
                     'flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-sm transition-colors',

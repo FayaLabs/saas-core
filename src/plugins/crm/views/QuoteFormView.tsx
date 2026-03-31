@@ -1,0 +1,372 @@
+import React, { useState } from 'react'
+import { Save, Plus, Trash2, X, Check, ChevronDown } from 'lucide-react'
+import { useCrmConfig, useCrmStore, formatCurrency } from '../CrmContext'
+import type { EntityLookupMap } from '../../../types/entity-lookup'
+import { SubpageHeader } from '../../../components/layout/ModulePage'
+import { SearchSelect, type SearchSelectOption } from '../../../components/ui/search-select'
+import { CurrencyInput } from '../../../components/ui/currency-input'
+
+// ---------------------------------------------------------------------------
+// Status indicator pills
+// ---------------------------------------------------------------------------
+
+const STATUSES = [
+  { value: 'draft', label: 'Draft', color: 'bg-primary text-primary-foreground' },
+  { value: 'sent', label: 'Sent', color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30' },
+  { value: 'approved', label: 'Approved', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30' },
+  { value: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 border border-red-200 dark:border-red-500/30' },
+  { value: 'expired', label: 'Expired', color: 'bg-muted text-muted-foreground border' },
+]
+
+// ---------------------------------------------------------------------------
+// Quote item
+// ---------------------------------------------------------------------------
+
+interface FormQuoteItem {
+  _id: string
+  itemKind: string
+  description: string
+  quantity: number
+  unitPrice: number
+  discount: number
+}
+
+let fid = 1
+function nextId() { return `qi${fid++}` }
+
+// ---------------------------------------------------------------------------
+// Item row — compact collapsed, expandable for edit
+// ---------------------------------------------------------------------------
+
+function QuoteItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdate, onRemove, showDiscount, onShowDiscount, onHideDiscount, entityLookups }: {
+  item: FormQuoteItem
+  index: number
+  itemTypes: Array<{ value: string; label: string }>
+  currency: { code: string; locale: string; symbol: string }
+  expanded: boolean
+  onToggle: () => void
+  onUpdate: (data: Partial<FormQuoteItem>) => void
+  onRemove: () => void
+  showDiscount: boolean
+  onShowDiscount: () => void
+  onHideDiscount: () => void
+  entityLookups: EntityLookupMap
+}) {
+  const total = item.quantity * item.unitPrice - item.discount
+  const kindLabel = itemTypes.find((t) => t.value === item.itemKind)?.label ?? item.itemKind
+
+  return (
+    <div className="border-b last:border-0">
+      {/* Collapsed row */}
+      <div className="flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors group" onClick={onToggle}>
+        <ChevronDown className={`h-3 w-3 text-muted-foreground shrink-0 transition-transform ${expanded ? 'rotate-0' : '-rotate-90'}`} />
+        <span className="text-[10px] font-medium text-muted-foreground w-5 shrink-0">{index + 1}.</span>
+        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium bg-muted text-muted-foreground shrink-0">{kindLabel}</span>
+        <span className="text-sm truncate flex-1 min-w-0">{item.description || <span className="text-muted-foreground italic">No description</span>}</span>
+        <span className="text-xs text-muted-foreground shrink-0">{item.quantity} x {formatCurrency(item.unitPrice, currency)}</span>
+        <span className="text-sm font-semibold shrink-0 min-w-[80px] text-right">{formatCurrency(total, currency)}</span>
+        <button onClick={(e) => { e.stopPropagation(); onRemove() }} className="p-1 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-all shrink-0">
+          <Trash2 className="h-3 w-3" />
+        </button>
+      </div>
+
+      {/* Expanded edit */}
+      {expanded && (
+        <div className="px-4 pb-4 pt-1 ml-8 space-y-3 bg-muted/10">
+          {/* Type selector */}
+          <div className="flex gap-1.5">
+            {itemTypes.map((t) => (
+              <button key={t.value} onClick={() => onUpdate({ itemKind: t.value })}
+                className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors ${item.itemKind === t.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Fields */}
+          <div className="grid gap-3 grid-cols-12">
+            <div className="col-span-6 sm:col-span-7">
+              {entityLookups[item.itemKind] ? (
+                <SearchSelect
+                  label="Item"
+                  value={item._id}
+                  displayValue={item.description}
+                  onChange={(id, opt) => {
+                    onUpdate({
+                      description: opt?.label ?? '',
+                      unitPrice: (opt?.data as any)?.price ?? item.unitPrice,
+                    })
+                  }}
+                  onSearch={async (q) => {
+                    const results = await entityLookups[item.itemKind].search(q)
+                    return results.map((r) => ({ id: r.id, label: r.label, subtitle: r.subtitle, group: r.group, data: r }))
+                  }}
+                  placeholder={`Search ${itemTypes.find((t) => t.value === item.itemKind)?.label?.toLowerCase() ?? 'item'}...`}
+                  renderOption={(opt) => (
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm truncate">{opt.label}</p>
+                      {opt.subtitle && <p className="text-[10px] text-muted-foreground">{opt.subtitle}</p>}
+                    </div>
+                  )}
+                />
+              ) : (
+                <>
+                  <label className="text-[10px] font-medium text-muted-foreground">Description</label>
+                  <input type="text" value={item.description} onChange={(e) => onUpdate({ description: e.target.value })} placeholder="Item description" autoFocus className="w-full mt-0.5 rounded-md border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                </>
+              )}
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <label className="text-[10px] font-medium text-muted-foreground">Qty</label>
+              <input type="number" min={1} value={item.quantity} onChange={(e) => onUpdate({ quantity: Number(e.target.value) || 1 })} className="w-full mt-0.5 rounded-md border bg-background px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            </div>
+            <div className="col-span-4">
+              <CurrencyInput label="Unit Price" value={item.unitPrice} onChange={(v) => onUpdate({ unitPrice: v })} symbol={currency.symbol} locale={currency.locale} currencyCode={currency.code} />
+            </div>
+          </div>
+
+          {/* Discount (optional) */}
+          {!showDiscount ? (
+            <button onClick={onShowDiscount} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+              <Plus className="h-3 w-3" /> Discount
+            </button>
+          ) : (
+            <div className="grid gap-3 grid-cols-12 items-end">
+              <div className="col-span-4">
+                <CurrencyInput label="Discount" value={item.discount} onChange={(v) => onUpdate({ discount: v })} symbol={currency.symbol} locale={currency.locale} currencyCode={currency.code} />
+              </div>
+              <div className="col-span-1">
+                <button onClick={() => { onUpdate({ discount: 0 }); onHideDiscount() }} className="mb-2 p-1 text-muted-foreground hover:text-destructive transition-colors">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Done */}
+          <div className="flex justify-end pt-1">
+            <button onClick={onToggle} className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+              <Check className="h-3 w-3" /> Done
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Add item step
+// ---------------------------------------------------------------------------
+
+function AddItemStep({ itemTypes, onSelect, onCancel }: {
+  itemTypes: Array<{ value: string; label: string }>
+  onSelect: (kind: string) => void
+  onCancel: () => void
+}) {
+  return (
+    <div className="border-b px-4 py-3 bg-primary/5 animate-in fade-in-0 slide-in-from-top-1">
+      <p className="text-xs font-medium text-muted-foreground mb-2">Select item type:</p>
+      <div className="flex gap-2 flex-wrap">
+        {itemTypes.map((t) => (
+          <button key={t.value} onClick={() => onSelect(t.value)} className="inline-flex items-center gap-1.5 rounded-lg border-2 border-transparent bg-card px-4 py-2 text-sm font-medium shadow-sm hover:border-primary hover:shadow-md transition-all">
+            {t.label}
+          </button>
+        ))}
+        <button onClick={onCancel} className="inline-flex items-center rounded-lg px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Quote form
+// ---------------------------------------------------------------------------
+
+export function QuoteFormView({ onSaved }: { onSaved?: () => void }) {
+  const config = useCrmConfig()
+  const { currency, itemTypes } = config
+  const createQuote = useCrmStore((s) => s.createQuote)
+
+  const [contactName, setContactName] = useState('')
+  const [contactId, setContactId] = useState('')
+  const [quoteDate, setQuoteDate] = useState(new Date().toISOString().slice(0, 10))
+  const [validUntil, setValidUntil] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() + 30)
+    return d.toISOString().slice(0, 10)
+  })
+  const [paymentConditions, setPaymentConditions] = useState('')
+  const [observations, setObservations] = useState('')
+  const [items, setItems] = useState<FormQuoteItem[]>([])
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
+  const [discountVisible, setDiscountVisible] = useState<Set<string>>(new Set())
+  const [addingItem, setAddingItem] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const totalAmount = items.reduce((sum, it) => sum + (it.quantity * it.unitPrice - it.discount), 0)
+
+  function addItemOfKind(kind: string) {
+    const newItem: FormQuoteItem = { _id: nextId(), itemKind: kind, description: '', quantity: 1, unitPrice: 0, discount: 0 }
+    setItems([...items, newItem])
+    setExpandedItemId(newItem._id)
+    setAddingItem(false)
+  }
+
+  function updateItem(id: string, data: Partial<FormQuoteItem>) {
+    setItems(items.map((it) => it._id === id ? { ...it, ...data } : it))
+  }
+
+  function removeItem(id: string) {
+    setItems(items.filter((it) => it._id !== id))
+    if (expandedItemId === id) setExpandedItemId(null)
+  }
+
+  async function handleSave() {
+    if (items.length === 0) return
+    setSaving(true)
+    try {
+      await createQuote({
+        contactId: contactId || undefined,
+        contactName: contactName || undefined,
+        quoteDate,
+        validUntil,
+        paymentConditions: paymentConditions || undefined,
+        observations: observations || undefined,
+        items: items.map((it) => ({
+          itemKind: it.itemKind,
+          description: it.description,
+          quantity: it.quantity,
+          unitPrice: it.unitPrice,
+          discount: it.discount,
+          totalAmount: it.quantity * it.unitPrice - it.discount,
+        })),
+      })
+      onSaved?.()
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="space-y-5">
+      <SubpageHeader
+        title="New Quote"
+        subtitle="Create a proposal for your client"
+        onBack={onSaved}
+        actions={
+          <div className="flex items-center gap-2">
+            {onSaved && (
+              <button onClick={onSaved} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+                <X className="h-3 w-3" /> Cancel
+              </button>
+            )}
+            <button onClick={handleSave} disabled={items.length === 0 || saving} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+              <Save className="h-3 w-3" /> {saving ? 'Saving...' : 'Save Quote'}
+            </button>
+          </div>
+        }
+      />
+
+      {/* Status indicator */}
+      <div className="flex gap-2">
+        {STATUSES.map((s) => (
+          <span key={s.value} className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${s.value === 'draft' ? s.color : 'bg-muted/30 text-muted-foreground/50'}`}>
+            {s.label}
+          </span>
+        ))}
+      </div>
+
+      {/* Quote details + Items — side by side */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Left: Quote details */}
+        <div className="rounded-lg border bg-card p-5 space-y-4">
+          <h3 className="text-sm font-semibold">Quote Details</h3>
+
+          <SearchSelect
+            value={contactId}
+            displayValue={contactName}
+            onChange={(id, opt) => { setContactId(id); setContactName(opt?.label ?? '') }}
+            onSearch={async (q) => {
+              if (!config.contactLookup) return []
+              const results = await config.contactLookup.search(q)
+              return results.map((r) => ({ id: r.id, label: r.label, subtitle: r.subtitle, group: r.group, data: r }))
+            }}
+            label="Client"
+            required
+            placeholder="Search client..."
+          />
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Quote Date</label>
+            <input type="date" value={quoteDate} onChange={(e) => setQuoteDate(e.target.value)} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Valid Until</label>
+            <input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Payment Conditions</label>
+            <textarea value={paymentConditions} onChange={(e) => setPaymentConditions(e.target.value)} rows={2} placeholder="e.g. 50% upfront, 50% on delivery" className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Notes</label>
+            <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={2} placeholder="Internal observations..." className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+          </div>
+        </div>
+
+        {/* Right: Items */}
+        <div className="lg:col-span-2 rounded-lg border bg-card overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 border-b">
+            <h3 className="text-sm font-semibold">Quote Items</h3>
+            <button onClick={() => setAddingItem(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+              <Plus className="h-3 w-3" /> Add Item
+            </button>
+          </div>
+
+          <div className="flex-1">
+            {addingItem && (
+              <AddItemStep itemTypes={itemTypes} onSelect={addItemOfKind} onCancel={() => setAddingItem(false)} />
+            )}
+
+            {items.length === 0 && !addingItem ? (
+              <div className="py-12 text-center">
+                <p className="text-sm text-muted-foreground">No items added</p>
+                <button onClick={() => setAddingItem(true)} className="text-xs text-primary hover:underline mt-1">Add your first item</button>
+              </div>
+            ) : (
+              items.map((item, i) => (
+                <QuoteItemRow
+                  key={item._id}
+                  item={item}
+                  index={i}
+                  itemTypes={itemTypes}
+                  currency={currency}
+                  expanded={expandedItemId === item._id}
+                  onToggle={() => setExpandedItemId(expandedItemId === item._id ? null : item._id)}
+                  onUpdate={(data) => updateItem(item._id, data)}
+                  onRemove={() => removeItem(item._id)}
+                  showDiscount={discountVisible.has(item._id) || item.discount > 0}
+                  onShowDiscount={() => setDiscountVisible((prev) => new Set(prev).add(item._id))}
+                  onHideDiscount={() => setDiscountVisible((prev) => { const next = new Set(prev); next.delete(item._id); return next })}
+                  entityLookups={config.entityLookups}
+                />
+              ))
+            )}
+          </div>
+
+          {/* Total footer */}
+          {items.length > 0 && (
+            <div className="px-4 py-3 border-t bg-muted/20 flex justify-between items-center mt-auto">
+              <span className="text-xs text-muted-foreground">{items.length} item{items.length !== 1 ? 's' : ''}</span>
+              <div className="text-right">
+                <span className="text-xs text-muted-foreground">Total: </span>
+                <span className="text-lg font-bold">{formatCurrency(totalAmount, currency)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

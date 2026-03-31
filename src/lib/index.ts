@@ -31,3 +31,5 @@ export {
   usePluginRuntime,
   usePluginRuntimeOptional,
 } from './plugins'
+export { createArchetypeLookup } from './archetype-lookup'
+export { resolveDataProvider } from './data-providers/resolve'

@@ -19,6 +19,7 @@ import { useInviteStore } from '../../stores/invite.store'
 import { useOrgAdapterOptional } from '../../lib/org-context'
 import { useAuthStore } from '../../stores/auth.store'
 import { usePermission } from '../../hooks/usePermission'
+import { dedup } from '../../lib/dedup'
 
 export function TeamTab() {
   const adapter = useOrgAdapterOptional()
@@ -33,10 +34,10 @@ export function TeamTab() {
 
   const [inviteOpen, setInviteOpen] = React.useState(false)
 
-  // Load invites on mount
+  // Load invites on mount (deduped to avoid strict mode double-fetch)
   React.useEffect(() => {
     if (adapter && currentOrg) {
-      adapter.listInvites(currentOrg.id).then(setInvites).catch(() => {})
+      dedup('team:invites:' + currentOrg.id, () => adapter.listInvites(currentOrg.id)).then(setInvites).catch(() => {})
     }
   }, [adapter, currentOrg?.id])
 

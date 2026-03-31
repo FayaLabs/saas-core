@@ -36,7 +36,7 @@
     --sidebar-accent: 220 20% 22%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-muted: 220 10% 50%;
-    --content: 220 15% 96%;
+    --content: 220 14% 97.5%;
 
     /* UI Perception Tokens */
     --button-radius: 0.5rem;
@@ -119,7 +119,7 @@
 
 /* Page transition */
 @keyframes page-enter {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(var(--saas-page-enter-offset)); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -183,9 +183,18 @@
   to { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
 }
 
+/* Page transition tokens — override in SaaS theme to customize */
+:root {
+  --saas-transition-duration: 200ms;
+  --saas-transition-easing: ease-out;
+  --saas-page-enter-duration: 250ms;
+  --saas-page-enter-offset: 4px;
+  --saas-nav-slide-offset: 12px;
+}
+
 /* Page content transition */
 .saas-page-enter {
-  animation: page-enter 250ms ease-out both;
+  animation: page-enter var(--saas-page-enter-duration) var(--saas-transition-easing) both;
 }
 
 /* Mobile drawer animation */
@@ -220,19 +229,19 @@
   to { opacity: 0; transform: translateX(-50%) scale(0.96) translateY(-8px); }
 }
 
-/* CRUD navigation transitions */
+/* Navigation transitions — used by CRUD pages, plugins, and module sub-views */
 .saas-nav-forward {
-  animation: saas-slide-forward 200ms ease-out both;
+  animation: saas-slide-forward var(--saas-transition-duration) var(--saas-transition-easing) both;
 }
 .saas-nav-back {
-  animation: saas-slide-back 200ms ease-out both;
+  animation: saas-slide-back var(--saas-transition-duration) var(--saas-transition-easing) both;
 }
 
 @keyframes saas-slide-forward {
-  from { opacity: 0; transform: translateX(12px); }
+  from { opacity: 0; transform: translateX(var(--saas-nav-slide-offset)); }
   to { opacity: 1; transform: translateX(0); }
 }
 @keyframes saas-slide-back {
-  from { opacity: 0; transform: translateX(-12px); }
+  from { opacity: 0; transform: translateX(calc(-1 * var(--saas-nav-slide-offset))); }
   to { opacity: 1; transform: translateX(0); }
 }

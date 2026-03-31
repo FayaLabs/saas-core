@@ -76,6 +76,7 @@ export interface PluginNavigationEntry {
 export interface PluginSettingsTab {
   id: string
   label: string
+  icon?: string
   component: React.ComponentType<any>
   pluginId?: string
   order?: number
@@ -177,6 +178,108 @@ export interface PluginRuntimeIssue {
   message: string
 }
 
+// --- AI tool system ---
+
+export type AIToolMode = 'read' | 'persist'
+
+export interface AIToolParameterProperty {
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object'
+  description?: string
+  enum?: string[]
+  items?: AIToolParameterProperty
+  default?: unknown
+}
+
+export interface AIToolParameters {
+  type: 'object'
+  properties: Record<string, AIToolParameterProperty>
+  required?: string[]
+}
+
+export interface AIToolSuggestion {
+  /** Human-friendly prompt shown as a chip, e.g. "How many customers today?" */
+  label: string
+  /** Actual message sent to the LLM when clicked (defaults to label) */
+  prompt?: string
+  /** Lucide icon name override */
+  icon?: string
+  /** Only show this suggestion for a specific vertical */
+  verticalId?: VerticalId
+}
+
+export interface PluginAITool {
+  /** Unique tool ID, namespaced by plugin: e.g. 'financial.daily-revenue' */
+  id: string
+  /** Function-style name shown as tool signature: e.g. 'getRevenue' */
+  name: string
+  /** Description for the LLM — tells it when/how to use this tool */
+  description: string
+  /** Lucide icon name */
+  icon?: string
+  /** Read-only query or state-mutating action */
+  mode: AIToolMode
+  /** JSON Schema for parameters — maps 1:1 to Claude tool_use input_schema */
+  parameters?: AIToolParameters
+  /** Permission required to see/use this tool */
+  permission?: PluginPermissionRequirement
+  /** User-facing suggestion chips for the empty chat state */
+  suggestions?: AIToolSuggestion[]
+  /** Category for grouping in the UI: e.g. 'Finance', 'Sales' */
+  category?: string
+  /** Tags for filtering/search */
+  tags?: string[]
+}
+
+// --- Plugin registry system ---
+
+export interface PluginRegistryDef {
+  /** Unique ID within the plugin, e.g. 'payment-methods' */
+  id: string
+  /** EntityDef for the CRUD page */
+  entity: import('./crud').EntityDef
+  /** Lucide icon name */
+  icon?: string
+  /** Short description */
+  description?: string
+  /** How to render the list view */
+  display?: 'table' | 'cards' | 'tree'
+  /** Initial records to seed on first setup */
+  seedData?: Record<string, unknown>[]
+  /** Demo data for mock provider */
+  mockData?: Record<string, unknown>[]
+  /** If true, records cannot be created, edited, or deleted (seed-only / system data) */
+  readOnly?: boolean
+}
+
+export interface PluginMigration {
+  /** Unique ID, e.g. 'financial-001-base-tables' */
+  id: string
+  /** Semver for ordering migrations */
+  version: string
+  /** Raw SQL migration */
+  sql: string
+  /** Description of what this migration does */
+  description?: string
+}
+
+export interface PluginQuickAction {
+  id: string
+  label: string
+  icon?: string
+  description?: string
+  /** Action handler — typically navigates to a view */
+  action: () => void
+}
+
+export interface PluginOnboarding {
+  /** Wizard component — receives onComplete callback */
+  component: React.ComponentType<{ onComplete: () => void }>
+  /** Wizard title */
+  title?: string
+  /** Wizard description */
+  description?: string
+}
+
 export interface PluginManifest {
   id: string
   name: string
@@ -198,8 +301,16 @@ export interface PluginManifest {
     position: 'bottom-right' | 'bottom-left'
   }[]
   capabilities?: PluginCapability[]
+  /** AI tools this plugin exposes to the chat assistant */
+  aiTools?: PluginAITool[]
   entities?: string[]
   permissions?: string[]
+  /** Registry entities the plugin brings (CRUD pages managed within the plugin) */
+  registries?: PluginRegistryDef[]
+  /** SQL migrations to create the plugin's tables */
+  migrations?: PluginMigration[]
+  /** First-time setup wizard */
+  onboarding?: PluginOnboarding
 }
 
 export interface ResolvedPluginManifest extends PluginManifest {
@@ -210,6 +321,8 @@ export interface ResolvedPluginManifest extends PluginManifest {
   missingDependencies: string[]
   settingsTabs: PluginSettingsTab[]
   widgets: PluginWidgetDefinition[]
+  resolvedRegistries: PluginRegistryDef[]
+  resolvedAITools: PluginAITool[]
 }
 
 export interface ResolvedPluginWidget<TConfig extends Record<string, unknown> = Record<string, unknown>>
@@ -232,5 +345,9 @@ export interface PluginRuntime {
   settingsTabs: PluginSettingsTab[]
   widgets: ResolvedPluginWidget[]
   capabilities: PluginCapability[]
+  /** AI tools from active plugins for the chat assistant */
+  aiTools: PluginAITool[]
   issues: PluginRuntimeIssue[]
+  /** All registries from active plugins, keyed by pluginId */
+  registries: Map<string, PluginRegistryDef[]>
 }

@@ -1,13 +1,9 @@
 import React, { useMemo } from 'react'
 import { CrudPage } from './CrudPage'
 import { createCrudStore } from '../../stores/createCrudStore'
-import { createMockProvider } from '../../lib/data-providers/mock'
-import { createSupabaseProvider } from '../../lib/data-providers/supabase'
-import { createArchetypeProvider } from '../../lib/data-providers/archetype'
-import { getSupabaseClientOptional } from '../../lib/supabase'
+import { resolveDataProvider } from '../../lib/data-providers/resolve'
 import type { EntityDef } from '../../types/crud'
 import type { DataProvider } from '../../lib/data-providers/types'
-import { useOrganizationStore } from '../../stores/organization.store'
 
 interface CreateCrudPageOptions<T extends { id: string }> {
   mockData?: T[]
@@ -34,43 +30,7 @@ export function createCrudPage<T extends { id: string }>(
     // Lazy provider resolution — runs at render time when Supabase is already initialized
     const useStore = useMemo(() => {
       if (eagerStore) return eagerStore
-
-      const client = getSupabaseClientOptional()
-      let provider: DataProvider<T>
-
-      if (client && entityDef.data?.table) {
-        const tenantId = () => useOrganizationStore.getState().currentOrg?.id
-
-        // Use archetype provider when archetype + archetypeKind are set
-        // AND no explicit schema override (schema:'saas_core' means querying archetype table directly)
-        if (entityDef.data.archetype && entityDef.data.archetypeKind && !entityDef.data.schema) {
-          provider = createArchetypeProvider<T>({
-            archetype: entityDef.data.archetype,
-            archetypeKind: entityDef.data.archetypeKind,
-            projectTable: entityDef.data.table,
-            tenantId,
-            searchColumns: entityDef.data.searchColumns ?? entityDef.fields
-              .filter((field) => field.searchable)
-              .map((field) => field.key),
-          })
-        } else {
-          provider = createSupabaseProvider<T>(entityDef.data.table, {
-            schema: entityDef.data.schema,
-            tenantId: entityDef.data.tenantScoped === false ? undefined : tenantId,
-            tenantIdColumn: entityDef.data.tenantIdColumn,
-            searchColumns: entityDef.data.searchColumns ?? entityDef.fields
-              .filter((field) => field.searchable)
-              .map((field) => field.key),
-            selectColumns: entityDef.data.selectColumns,
-            columnMap: entityDef.data.columnMap,
-            filters: entityDef.data.filters,
-            defaults: entityDef.data.defaults,
-          })
-        }
-      } else {
-        provider = createMockProvider(entityDef, options?.mockData)
-      }
-
+      const provider = resolveDataProvider(entityDef, options?.mockData)
       return createCrudStore(provider)
     }, [])
 

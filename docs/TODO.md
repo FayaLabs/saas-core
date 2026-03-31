@@ -6,3 +6,4 @@
 - [ ] Plugins Injection Concept
 - [ ] i18n translations
 - [ ] AI Agent Chat
+- [ ] Migration (initial, for plugins, and for updates)

@@ -21,6 +21,8 @@ interface CrudPageProps<T extends { id: string }> {
   basePath: string
   display: CrudDisplay
   feature?: string
+  /** If true, hides create/edit/delete actions — list and detail view only */
+  readOnly?: boolean
 }
 
 function getRouteDepth(sub: string): number {
@@ -153,7 +155,7 @@ function CrudTableView<T extends { id: string }>({
   )
 }
 
-export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePath, display, feature }: CrudPageProps<T>) {
+export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePath, display, feature, readOnly }: CrudPageProps<T>) {
   const store = useStore()
   const { sub, direction } = useSubRoute(basePath)
   const [deleteItem, setDeleteItem] = useState<T | null>(null)
@@ -176,7 +178,7 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
   let viewKey = 'list'
   let content: React.ReactNode = null
 
-  if (sub === '/new') {
+  if (sub === '/new' && !readOnly) {
     viewKey = 'new'
     content = (
       <CrudFormPage
@@ -190,7 +192,10 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
         }}
       />
     )
-  } else if (sub.endsWith('/edit')) {
+  } else if (sub === '/new' && readOnly) {
+    // readOnly — redirect back to list
+    navigateToList()
+  } else if (sub.endsWith('/edit') && !readOnly) {
     const id = sub.slice(1, -5)
     const item = store.getById(id)
     viewKey = `edit-${id}`
@@ -230,6 +235,10 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
         />
       )
     }
+  } else if (sub.endsWith('/edit') && readOnly) {
+    // readOnly — redirect to detail view
+    const id = sub.slice(1, -5)
+    window.location.hash = `${basePath}/${id}`
   } else if (sub.startsWith('/') && sub.length > 1) {
     const id = sub.slice(1)
     const item = store.getById(id)
@@ -263,8 +272,8 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
           namePlural={namePlural}
           basePath={basePath}
           onBack={navigateToList}
-          onEdit={() => { window.location.hash = `${basePath}/${id}/edit` }}
-          onDelete={() => setDeleteItem(item)}
+          onEdit={readOnly ? undefined : () => { window.location.hash = `${basePath}/${id}/edit` }}
+          onDelete={readOnly ? undefined : () => setDeleteItem(item)}
           feature={feature}
         />
       )
@@ -294,13 +303,13 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
               <p className="text-muted-foreground">{store.total} total {namePlural.toLowerCase()}</p>
             )}
           </div>
-          {feature ? (
+          {!readOnly && (feature ? (
             <PermissionGate feature={feature} action="create">
               <Button onClick={() => { window.location.hash = `${basePath}/new` }}>+ Add {entityDef.name}</Button>
             </PermissionGate>
           ) : (
             <Button onClick={() => { window.location.hash = `${basePath}/new` }}>+ Add {entityDef.name}</Button>
-          )}
+          ))}
         </div>
 
         {entityDef.fields.some((f) => f.searchable) && (
@@ -369,7 +378,7 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
           <Card>
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-muted-foreground mb-4">No {namePlural.toLowerCase()} yet</p>
-              <Button onClick={() => { window.location.hash = `${basePath}/new` }}>Add your first {entityDef.name.toLowerCase()}</Button>
+              {!readOnly && <Button onClick={() => { window.location.hash = `${basePath}/new` }}>Add your first {entityDef.name.toLowerCase()}</Button>}
             </div>
           </Card>
         ) : display === 'cards' ? (

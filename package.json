@@ -50,6 +50,21 @@
       "import": "./dist/types/index.js",
       "require": "./dist/types/index.cjs"
     },
+    "./plugins/financial": {
+      "types": "./dist/plugins/financial/index.d.ts",
+      "import": "./dist/plugins/financial/index.js",
+      "require": "./dist/plugins/financial/index.cjs"
+    },
+    "./plugins/inventory": {
+      "types": "./dist/plugins/inventory/index.d.ts",
+      "import": "./dist/plugins/inventory/index.js",
+      "require": "./dist/plugins/inventory/index.cjs"
+    },
+    "./plugins/crm": {
+      "types": "./dist/plugins/crm/index.d.ts",
+      "import": "./dist/plugins/crm/index.js",
+      "require": "./dist/plugins/crm/index.cjs"
+    },
     "./styles.css": "./src/styles.css"
   },
   "files": [

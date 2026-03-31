@@ -85,84 +85,52 @@ export function createArchetypeProvider<T extends { id: string }>(
     return { archetypeData, projectData }
   }
 
+  // View name convention: v_{shortName} — maps project table to its view
+  const VIEW_MAP: Record<string, string> = {
+    clients: 'v_clients',
+    staff_members: 'v_staff',
+  }
+  const viewName = VIEW_MAP[config.projectTable] ?? `v_${config.projectTable}`
+
   return {
     async list(query: CrudQuery): Promise<CrudResult<T>> {
       const tenantId = config.tenantId()
       if (!tenantId) return { data: [], total: 0 }
 
-      // 1. Query project table to get FK IDs + project columns
+      // Single query via v_ view (JOINs public table with saas_core archetype)
       let q = getClient()
-        .from(config.projectTable)
+        .from(viewName)
         .select('*', { count: 'exact' })
         .eq('tenant_id', tenantId)
+
+      // Search
+      if (query.search && config.searchColumns && config.searchColumns.length > 0) {
+        const term = `%${query.search}%`
+        const orClauses = config.searchColumns
+          .map((col) => camelToSnake(col))
+          .map((col) => `${col}.ilike.${term}`)
+        if (orClauses.length > 0) {
+          q = q.or(orClauses.join(','))
+        }
+      }
+
+      // Sort
+      if (query.sortBy) {
+        q = q.order(camelToSnake(query.sortBy), { ascending: query.sortDir !== 'desc' })
+      } else {
+        q = q.order('created_at', { ascending: false })
+      }
 
       // Pagination
       const page = query.page ?? 1
       const pageSize = query.pageSize ?? 50
       const from = (page - 1) * pageSize
       q = q.range(from, from + pageSize - 1)
-      q = q.order('created_at', { ascending: false })
 
-      const { data: projectRows, error: projectError, count } = await q
-      if (projectError) throw projectError
-      if (!projectRows || projectRows.length === 0) return { data: [], total: count ?? 0 }
+      const { data, error, count } = await q
+      if (error) throw error
 
-      // 2. Get archetype IDs from project rows
-      const archetypeIds = projectRows.map((r: any) => r[fkColumn]).filter(Boolean)
-      if (archetypeIds.length === 0) return { data: [], total: count ?? 0 }
-
-      // 3. Fetch archetype rows
-      let aq = coreClient()
-        .from(ac.table)
-        .select('*')
-        .in('id', archetypeIds)
-
-      // Search on archetype columns
-      if (query.search && config.searchColumns && config.searchColumns.length > 0) {
-        const term = `%${query.search}%`
-        const orClauses = config.searchColumns
-          .map((col) => camelToSnake(col))
-          .filter((col) => archetypeColumns.has(col))
-          .map((col) => `${col}.ilike.${term}`)
-        if (orClauses.length > 0) {
-          aq = aq.or(orClauses.join(','))
-        }
-      }
-
-      // Sort on archetype columns
-      if (query.sortBy) {
-        const snakeCol = camelToSnake(query.sortBy)
-        if (archetypeColumns.has(snakeCol)) {
-          aq = aq.order(snakeCol, { ascending: query.sortDir !== 'desc' })
-        }
-      } else {
-        aq = aq.order('created_at', { ascending: false })
-      }
-
-      const { data: archetypeRows, error: archetypeError } = await aq
-      if (archetypeError) throw archetypeError
-
-      // 4. Merge: archetype + project → flat rows
-      const archetypeMap = new Map<string, Record<string, unknown>>()
-      for (const row of (archetypeRows ?? [])) {
-        archetypeMap.set((row as any).id, row as Record<string, unknown>)
-      }
-
-      const rows = projectRows
-        .map((projectRow: any) => {
-          const archetypeRow = archetypeMap.get(projectRow[fkColumn])
-          if (!archetypeRow) return null
-
-          const flat: Record<string, unknown> = {
-            ...archetypeRow,
-            ...projectRow,
-            id: projectRow[fkColumn], // Use archetype ID as the entity ID
-          }
-          delete flat[fkColumn]
-          return mapRow<T>(flat)
-        })
-        .filter(Boolean) as T[]
-
+      const rows = (data ?? []).map((row: Record<string, unknown>) => mapRow<T>(row))
       return { data: rows, total: count ?? 0 }
     },
 

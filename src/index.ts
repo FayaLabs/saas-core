@@ -3,7 +3,7 @@ import { useThemeStore } from './stores/theme.store'
 import { useBillingStore } from './stores/billing.store'
 import { useAuthStore } from './stores/auth.store'
 import { usePermissionsStore } from './stores/permissions.store'
-import { createSupabaseClient } from './lib/supabase'
+import { createSupabaseClient, getSupabaseClientOptional } from './lib/supabase'
 import { ToastProvider } from './components/notifications/ToastProvider'
 import { RouterProvider, setGlobalRouter, hashRouterAdapter, type RouterAdapter } from './lib/router'
 import { AppShell } from './components/layout/AppShell'
@@ -12,7 +12,7 @@ import { SettingsPage } from './components/settings/SettingsPage'
 import { BillingPage } from './components/billing/BillingPage'
 import { ChatFab } from './components/chat/ChatFab'
 import { ChatPanel } from './components/chat/ChatPanel'
-import { CommandPalette, type CommandItem } from './components/layout/CommandPalette'
+import { CommandPalette, type CommandItem, type EntitySearchResult, type EntitySearchFn } from './components/layout/CommandPalette'
 import { useLayoutStore } from './stores/layout.store'
 import { LoginPage } from './components/auth/LoginPage'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
@@ -28,7 +28,9 @@ import { PermissionGate } from './components/organization/PermissionGate'
 import { TeamTab } from './components/organization/TeamTab'
 import { PermissionProfilesTab } from './components/organization/PermissionProfilesTab'
 import { ConnectedLocationsOverview } from './components/settings/ConnectedLocationsOverview'
-import { Users, ShieldCheck, MapPin } from 'lucide-react'
+import { ConnectedHolidaysSettings } from './components/settings/ConnectedHolidaysSettings'
+import { Users, ShieldCheck, MapPin, CalendarOff, Puzzle } from 'lucide-react'
+import * as LucideIcons from 'lucide-react'
 import { resolvePluginRuntime, PluginRuntimeProvider } from './lib/plugins'
 import type { AuthAdapter } from './types/auth-adapter'
 import type { OrgAdapter } from './types/org-adapter'
@@ -259,8 +261,85 @@ function buildNavigation(
 // ---------------------------------------------------------------------------
 // Internal: render logo from string or ReactNode
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Global entity search — queries persons, products, services in parallel
+// ---------------------------------------------------------------------------
+
+function createGlobalEntitySearch(): EntitySearchFn {
+  return async (query: string): Promise<EntitySearchResult[]> => {
+    const supabase = getSupabaseClientOptional()
+    if (!supabase) return []
+
+    const term = `%${query}%`
+    const limit = 8
+
+    const [persons, products, services] = await Promise.all([
+      supabase.schema('saas_core').from('persons')
+        .select('id, name, email, phone, kind')
+        .eq('is_active', true)
+        .ilike('name', term)
+        .limit(limit)
+        .then((r: any) => r.data ?? []),
+      supabase.schema('saas_core').from('products')
+        .select('id, name, sku, price')
+        .eq('is_active', true)
+        .ilike('name', term)
+        .limit(limit)
+        .then((r: any) => r.data ?? []),
+      supabase.schema('saas_core').from('services')
+        .select('id, name, price, duration_minutes')
+        .eq('is_active', true)
+        .ilike('name', term)
+        .limit(limit)
+        .then((r: any) => r.data ?? []),
+    ])
+
+    const results: EntitySearchResult[] = []
+
+    for (const p of persons) {
+      const kind = p.kind ? String(p.kind) : 'person'
+      const kindLabel = kind.charAt(0).toUpperCase() + kind.slice(1) + 's'
+      results.push({
+        id: p.id,
+        label: p.name,
+        subtitle: [p.email, p.phone].filter(Boolean).join(' · ') || undefined,
+        group: kindLabel,
+        icon: 'User',
+        data: p,
+      })
+    }
+    for (const p of products) {
+      results.push({
+        id: p.id,
+        label: p.name,
+        subtitle: [p.sku, p.price != null ? `$${p.price}` : null].filter(Boolean).join(' · ') || undefined,
+        group: 'Products',
+        icon: 'Box',
+        data: p,
+      })
+    }
+    for (const s of services) {
+      results.push({
+        id: s.id,
+        label: s.name,
+        subtitle: [
+          s.duration_minutes ? `${s.duration_minutes}min` : null,
+          s.price != null ? `$${s.price}` : null,
+        ].filter(Boolean).join(' · ') || undefined,
+        group: 'Services',
+        icon: 'Sparkles',
+        data: s,
+      })
+    }
+
+    return results
+  }
+}
+
 function CommandPaletteWrapper({ navigation, routerAdapter }: { navigation: NavigationItem[]; routerAdapter: RouterAdapter }) {
   const { commandPaletteOpen, setCommandPaletteOpen } = useLayoutStore()
+
+  const entitySearch = React.useMemo(() => createGlobalEntitySearch(), [])
 
   const commands: CommandItem[] = React.useMemo(() => {
     const items: CommandItem[] = []
@@ -292,10 +371,24 @@ function CommandPaletteWrapper({ navigation, routerAdapter }: { navigation: Navi
     return items
   }, [navigation, routerAdapter])
 
+  const handleEntitySelect = React.useCallback((result: EntitySearchResult) => {
+    // Persons route by kind (e.g. client → /clients), products/services by group
+    const group = result.group?.toLowerCase()
+    if (group === 'persons' && result.data?.kind) {
+      const kind = String(result.data.kind)
+      const plural = kind.endsWith('s') ? kind : kind + 's'
+      routerAdapter.navigate(`/${plural}/${result.id}`)
+    } else if (group) {
+      routerAdapter.navigate(`/${group}/${result.id}`)
+    }
+  }, [routerAdapter])
+
   return React.createElement(CommandPalette, {
     commands,
     open: commandPaletteOpen,
     onOpenChange: setCommandPaletteOpen,
+    onEntitySearch: entitySearch,
+    onEntitySelect: handleEntitySelect,
   })
 }
 
@@ -350,6 +443,7 @@ function buildSettingsTabs(
       { id: 'team', label: 'Team', icon: React.createElement(Users, { className: 'h-4 w-4' }), component: React.createElement(TeamTab) },
       { id: 'permissions', label: 'Permissions', icon: React.createElement(ShieldCheck, { className: 'h-4 w-4' }), component: React.createElement(PermissionProfilesTab) },
       { id: 'locations', label: 'Locations', icon: React.createElement(MapPin, { className: 'h-4 w-4' }), component: React.createElement(ConnectedLocationsOverview) },
+      { id: 'holidays', label: 'Holidays', icon: React.createElement(CalendarOff, { className: 'h-4 w-4' }), component: React.createElement(ConnectedHolidaysSettings) },
     )
   }
 
@@ -362,11 +456,14 @@ function buildSettingsTabs(
       continue
     }
 
+    const IconComp = tab.icon ? (LucideIcons as any)[tab.icon] ?? Puzzle : Puzzle
     settingsTabs.push({
       id: tab.id,
       label: tab.label,
+      icon: React.createElement(IconComp, { className: 'h-4 w-4' }),
       component: React.createElement(tab.component),
-    })
+      isPlugin: true,
+    } as any)
   }
 
   return settingsTabs
@@ -487,13 +584,13 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
       })
     }
 
-    // Resolve page: exact match first, then prefix match for CRUD sub-routes
+    // Resolve page: exact match first, then prefix match for CRUD sub-routes and plugin routes
     let matchedPath = route
     let routeEntry = routes.get(route)
     if (!routeEntry) {
-      // Try prefix match (e.g. /services/new → /services)
+      // Try prefix match (e.g. /services/new → /services, /financial/settings/... → /financial)
       for (const [path, entry] of routes) {
-        if (path !== '/' && route.startsWith(path + '/') && (entry.component as any).__isCrudPage) {
+        if (path !== '/' && route.startsWith(path + '/') && ((entry.component as any).__isCrudPage || entry.plugin || path === '/settings')) {
           routeEntry = entry
           matchedPath = path
           break
@@ -507,7 +604,16 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
         matchedPath,
       },
     }
-    const PageComponent = routeEntry?.component ?? routes.get('/')?.component ?? (() => null)
+    const NotFoundPage: React.FC = () => React.createElement('div', { className: 'flex flex-col items-center justify-center py-24 text-center' },
+      React.createElement('h1', { className: 'text-6xl font-bold text-muted-foreground/20 mb-4' }, '404'),
+      React.createElement('h2', { className: 'text-xl font-semibold mb-2' }, 'Page not found'),
+      React.createElement('p', { className: 'text-sm text-muted-foreground mb-6' }, 'The page you\'re looking for doesn\'t exist or has been moved.'),
+      React.createElement('button', {
+        className: 'rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors',
+        onClick: () => routerAdapter.navigate('/'),
+      }, 'Go to Dashboard'),
+    )
+    const PageComponent = routeEntry?.component ?? NotFoundPage
     const pagePermission = routeEntry?.permission
     const pageTitle = navigation.find((n) => n.route === matchedPath)?.label ?? navigation.find((n) => n.route === route)?.label ?? navigation[0]?.label ?? ''
     const settingsTabs = buildSettingsTabs(config, pluginRuntime.settingsTabs, can)
@@ -727,5 +833,6 @@ export { createCrudPage } from './components/crud/createCrudPage'
 export { createCrudStore } from './stores/createCrudStore'
 export { PermissionGate } from './components/organization/PermissionGate'
 export { usePermission } from './hooks/usePermission'
-export { ModulePage } from './components/layout/ModulePage'
+export { ModulePage, SubpageHeader } from './components/layout/ModulePage'
 export type { ModuleNavItem } from './components/layout/ModulePage'
+// Financial plugin available via '@fayz/saas-core/plugins/financial'
