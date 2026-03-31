@@ -1,19 +1,19 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Pencil, DollarSign, Check, Clock, AlertTriangle, FileText, Calendar, Hash, User, X, MoreVertical, Ban } from 'lucide-react'
+import { Pencil, DollarSign, FileText, Calendar, Hash, User, X, MoreVertical, Ban, ChevronDown, CreditCard, Banknote, Building2, CircleDashed, CircleEllipsis, CircleCheckBig, CircleAlert } from 'lucide-react'
 import { useFinancialConfig, useFinancialStore, useFinancialProvider, formatCurrency } from '../FinancialContext'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { PaymentModal } from '../components/PaymentModal'
 import type { Invoice, InvoiceItem, FinancialMovement, TransactionDirection } from '../types'
 
 const STATUS_COLORS: Record<string, { bg: string; icon: React.ElementType; label: string }> = {
-  open: { bg: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', icon: Clock, label: 'Open' },
-  pending: { bg: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400', icon: Clock, label: 'Pending' },
-  partial: { bg: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400', icon: DollarSign, label: 'Partial' },
-  paid: { bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', icon: Check, label: 'Paid' },
-  overdue: { bg: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400', icon: AlertTriangle, label: 'Overdue' },
-  draft: { bg: 'bg-gray-100 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400', icon: Clock, label: 'Draft' },
-  cancelled: { bg: 'bg-gray-100 text-gray-500 dark:bg-gray-500/20 dark:text-gray-400', icon: X, label: 'Cancelled' },
+  open: { bg: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', icon: CircleDashed, label: 'Open' },
+  pending: { bg: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400', icon: CircleDashed, label: 'Pending' },
+  partial: { bg: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400', icon: CircleEllipsis, label: 'Partial' },
+  paid: { bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', icon: CircleCheckBig, label: 'Paid' },
+  overdue: { bg: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400', icon: CircleAlert, label: 'Overdue' },
+  draft: { bg: 'bg-gray-100 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400', icon: CircleDashed, label: 'Draft' },
+  cancelled: { bg: 'bg-gray-100 text-gray-500 dark:bg-gray-500/20 dark:text-gray-400', icon: Ban, label: 'Cancelled' },
 }
 
 export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
@@ -24,12 +24,20 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
 }) {
   const { currency } = useFinancialConfig()
   const provider = useFinancialProvider()
+  const paymentMethods = useFinancialStore((s) => s.paymentMethods)
+  const paymentMethodTypes = useFinancialStore((s) => s.paymentMethodTypes)
+  const bankAccounts = useFinancialStore((s) => s.bankAccounts)
+  const fetchPaymentMethods = useFinancialStore((s) => s.fetchPaymentMethods)
+  const fetchBankAccounts = useFinancialStore((s) => s.fetchBankAccounts)
+  const [detailsLoaded, setDetailsLoaded] = useState(false)
+  const [detailsLoading, setDetailsLoading] = useState(false)
 
   const [invoice, setInvoice] = useState<Invoice | null>(null)
   const [items, setItems] = useState<InvoiceItem[]>([])
   const [movements, setMovements] = useState<FinancialMovement[]>([])
   const [loading, setLoading] = useState(true)
   const [payingMovement, setPayingMovement] = useState<FinancialMovement | null>(null)
+  const [expandedMovId, setExpandedMovId] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmCancel, setConfirmCancel] = useState(false)
   const [cancelling, setCancelling] = useState(false)
@@ -64,6 +72,20 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [menuOpen])
+
+  async function loadPaymentDetails() {
+    if (detailsLoaded || detailsLoading) return
+    setDetailsLoading(true)
+    await Promise.all([fetchPaymentMethods(), fetchBankAccounts()])
+    setDetailsLoaded(true)
+    setDetailsLoading(false)
+  }
+
+  function handleExpandMov(movId: string) {
+    const opening = expandedMovId !== movId
+    setExpandedMovId(opening ? movId : null)
+    if (opening) loadPaymentDetails()
+  }
 
   async function handleCancel() {
     setCancelling(true)
@@ -353,34 +375,122 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
               {movements.map((mov) => {
                 const remaining = mov.amount - mov.paidAmount
                 const isPaid = mov.status === 'paid'
+                const isPartial = mov.status === 'partial'
+                const hasPaidDetails = isPaid || isPartial
+                const isExpanded = expandedMovId === mov.id
                 const movStatus = STATUS_COLORS[mov.status] ?? STATUS_COLORS.pending
                 const MovIcon = movStatus.icon
 
+                // Resolve names for payment details
+                const method = paymentMethods.find((m) => m.id === mov.paymentMethodId)
+                const methodType = paymentMethodTypes.find((t) => t.id === (method?.paymentMethodTypeId ?? mov.paymentMethodTypeId))
+                const account = bankAccounts.find((a) => a.id === mov.bankAccountId)
+
                 return (
-                  <div key={mov.id} className="flex items-center gap-3 px-4 py-3">
-                    <span className="text-xs font-medium text-muted-foreground w-6 shrink-0">#{mov.installmentNumber}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium tabular-nums">{formatCurrency(mov.amount, currency)}</span>
-                        <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-medium capitalize ${movStatus.bg}`}>
-                          <MovIcon className="h-2 w-2" /> {mov.status}
-                        </span>
+                  <div key={mov.id}>
+                    <div
+                      className={`flex items-center gap-3 px-4 py-3 ${hasPaidDetails ? 'cursor-pointer hover:bg-muted/20 transition-colors' : ''}`}
+                      onClick={hasPaidDetails ? () => handleExpandMov(mov.id) : undefined}
+                    >
+                      <span className="text-xs font-medium text-muted-foreground w-6 shrink-0">#{mov.installmentNumber}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium tabular-nums">{formatCurrency(mov.amount, currency)}</span>
+                          <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-medium capitalize ${movStatus.bg}`}>
+                            <MovIcon className="h-2 w-2" /> {mov.status}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">
+                          Due: {mov.dueDate}
+                          {mov.paidAmount > 0 && !isPaid && ` · Paid: ${formatCurrency(mov.paidAmount, currency)}`}
+                          {mov.paymentDate && ` · Paid on: ${mov.paymentDate}`}
+                        </p>
                       </div>
-                      <p className="text-[10px] text-muted-foreground">
-                        Due: {mov.dueDate}
-                        {mov.paidAmount > 0 && !isPaid && ` · Paid: ${formatCurrency(mov.paidAmount, currency)}`}
-                        {mov.paymentDate && ` · Paid on: ${mov.paymentDate}`}
-                      </p>
+                      {!isPaid && !isPartial && invoice.status !== 'cancelled' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setPayingMovement(mov) }}
+                          className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+                        >
+                          <DollarSign className="h-3 w-3" />
+                          Pay {remaining < mov.amount ? formatCurrency(remaining, currency) : ''}
+                        </button>
+                      )}
+                      {isPartial && invoice.status !== 'cancelled' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setPayingMovement(mov) }}
+                          className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors shrink-0"
+                        >
+                          <DollarSign className="h-3 w-3" />
+                          Pay {formatCurrency(remaining, currency)}
+                        </button>
+                      )}
+                      {hasPaidDetails && (
+                        <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                      )}
                     </div>
-                    {!isPaid && invoice.status !== 'cancelled' && (
-                      <button
-                        onClick={() => setPayingMovement(mov)}
-                        className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
-                      >
-                        <DollarSign className="h-3 w-3" />
-                        Pay {remaining < mov.amount ? formatCurrency(remaining, currency) : ''}
-                      </button>
-                    )}
+
+                    {/* Expanded payment details */}
+                    <div
+                      className="grid transition-all duration-200 ease-out"
+                      style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
+                    >
+                      <div className="overflow-hidden">
+                        <div className="px-4 pb-2.5 pl-14">
+                          {detailsLoading ? (
+                            <div className="flex items-center gap-3">
+                              <div className="h-3 w-20 rounded bg-muted/40 animate-pulse" />
+                              <div className="h-3 w-16 rounded bg-muted/30 animate-pulse" />
+                              <div className="h-3 w-24 rounded bg-muted/40 animate-pulse" />
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[11px] text-muted-foreground">
+                              {methodType && (
+                                <>
+                                  <span className="font-medium text-foreground">{methodType.name}</span>
+                                  {method && <span>({method.name})</span>}
+                                </>
+                              )}
+                              {mov.cardBrand && (
+                                <>
+                                  {methodType && <span>&middot;</span>}
+                                  <CreditCard className="h-3 w-3 shrink-0" />
+                                  <span className="font-medium text-foreground">{mov.cardBrand}</span>
+                                  {mov.cardInstallments && <span>{mov.cardInstallments}x</span>}
+                                </>
+                              )}
+                              {account && (
+                                <>
+                                  {(methodType || mov.cardBrand) && <span>&middot;</span>}
+                                  <Building2 className="h-3 w-3 shrink-0" />
+                                  <span>{account.name}</span>
+                                </>
+                              )}
+                              {mov.paidAmount > 0 && (
+                                <>
+                                  <span>&middot;</span>
+                                  <span className="font-medium text-emerald-600">{formatCurrency(mov.paidAmount, currency)}</span>
+                                </>
+                              )}
+                              {mov.paymentDate && (
+                                <>
+                                  <span>&middot;</span>
+                                  <span>{mov.paymentDate}</span>
+                                </>
+                              )}
+                              {mov.notes && (
+                                <>
+                                  <span>&middot;</span>
+                                  <span className="italic truncate max-w-[200px]">{mov.notes}</span>
+                                </>
+                              )}
+                              {!methodType && !mov.cardBrand && !account && !mov.notes && (
+                                <span>No additional details recorded</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )
               })}
@@ -399,7 +509,7 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
             </div>
             {totalRemaining <= 0 && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
-                <Check className="h-3 w-3" /> Fully paid
+                <CircleCheckBig className="h-3 w-3" /> Fully paid
               </span>
             )}
           </div>

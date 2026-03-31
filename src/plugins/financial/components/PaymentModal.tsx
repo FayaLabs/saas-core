@@ -103,6 +103,7 @@ export function PaymentModal({ movement, onClose, onPaid }: {
         amount,
         paymentDate,
         paymentMethodId: paymentMethodId || undefined,
+        paymentMethodTypeId: selectedTypeId || undefined,
         bankAccountId: bankAccountId || undefined,
         cardBrand: needsCard ? cardBrand || undefined : undefined,
         cardInstallments: needsCardInstallments ? cardInstallments : undefined,

@@ -39,6 +39,43 @@ function getClients() {
   return { core: supabase.schema('saas_core'), pub: supabase }
 }
 
+let _overdueSwept = false
+
+/** Batch-mark overdue: pending/partial movements past due → 'overdue', then update parent invoices */
+async function sweepOverdue() {
+  if (_overdueSwept) return
+  _overdueSwept = true
+  try {
+    const { core, pub } = getClients()
+    const today = new Date().toISOString().slice(0, 10)
+
+    // Mark overdue movements
+    const { data: overdueMovs } = await pub.from('financial_movements')
+      .update({ status: 'overdue' })
+      .in('status', ['pending', 'partial'])
+      .lt('due_date', today)
+      .select('invoice_id')
+
+    // Collect unique invoice IDs and update their status
+    if (overdueMovs && overdueMovs.length > 0) {
+      const invoiceIds = [...new Set(overdueMovs.map((m: any) => m.invoice_id).filter(Boolean))]
+      for (const invId of invoiceIds) {
+        const { data: allMovs } = await pub.from('financial_movements')
+          .select('status')
+          .eq('invoice_id', invId)
+          .eq('movement_kind', 'bill')
+        const movs = allMovs ?? []
+        const hasOverdue = movs.some((m: any) => m.status === 'overdue')
+        const allPaid = movs.every((m: any) => m.status === 'paid')
+        const invoiceStatus = allPaid ? 'paid' : hasOverdue ? 'overdue' : 'open'
+        await core.from('orders').update({ status: invoiceStatus }).eq('id', invId)
+      }
+    }
+  } catch {
+    // Non-critical — don't block the UI
+  }
+}
+
 export function createSupabaseFinancialProvider(): FinancialDataProvider {
   const provider: FinancialDataProvider = {
     // --- Invoices (saas_core.orders kind='invoice_*') ---
@@ -215,6 +252,7 @@ export function createSupabaseFinancialProvider(): FinancialDataProvider {
       const newStatus = newPaid >= mov.amount ? 'paid' : 'partial'
       const updates: any = { paid_amount: newPaid, status: newStatus, payment_date: input.paymentDate }
       if (input.paymentMethodId) updates.payment_method_id = input.paymentMethodId
+      if (input.paymentMethodTypeId) updates.payment_method_type_id = input.paymentMethodTypeId
       if (input.bankAccountId) updates.bank_account_id = input.bankAccountId
       if (input.cashSessionId) updates.cash_session_id = input.cashSessionId
       if (input.cardBrand) updates.card_brand = input.cardBrand
@@ -371,27 +409,29 @@ export function createSupabaseFinancialProvider(): FinancialDataProvider {
 
     // --- Summary ---
     async getSummary(dateRange?: DateRange): Promise<FinancialSummary> {
+      // Sweep overdue on first load (background, non-blocking)
+      sweepOverdue()
       const { core, pub } = getClients()
       const { data: accounts } = await pub.from('bank_accounts').select('current_balance').eq('is_active', true)
       const totalBalance = (accounts ?? []).reduce((s: number, a: any) => s + (a.current_balance ?? 0), 0)
 
       const { data: movs } = await pub.from('financial_movements').select('direction, movement_kind, amount, paid_amount, status, due_date, payment_date')
       const allMovs = movs ?? []
-      const pending = allMovs.filter((m: any) => ['pending', 'partial'].includes(m.status))
+      const unpaid = allMovs.filter((m: any) => ['pending', 'partial', 'overdue'].includes(m.status))
       const today = new Date().toISOString().slice(0, 10)
 
-      const pendingCredit = pending.filter((m: any) => m.direction === 'credit')
-      const pendingDebit = pending.filter((m: any) => m.direction === 'debit')
-      const overdueCredit = pendingCredit.filter((m: any) => m.due_date < today)
-      const overdueDebit = pendingDebit.filter((m: any) => m.due_date < today)
+      const unpaidCredit = unpaid.filter((m: any) => m.direction === 'credit')
+      const unpaidDebit = unpaid.filter((m: any) => m.direction === 'debit')
+      const overdueCredit = unpaidCredit.filter((m: any) => m.status === 'overdue' || m.due_date < today)
+      const overdueDebit = unpaidDebit.filter((m: any) => m.status === 'overdue' || m.due_date < today)
 
       const monthStart = today.slice(0, 7) + '-01'
       const monthPaid = allMovs.filter((m: any) => m.status === 'paid' && m.payment_date >= monthStart)
 
       return {
         totalBalance,
-        totalReceivable: pendingCredit.reduce((s: number, m: any) => s + m.amount - m.paid_amount, 0),
-        totalPayable: pendingDebit.reduce((s: number, m: any) => s + m.amount - m.paid_amount, 0),
+        totalReceivable: unpaidCredit.reduce((s: number, m: any) => s + m.amount - m.paid_amount, 0),
+        totalPayable: unpaidDebit.reduce((s: number, m: any) => s + m.amount - m.paid_amount, 0),
         monthlyInflow: monthPaid.filter((m: any) => m.direction === 'credit').reduce((s: number, m: any) => s + m.paid_amount, 0),
         monthlyOutflow: monthPaid.filter((m: any) => m.direction === 'debit').reduce((s: number, m: any) => s + m.paid_amount, 0),
         overdueReceivableCount: overdueCredit.length,

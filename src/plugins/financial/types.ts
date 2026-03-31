@@ -251,6 +251,7 @@ export interface PayMovementInput {
   amount: number
   paymentDate: string
   paymentMethodId?: string
+  paymentMethodTypeId?: string
   bankAccountId?: string
   cashSessionId?: string
   cardBrand?: string
