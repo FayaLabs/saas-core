@@ -105,6 +105,14 @@ const saasPreset: Partial<Config> = {
           from: { opacity: '0', transform: 'translateY(6px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
+        'slide-in-from-right': {
+          from: { transform: 'translateX(100%)' },
+          to: { transform: 'translateX(0)' },
+        },
+        'slide-out-to-right': {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 200ms ease-out',
@@ -114,6 +122,8 @@ const saasPreset: Partial<Config> = {
         'slide-in-from-top': 'slide-in-from-top 200ms ease-out',
         'slide-in-from-bottom': 'slide-in-from-bottom 200ms ease-out',
         'slide-out-to-top': 'slide-out-to-top 150ms ease-in',
+        'slide-in-from-right': 'slide-in-from-right 250ms cubic-bezier(0.16, 1, 0.3, 1)',
+        'slide-out-to-right': 'slide-out-to-right 200ms ease-in',
         'page-in': 'page-in 250ms ease-out',
       },
     },

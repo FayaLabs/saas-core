@@ -7,3 +7,5 @@
 - [ ] i18n translations
 - [ ] AI Agent Chat
 - [ ] Migration (initial, for plugins, and for updates)
+- [ ] Plugins package segregation from saas-core(agenda + fullcalendar)
+- [ ]

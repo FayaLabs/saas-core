@@ -3,6 +3,7 @@ import { Search, Plus, FileText, CircleDashed, CircleEllipsis, CircleCheckBig, C
 import { useFinancialConfig, useFinancialStore, formatCurrency } from '../FinancialContext'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { TableSkeleton } from '../../../components/ui/skeleton'
+import { PersonLink } from '../../../components/shared/PersonLink'
 import type { TransactionDirection, InvoiceStatus } from '../types'
 
 const STATUS_OPTIONS: { value: InvoiceStatus; label: string; color: string; icon: React.ElementType }[] = [
@@ -127,8 +128,12 @@ export function InvoiceListView({ direction, onNew, onEdit }: {
               {filtered.map((inv) => (
                 <tr key={inv.id} onClick={() => onEdit?.(inv.id)} className="border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer">
                   <td className="px-4 py-3 text-muted-foreground text-xs">{inv.invoiceDate}</td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium">{inv.contactName || '—'}</p>
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    {inv.contactName ? (
+                      <PersonLink personId={inv.contactId} name={inv.contactName} size="sm" className="text-sm font-medium" />
+                    ) : (
+                      <p className="font-medium">—</p>
+                    )}
                     {inv.itemsSummary && <p className="text-[10px] text-muted-foreground truncate max-w-[250px]">{inv.itemsSummary}</p>}
                   </td>
                   <td className={`px-4 py-3 text-right font-medium ${inv.status === 'cancelled' ? 'line-through text-muted-foreground' : ''}`}>{formatCurrency(inv.totalAmount, currency)}</td>

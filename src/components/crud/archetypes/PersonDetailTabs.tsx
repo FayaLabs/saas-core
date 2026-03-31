@@ -1,7 +1,8 @@
 import React from 'react'
 import { Shield, Clock, FileText, CalendarDays } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card'
+import { Card, CardContent } from '../../ui/card'
 import { Badge } from '../../ui/badge'
+import { ScheduleEditor } from './ScheduleEditor'
 
 function ComingSoon({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
   return (
@@ -48,19 +49,22 @@ export function DocumentsTab() {
   )
 }
 
-export function ScheduleTab() {
-  return (
-    <ComingSoon
-      icon={CalendarDays}
-      title="Schedule"
-      description="View and manage appointments, shifts, and availability for this person."
-    />
-  )
+export function ScheduleTab({ item }: { item: any }) {
+  if (!item?.id) {
+    return (
+      <ComingSoon
+        icon={CalendarDays}
+        title="Schedule"
+        description="View and manage appointments, shifts, and availability for this person."
+      />
+    )
+  }
+  return <ScheduleEditor assigneeId={item.id} />
 }
 
 export const PERSON_DETAIL_TABS = [
-  { id: 'access', label: 'Access', component: AccessTab },
-  { id: 'schedule', label: 'Schedule', component: ScheduleTab },
+  { id: 'access', label: 'Access', component: AccessTab, visibleFor: ['staff'] },
+  { id: 'schedule', label: 'Schedule', component: ScheduleTab, visibleFor: ['staff'] },
   { id: 'documents', label: 'Documents', component: DocumentsTab },
   { id: 'activity', label: 'Activity', component: ActivityTab },
 ]

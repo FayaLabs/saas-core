@@ -14,6 +14,8 @@ import { ProductFormView } from './views/ProductFormView'
 import { StockMovementView } from './views/StockMovementView'
 import { MovementHistoryView } from './views/MovementHistoryView'
 import { RecipesView } from './views/RecipesView'
+import { RecipeFormView } from './views/RecipeFormView'
+import { RecipeDetailView } from './views/RecipeDetailView'
 import { PluginSettingsPanel } from '../../components/plugins/PluginSettingsPanel'
 import { InventoryGeneralSettings } from './components/InventoryGeneralSettings'
 import { InventoryOnboarding } from './components/InventoryOnboarding'
@@ -42,7 +44,7 @@ function buildNav(config: ResolvedInventoryConfig, view: string, navigate: (v: s
     items.push({
       id: 'recipes', label: config.labels.recipes, icon: 'BookOpen',
       children: [
-        { id: 'recipes-list', label: config.labels.recipesList, active: view === 'recipes-list', onClick: () => navigate('recipes-list') },
+        { id: 'recipes-list', label: config.labels.recipesList, active: view === 'recipes-list' || view.startsWith('recipes-detail:'), onClick: () => navigate('recipes-list') },
         { id: 'recipes-new', label: config.labels.recipesNew, active: view === 'recipes-new', onClick: () => navigate('recipes-new') },
       ],
     })
@@ -61,7 +63,7 @@ export function InventoryPage({ config, provider, store, registries }: {
     dashboard: 0,
     'products-list': 0, 'products-new': 1,
     'stock-entry': 1, 'stock-exit': 1, 'stock-history': 0,
-    'recipes-list': 0, 'recipes-new': 1,
+    'recipes-list': 0, 'recipes-new': 1, 'recipes-detail': 1,
     settings: 1,
   }, 'dashboard')
 
@@ -151,8 +153,15 @@ export function InventoryPage({ config, provider, store, registries }: {
       case 'stock-entry': return <StockMovementView defaultType="entry" onSaved={() => navigate('stock-history')} />
       case 'stock-exit': return <StockMovementView defaultType="exit" onSaved={() => navigate('stock-history')} />
       case 'stock-history': return <MovementHistoryView onViewDetail={(id) => navigate(`stock-detail:${id}`)} />
-      case 'recipes-list': return <RecipesView />
-      default: return <DashboardView />
+      case 'recipes-list': return <RecipesView onNew={() => navigate('recipes-new')} onView={(id) => navigate(`recipes-detail:${id}`)} />
+      case 'recipes-new': return <RecipeFormView onSaved={(id) => id ? navigate(`recipes-detail:${id}`) : navigate('recipes-list')} />
+      default: {
+        if (view.startsWith('recipes-detail:')) {
+          const id = view.slice('recipes-detail:'.length)
+          return <RecipeDetailView recipeId={id} onBack={() => navigate('recipes-list')} />
+        }
+        return <DashboardView />
+      }
     }
   }
 
@@ -168,7 +177,7 @@ export function InventoryPage({ config, provider, store, registries }: {
             {quickActions.length > 0 && <QuickActionsButton actions={quickActions} />}
             {registries && registries.length > 0 && (
               <button
-                onClick={() => navigate('settings', '/inventory/settings/' + (registries[0]?.id ?? ''))}
+                onClick={() => { window.location.hash = '/settings/inventory' }}
                 className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors"
                 title="Inventory Settings"
               >

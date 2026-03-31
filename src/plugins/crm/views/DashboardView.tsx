@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Users, TrendingUp, Target, Clock, AlertTriangle, ArrowRight, Trophy, BarChart3 } from 'lucide-react'
+import { Users, TrendingUp, Target, Clock, AlertTriangle, Trophy, BarChart3, FileText } from 'lucide-react'
 import { useCrmConfig, useCrmStore, formatCurrency } from '../CrmContext'
 
 // ---------------------------------------------------------------------------
@@ -24,7 +24,7 @@ function StatCard({ label, value, subtitle, icon: Icon, color }: {
 }
 
 // ---------------------------------------------------------------------------
-// Visual funnel — actual trapezoid shape
+// Sales funnel — horizontal bar chart
 // ---------------------------------------------------------------------------
 
 function SalesFunnel() {
@@ -34,91 +34,59 @@ function SalesFunnel() {
   if (funnel.length === 0) {
     return (
       <div className="rounded-lg border bg-card p-5">
-        <h3 className="text-sm font-semibold mb-3">Sales Funnel</h3>
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="w-24 h-20 mb-3" style={{ clipPath: 'polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%)' }}>
-            <div className="w-full h-full bg-muted/30 rounded" />
-          </div>
+        <h3 className="text-sm font-semibold mb-4">Pipeline Overview</h3>
+        <div className="flex flex-col items-center justify-center py-10">
+          <BarChart3 className="h-8 w-8 text-muted-foreground/20 mb-2" />
           <p className="text-xs text-muted-foreground">No pipeline data yet</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">Create your first deal to see the funnel</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5">Create your first lead to see the funnel</p>
         </div>
       </div>
     )
   }
 
-  const total = funnel.length
-  const maxValue = Math.max(...funnel.map((s) => s.dealCount), 1)
+  const maxCount = Math.max(...funnel.map((s) => s.dealCount), 1)
 
   return (
     <div className="rounded-lg border bg-card p-5">
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-sm font-semibold">Sales Funnel</h3>
+        <h3 className="text-sm font-semibold">Pipeline Overview</h3>
         <span className="text-[10px] text-muted-foreground">{funnel.reduce((s, f) => s + f.dealCount, 0)} total deals</span>
       </div>
 
-      <div className="flex flex-col items-center gap-1">
-        {funnel.map((stage, i) => {
-          // Funnel width: first stage = 100%, last = 30%, linear interpolation
-          const widthPercent = 100 - ((i / Math.max(total - 1, 1)) * 70)
-          const barWidth = Math.max((stage.dealCount / maxValue) * 100, 8)
-
+      <div className="space-y-2.5">
+        {funnel.map((stage) => {
+          const widthPercent = Math.max((stage.dealCount / maxCount) * 100, 4)
           return (
-            <div key={stage.stageId} className="w-full" style={{ maxWidth: `${widthPercent}%` }}>
-              <div
-                className="relative rounded-md overflow-hidden transition-all"
-                style={{ backgroundColor: stage.stageColor + '18' }}
-              >
-                {/* Filled portion */}
+            <div key={stage.stageId} className="flex items-center gap-3">
+              <div className="w-24 shrink-0 flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: stage.stageColor }} />
+                <span className="text-xs text-muted-foreground truncate">{stage.stageName}</span>
+              </div>
+              <div className="flex-1 h-7 bg-muted/30 rounded-md overflow-hidden">
                 <div
-                  className="h-10 rounded-md flex items-center justify-between px-3 transition-all"
-                  style={{
-                    backgroundColor: stage.stageColor + '30',
-                    width: '100%',
-                  }}
+                  className="h-full rounded-md flex items-center px-2.5 transition-all"
+                  style={{ width: `${widthPercent}%`, backgroundColor: stage.stageColor + '30' }}
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: stage.stageColor }} />
-                    <span className="text-xs font-medium truncate">{stage.stageName}</span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs font-bold">{stage.dealCount}</span>
-                    {stage.totalValue > 0 && (
-                      <span className="text-[10px] text-muted-foreground hidden sm:inline">{formatCurrency(stage.totalValue, currency)}</span>
-                    )}
-                  </div>
+                  <span className="text-[11px] font-bold whitespace-nowrap" style={{ color: stage.stageColor }}>
+                    {stage.dealCount}
+                  </span>
                 </div>
               </div>
-
-              {/* Connector arrow */}
-              {i < total - 1 && (
-                <div className="flex justify-center py-0.5">
-                  <div className="h-1.5 w-px bg-muted" />
-                </div>
+              {stage.totalValue > 0 && (
+                <span className="text-[10px] text-muted-foreground w-20 text-right shrink-0 hidden sm:block">
+                  {formatCurrency(stage.totalValue, currency)}
+                </span>
               )}
             </div>
           )
         })}
       </div>
-
-      {/* Conversion summary */}
-      {funnel.length >= 2 && (
-        <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t">
-          <span className="text-[10px] text-muted-foreground">{funnel[0].stageName}</span>
-          <ArrowRight className="h-3 w-3 text-muted-foreground" />
-          <span className="text-[10px] text-muted-foreground">{funnel[funnel.length - 1].stageName}</span>
-          <span className="text-[10px] font-semibold ml-1">
-            {funnel[funnel.length - 1].dealCount > 0 && funnel[0].dealCount > 0
-              ? `${((funnel[funnel.length - 1].dealCount / funnel[0].dealCount) * 100).toFixed(1)}%`
-              : '—'}
-          </span>
-        </div>
-      )}
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Performance metrics card
+// Performance metrics
 // ---------------------------------------------------------------------------
 
 function PerformanceMetrics() {
@@ -126,7 +94,7 @@ function PerformanceMetrics() {
   const summary = useCrmStore((s) => s.summary)
 
   const metrics = [
-    { label: 'Deals won this month', value: String(summary?.wonDealsThisMonth ?? 0), highlight: true },
+    { label: 'Deals won this month', value: String(summary?.wonDealsThisMonth ?? 0) },
     { label: 'Revenue won', value: formatCurrency(summary?.wonDealsValueThisMonth ?? 0, currency), color: 'text-emerald-600 dark:text-emerald-400' },
     { label: 'Avg deal value', value: formatCurrency(summary?.averageDealValue ?? 0, currency) },
     { label: 'Conversion rate', value: `${(summary?.conversionRate ?? 0).toFixed(1)}%` },
@@ -151,7 +119,7 @@ function PerformanceMetrics() {
 }
 
 // ---------------------------------------------------------------------------
-// Pipeline value by stage — horizontal stacked bar
+// Pipeline value bar
 // ---------------------------------------------------------------------------
 
 function PipelineValueBar() {
@@ -163,7 +131,7 @@ function PipelineValueBar() {
     <div className="rounded-lg border bg-card p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          <Target className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold">Pipeline Value</h3>
         </div>
         <span className="text-sm font-bold">{formatCurrency(totalValue, currency)}</span>
@@ -171,7 +139,7 @@ function PipelineValueBar() {
 
       {totalValue > 0 ? (
         <>
-          <div className="flex h-4 rounded-full overflow-hidden gap-0.5">
+          <div className="flex h-3 rounded-full overflow-hidden gap-0.5">
             {funnel.filter((s) => s.totalValue > 0).map((stage) => (
               <div
                 key={stage.stageId}
@@ -196,7 +164,7 @@ function PipelineValueBar() {
           </div>
         </>
       ) : (
-        <div className="h-4 rounded-full bg-muted/30" />
+        <div className="h-3 rounded-full bg-muted/30" />
       )}
     </div>
   )
@@ -212,6 +180,14 @@ function RecentLeads() {
 
   useEffect(() => { fetchLeads({ pageSize: 5 }) }, [])
 
+  const STATUS_COLORS: Record<string, string> = {
+    new: 'bg-blue-500',
+    contacted: 'bg-violet-500',
+    qualified: 'bg-emerald-500',
+    converted: 'bg-amber-500',
+    lost: 'bg-red-500',
+  }
+
   return (
     <div className="rounded-lg border bg-card p-5">
       <div className="flex items-center justify-between mb-3">
@@ -221,21 +197,73 @@ function RecentLeads() {
       {leads.length === 0 ? (
         <p className="text-xs text-muted-foreground text-center py-6">No leads yet. Capture your first lead to get started.</p>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {leads.slice(0, 5).map((lead) => (
-            <div key={lead.id} className="flex items-center justify-between py-2 border-b last:border-0">
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{lead.name}</p>
-                <p className="text-[10px] text-muted-foreground">{lead.sourceName || lead.email || lead.phone || 'No contact info'}</p>
+            <div key={lead.id} className="flex items-center gap-3 py-2 border-b last:border-0">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
+                {lead.name.charAt(0).toUpperCase()}
               </div>
-              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-medium capitalize ${
-                lead.status === 'new' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400' :
-                lead.status === 'qualified' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
-                lead.status === 'converted' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
-                'bg-muted text-muted-foreground'
-              }`}>
-                {lead.status}
-              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{lead.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{lead.email || lead.phone || lead.sourceName || '—'}</p>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <div className={`h-1.5 w-1.5 rounded-full ${STATUS_COLORS[lead.status] ?? 'bg-muted-foreground/40'}`} />
+                <span className="text-[10px] text-muted-foreground capitalize">{lead.status}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Recent quotes
+// ---------------------------------------------------------------------------
+
+function RecentQuotes() {
+  const { currency } = useCrmConfig()
+  const quotes = useCrmStore((s) => s.quotes)
+  const fetchQuotes = useCrmStore((s) => s.fetchQuotes)
+
+  useEffect(() => { fetchQuotes({ pageSize: 5 }) }, [])
+
+  const STATUS_COLORS: Record<string, string> = {
+    draft: 'bg-gray-400',
+    sent: 'bg-blue-500',
+    approved: 'bg-emerald-500',
+    rejected: 'bg-red-500',
+    expired: 'bg-amber-500',
+  }
+
+  return (
+    <div className="rounded-lg border bg-card p-5">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-sm font-semibold">Recent Quotes</h3>
+        </div>
+        <span className="text-[10px] text-muted-foreground">{quotes.length} quotes</span>
+      </div>
+      {quotes.length === 0 ? (
+        <p className="text-xs text-muted-foreground text-center py-6">No quotes yet.</p>
+      ) : (
+        <div className="space-y-0.5">
+          {quotes.slice(0, 5).map((q) => (
+            <div key={q.id} className="flex items-center gap-3 py-2 border-b last:border-0">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{q.quoteNumber}</span>
+                  <div className="flex items-center gap-1">
+                    <div className={`h-1.5 w-1.5 rounded-full ${STATUS_COLORS[q.status] ?? 'bg-muted-foreground/40'}`} />
+                    <span className="text-[10px] text-muted-foreground capitalize">{q.status}</span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-muted-foreground truncate">{q.contactName || '—'}</p>
+              </div>
+              <span className="text-xs font-semibold shrink-0">{formatCurrency(q.totalAmount, currency)}</span>
             </div>
           ))}
         </div>
@@ -311,10 +339,11 @@ export function DashboardView() {
         </div>
       </div>
 
-      {/* Pipeline value + Recent leads */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      {/* Pipeline value + Recent leads + Recent quotes */}
+      <div className="grid gap-4 lg:grid-cols-3">
         <PipelineValueBar />
         <RecentLeads />
+        <RecentQuotes />
       </div>
     </div>
   )

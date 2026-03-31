@@ -41,6 +41,11 @@ export interface CrmUIState {
   createDeal(input: CreateDealInput): Promise<Deal>
   createActivity(input: CreateActivityInput): Promise<Activity>
   createQuote(input: CreateQuoteInput): Promise<Quote>
+  updateQuote(id: string, input: CreateQuoteInput): Promise<Quote>
+  sendQuote(id: string): Promise<Quote>
+  approveQuote(id: string): Promise<Quote>
+  rejectQuote(id: string, reason: string): Promise<Quote>
+  expireQuote(id: string): Promise<Quote>
   moveDealToStage(dealId: string, stageId: string): Promise<void>
 }
 
@@ -184,36 +189,66 @@ export function createCrmStore(provider: CrmDataProvider): StoreApi<CrmUIState> 
 
     async createQuote(input) {
       try {
-        const quote = await provider.createQuote(input)
+        let { pipelines, stages } = get()
+        if (pipelines.length === 0) {
+          pipelines = await provider.getPipelines()
+          stages = pipelines.length > 0 ? await provider.getPipelineStages(pipelines[0].id) : []
+          set({ pipelines, stages })
+        }
+        const defaultPipeline = pipelines.find((p) => p.isDefault) ?? pipelines[0]
 
-        // Auto-create a deal in the "Proposal" stage so it appears in the pipeline
-        if (!input.dealId) {
-          let { pipelines, stages } = get()
-          if (pipelines.length === 0) {
-            pipelines = await provider.getPipelines()
-            stages = pipelines.length > 0 ? await provider.getPipelineStages(pipelines[0].id) : []
-            set({ pipelines, stages })
-          }
+        let leadId = input.leadId
+        let dealId = input.dealId
 
-          const defaultPipeline = pipelines.find((p) => p.isDefault) ?? pipelines[0]
-          const proposalStage = stages.find((s) => s.name === 'Proposal')
-            ?? stages.filter((s) => !s.isWon && !s.isLost).sort((a, b) => b.order - a.order)[0]
-          if (defaultPipeline && proposalStage) {
-            try {
-              await provider.createDeal({
-                title: input.contactName ? `Quote ${quote.quoteNumber} - ${input.contactName}` : `Quote ${quote.quoteNumber}`,
-                value: quote.totalAmount,
-                pipelineId: defaultPipeline.id,
-                stageId: proposalStage.id,
-                contactId: input.contactId,
-                contactName: input.contactName,
+        // Auto-create lead if no contact/lead provided (unknown client)
+        if (!leadId && !input.contactId && input.contactName) {
+          try {
+            const lead = await provider.createLead({ name: input.contactName })
+            leadId = lead.id
+            // Auto-create deal for the new lead
+            const firstStage = stages.filter((s) => !s.isWon && !s.isLost).sort((a, b) => a.order - b.order)[0]
+            if (defaultPipeline && firstStage) {
+              const deal = await provider.createDeal({
+                leadId: lead.id, title: lead.name, value: 0,
+                pipelineId: defaultPipeline.id, stageId: firstStage.id, contactName: lead.name,
               })
-            } catch {
-              // Deal creation failed — quote is still saved
+              dealId = deal.id
             }
+          } catch {
+            // Lead creation failed — continue without linking
           }
         }
 
+        // Resolve deal from lead if we have a lead but no deal
+        if (leadId && !dealId) {
+          try {
+            const existingDeal = await provider.getDealByLeadId(leadId)
+            if (existingDeal) dealId = existingDeal.id
+          } catch { /* ignore */ }
+        }
+
+        // Create the quote with proper links
+        const enrichedInput = { ...input, leadId, dealId }
+        const quote = await provider.createQuote(enrichedInput)
+
+        // If we have a deal, advance it to Proposal stage (only forward)
+        if (dealId && defaultPipeline) {
+          try {
+            const deal = await provider.getDealById(dealId)
+            if (deal && deal.status === 'open') {
+              const currentStage = stages.find((s) => s.id === deal.stageId)
+              const proposalStage = stages.find((s) => s.name === 'Proposal')
+                ?? stages.filter((s) => !s.isWon && !s.isLost).sort((a, b) => b.order - a.order)[0]
+              // Only advance forward
+              if (proposalStage && currentStage && proposalStage.order > currentStage.order) {
+                await provider.moveDealToStage(dealId, proposalStage.id)
+              }
+            }
+          } catch { /* ignore */ }
+        }
+
+        // Refresh local state
+        set((state) => ({ quotes: [quote, ...state.quotes], quotesTotal: state.quotesTotal + 1 }))
         toast.success('Quote created')
         return quote
       } catch (err: any) {
@@ -222,13 +257,96 @@ export function createCrmStore(provider: CrmDataProvider): StoreApi<CrmUIState> 
       }
     },
 
+    async updateQuote(id, input) {
+      try {
+        const quote = await provider.updateQuote(id, input)
+        set((state) => ({ quotes: state.quotes.map((q) => q.id === id ? quote : q) }))
+        toast.success('Quote updated')
+        return quote
+      } catch (err: any) {
+        toast.error('Failed to update quote', { description: err?.message })
+        throw err
+      }
+    },
+
+    async sendQuote(id) {
+      try {
+        const quote = await provider.sendQuote(id)
+        set((state) => ({ quotes: state.quotes.map((q) => q.id === id ? quote : q) }))
+        toast.success('Quote sent')
+        return quote
+      } catch (err: any) {
+        toast.error('Failed to send quote', { description: err?.message })
+        throw err
+      }
+    },
+
+    async approveQuote(id) {
+      try {
+        const quote = await provider.approveQuote(id)
+        // Full refresh — cascades touch deals, leads, quotes, creates invoice
+        const { pipelines } = get()
+        if (pipelines.length > 0) {
+          const [dealsByStage, summary, leadsResult, quotesResult] = await Promise.all([
+            provider.getDealsByStage(pipelines[0].id),
+            provider.getSummary(),
+            provider.getLeads({}),
+            provider.getQuotes({}),
+          ])
+          set({ dealsByStage, summary, leads: leadsResult.data, leadsTotal: leadsResult.total, quotes: quotesResult.data, quotesTotal: quotesResult.total })
+        }
+        toast.success('Quote approved — invoice created')
+        return quote
+      } catch (err: any) {
+        toast.error('Failed to approve quote', { description: err?.message })
+        throw err
+      }
+    },
+
+    async rejectQuote(id, reason) {
+      try {
+        const quote = await provider.rejectQuote(id, reason)
+        const { pipelines } = get()
+        if (pipelines.length > 0) {
+          const [dealsByStage, summary, leadsResult, quotesResult] = await Promise.all([
+            provider.getDealsByStage(pipelines[0].id),
+            provider.getSummary(),
+            provider.getLeads({}),
+            provider.getQuotes({}),
+          ])
+          set({ dealsByStage, summary, leads: leadsResult.data, leadsTotal: leadsResult.total, quotes: quotesResult.data, quotesTotal: quotesResult.total })
+        }
+        toast.success('Quote rejected')
+        return quote
+      } catch (err: any) {
+        toast.error('Failed to reject quote', { description: err?.message })
+        throw err
+      }
+    },
+
+    async expireQuote(id) {
+      try {
+        const quote = await provider.expireQuote(id)
+        set((state) => ({ quotes: state.quotes.map((q) => q.id === id ? quote : q) }))
+        toast.success('Quote expired')
+        return quote
+      } catch (err: any) {
+        toast.error('Failed to expire quote', { description: err?.message })
+        throw err
+      }
+    },
+
     async moveDealToStage(dealId, stageId) {
       await provider.moveDealToStage(dealId, stageId)
       const { pipelines } = get()
       if (pipelines.length > 0) {
-        const dealsByStage = await provider.getDealsByStage(pipelines[0].id)
-        const summary = await provider.getSummary()
-        set({ dealsByStage, summary })
+        const [dealsByStage, summary, leadsResult, quotesResult] = await Promise.all([
+          provider.getDealsByStage(pipelines[0].id),
+          provider.getSummary(),
+          provider.getLeads({}),
+          provider.getQuotes({}),
+        ])
+        set({ dealsByStage, summary, leads: leadsResult.data, leadsTotal: leadsResult.total, quotes: quotesResult.data, quotesTotal: quotesResult.total })
       }
     },
   }))

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Pencil, DollarSign, FileText, Calendar, Hash, User, X, MoreVertical, Ban, ChevronDown, CreditCard, Banknote, Building2, CircleDashed, CircleEllipsis, CircleCheckBig, CircleAlert } from 'lucide-react'
+import { PersonLink } from '../../../components/shared/PersonLink'
 import { useFinancialConfig, useFinancialStore, useFinancialProvider, formatCurrency } from '../FinancialContext'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { PaymentModal } from '../components/PaymentModal'
@@ -262,7 +263,11 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
               <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] text-muted-foreground">Contact</p>
-                <p className="text-xs font-medium truncate">{invoice.contactName || '—'}</p>
+                {invoice.contactName ? (
+                  <PersonLink personId={invoice.contactId} name={invoice.contactName} size="sm" />
+                ) : (
+                  <p className="text-xs font-medium truncate">—</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">

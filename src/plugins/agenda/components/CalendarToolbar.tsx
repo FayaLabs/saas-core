@@ -1,0 +1,88 @@
+import React from 'react'
+import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react'
+import { useAgendaConfig } from '../AgendaContext'
+
+interface CalendarToolbarProps {
+  title: string
+  onPrev: () => void
+  onNext: () => void
+  onToday: () => void
+  onViewChange: (view: string) => void
+  currentView: string
+  onNewAppointment: () => void
+}
+
+const VIEW_OPTIONS = [
+  { key: 'dayGridMonth', label: 'Month' },
+  { key: 'resourceTimeGridWeek', label: 'Week' },
+  { key: 'resourceTimeGridDay', label: 'Day' },
+  { key: 'listWeek', label: 'Agenda' },
+] as const
+
+export function CalendarToolbar({
+  title, onPrev, onNext, onToday, onViewChange, currentView, onNewAppointment,
+}: CalendarToolbarProps) {
+  const config = useAgendaConfig()
+
+  return (
+    <div className="flex items-center justify-between pb-4">
+      {/* Left: nav controls + date */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onPrev}
+            className="flex h-8 items-center justify-center rounded-lg border px-2 text-sm hover:bg-muted/50 transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Previous</span>
+          </button>
+          <button
+            onClick={onToday}
+            className="flex h-8 items-center justify-center rounded-lg border px-3 text-sm font-medium hover:bg-muted/50 transition-colors"
+          >
+            Today
+          </button>
+          <button
+            onClick={onNext}
+            className="flex h-8 items-center justify-center rounded-lg border px-2 text-sm hover:bg-muted/50 transition-colors"
+          >
+            <span className="hidden sm:inline">Next</span>
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-lg font-semibold">{title}</h2>
+        </div>
+      </div>
+
+      {/* Right: view switcher + new */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center rounded-lg border p-0.5">
+          {VIEW_OPTIONS.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => onViewChange(opt.key)}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                currentView === opt.key
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={onNewAppointment}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">{config.labels.newAppointment}</span>
+        </button>
+      </div>
+    </div>
+  )
+}

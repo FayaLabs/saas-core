@@ -8,7 +8,6 @@ import type { EntityLookupMap, EntityLookup } from '../../types/entity-lookup'
 export interface CrmModules {
   quotes: boolean
   activities: boolean
-  contacts: boolean
   pipeline: boolean
 }
 

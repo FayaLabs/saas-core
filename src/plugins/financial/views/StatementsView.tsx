@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Receipt } from 'lucide-react'
 import { useFinancialConfig, useFinancialStore, formatCurrency } from '../FinancialContext'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
+import { DatePicker } from '../../../components/ui/date-picker'
 
 export function StatementsView() {
   const { currency, labels } = useFinancialConfig()
@@ -53,11 +54,11 @@ export function StatementsView() {
         </div>
         <div>
           <label className="text-[10px] font-medium text-muted-foreground uppercase">From</label>
-          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full mt-0.5 rounded-lg border bg-background px-3 py-2 text-sm" />
+          <DatePicker value={dateFrom} onChange={setDateFrom} className="mt-0.5" />
         </div>
         <div>
           <label className="text-[10px] font-medium text-muted-foreground uppercase">To</label>
-          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full mt-0.5 rounded-lg border bg-background px-3 py-2 text-sm" />
+          <DatePicker value={dateTo} onChange={setDateTo} className="mt-0.5" />
         </div>
       </div>
 

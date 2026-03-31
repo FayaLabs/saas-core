@@ -7,6 +7,7 @@ import type {
 } from '../types'
 import { getSupabaseClientOptional } from '../../../lib/supabase'
 import { useOrganizationStore } from '../../../stores/organization.store'
+import { deriveLeadStatus, deriveQuoteStatus } from '../cascade'
 
 function getTenantId(): string | undefined {
   return useOrganizationStore.getState().currentOrg?.id
@@ -27,8 +28,6 @@ function getClients() {
 }
 
 export function createSupabaseCrmProvider(): CrmDataProvider {
-  let quoteCounter = 1
-
   const provider: CrmDataProvider = {
     // --- Pipelines (public.pipelines + pipeline_stages) ---
     async getPipelines(): Promise<Pipeline[]> {
@@ -245,12 +244,40 @@ export function createSupabaseCrmProvider(): CrmDataProvider {
 
     async moveDealToStage(dealId: string, stageId: string): Promise<Deal> {
       const { core, pub } = getClients()
-      const { data: stage } = await pub.from('pipeline_stages').select('*').eq('id', stageId).single()
+      const { data: stageRow } = await pub.from('pipeline_stages').select('*').eq('id', stageId).single()
       await pub.from('deal_extensions').update({
-        stage_id: stageId, probability: stage?.probability ?? 0,
+        stage_id: stageId, probability: stageRow?.probability ?? 0,
       }).eq('order_id', dealId)
-      if (stage?.is_won) await core.from('orders').update({ status: 'won' }).eq('id', dealId)
-      if (stage?.is_lost) await core.from('orders').update({ status: 'lost' }).eq('id', dealId)
+      if (stageRow?.is_won) await core.from('orders').update({ status: 'won' }).eq('id', dealId)
+      if (stageRow?.is_lost) await core.from('orders').update({ status: 'lost' }).eq('id', dealId)
+
+      // Cascade to lead + quotes
+      if (stageRow) {
+        const typedStage: import('../types').PipelineStage = {
+          id: stageRow.id, pipelineId: stageRow.pipeline_id, name: stageRow.name,
+          order: stageRow.order, color: stageRow.color, probability: stageRow.probability,
+          isWon: stageRow.is_won, isLost: stageRow.is_lost,
+          tenantId: stageRow.tenant_id, createdAt: stageRow.created_at,
+        }
+        // Update lead status
+        const { data: ext } = await pub.from('deal_extensions').select('lead_id').eq('order_id', dealId).single()
+        if (ext?.lead_id) {
+          const newLeadStatus = deriveLeadStatus(typedStage)
+          await core.from('persons').update({ metadata: { status: newLeadStatus } }).eq('id', ext.lead_id)
+        }
+        // Update quote statuses
+        const { data: quotes } = await core.from('orders').select('id, status').eq('kind', 'quote')
+        for (const q of quotes ?? []) {
+          const meta = (q as any).metadata
+          if (meta?.dealId === dealId) {
+            const newStatus = deriveQuoteStatus(typedStage, q.status)
+            if (newStatus !== q.status) {
+              await core.from('orders').update({ status: newStatus }).eq('id', q.id)
+            }
+          }
+        }
+      }
+
       return (await provider.getDealById(dealId))!
     },
 
@@ -308,6 +335,7 @@ export function createSupabaseCrmProvider(): CrmDataProvider {
         validUntil: r.due_at?.slice(0, 10) ?? '', status: r.status ?? 'draft',
         totalAmount: r.total ?? 0, contactId: r.party_id,
         contactName: r.metadata?.contactName, observations: r.notes,
+        dealId: r.metadata?.dealId, leadId: r.metadata?.leadId, convertedInvoiceId: r.metadata?.convertedInvoiceId,
         items: [], tenantId: r.tenant_id, createdAt: r.created_at, updatedAt: r.updated_at,
       } as Quote))
       return { data: quotes, total: count ?? 0 }
@@ -323,6 +351,7 @@ export function createSupabaseCrmProvider(): CrmDataProvider {
         validUntil: order.due_at?.slice(0, 10) ?? '', status: order.status ?? 'draft',
         totalAmount: order.total ?? 0, contactId: order.party_id,
         contactName: order.metadata?.contactName, observations: order.notes,
+        dealId: order.metadata?.dealId, leadId: order.metadata?.leadId, convertedInvoiceId: order.metadata?.convertedInvoiceId,
         items: (items ?? []).map((i: any) => ({
           id: i.id, quoteId: id, itemKind: i.metadata?.itemKind ?? 'other',
           description: i.name ?? '', quantity: i.quantity ?? 1,
@@ -338,13 +367,17 @@ export function createSupabaseCrmProvider(): CrmDataProvider {
       const tenantId = getTenantId()
       const totalAmount = input.items.reduce((sum, i) => sum + i.totalAmount, 0)
 
+      // Derive next quote number from existing quotes
+      const { count } = await core.from('orders').select('*', { count: 'exact', head: true }).eq('kind', 'quote')
+      const nextNum = (count ?? 0) + 1
+
       const { data: order, error } = await core.from('orders').insert({
         tenant_id: tenantId, kind: 'quote', status: 'draft',
-        reference_number: `Q-${String(quoteCounter++).padStart(4, '0')}`,
+        reference_number: `Q-${String(nextNum).padStart(4, '0')}`,
         total: totalAmount, party_id: input.contactId,
         due_at: input.validUntil ? new Date(input.validUntil).toISOString() : null,
         notes: input.observations, currency: 'BRL',
-        metadata: { contactName: input.contactName, paymentConditions: input.paymentConditions },
+        metadata: { contactName: input.contactName, paymentConditions: input.paymentConditions, dealId: input.dealId, leadId: input.leadId },
       }).select().single()
       if (error) throw new Error(error.message)
 
@@ -364,23 +397,169 @@ export function createSupabaseCrmProvider(): CrmDataProvider {
         id: order.id, quoteNumber: order.reference_number,
         quoteDate: order.created_at?.slice(0, 10), validUntil: input.validUntil,
         status: 'draft', totalAmount, contactName: input.contactName,
+        dealId: input.dealId, leadId: input.leadId,
         items: [], tenantId: tenantId!,
         createdAt: order.created_at, updatedAt: order.updated_at,
       } as unknown as Quote
     },
 
-    async approveQuote(id: string): Promise<Quote> {
+    async updateQuote(id: string, input: CreateQuoteInput): Promise<Quote> {
       const { core } = getClients()
+      const totalAmount = input.items.reduce((sum, i) => sum + i.totalAmount, 0)
+
+      const { error } = await core.from('orders').update({
+        total: totalAmount, party_id: input.contactId,
+        due_at: input.validUntil ? new Date(input.validUntil).toISOString() : null,
+        notes: input.observations, metadata: { contactName: input.contactName, paymentConditions: input.paymentConditions, dealId: input.dealId, leadId: input.leadId },
+      }).eq('id', id)
+      if (error) throw new Error(error.message)
+
+      // Replace items: delete existing, insert new
+      await core.from('order_items').delete().eq('order_id', id)
+      if (input.items.length > 0) {
+        const { error: itemsError } = await core.from('order_items').insert(
+          input.items.map((item, i) => ({
+            order_id: id, name: item.description,
+            quantity: item.quantity, unit_price: item.unitPrice,
+            discount: item.discount, total: item.totalAmount,
+            sort_order: i, metadata: { itemKind: item.itemKind },
+          }))
+        )
+        if (itemsError) throw new Error(itemsError.message)
+      }
+
+      return (await provider.getQuoteById(id))!
+    },
+
+    async sendQuote(id: string): Promise<Quote> {
+      const { core } = getClients()
+      await core.from('orders').update({ status: 'sent' }).eq('id', id)
+      return (await provider.getQuoteById(id))!
+    },
+
+    async approveQuote(id: string): Promise<Quote> {
+      const { core, pub } = getClients()
+      const tenantId = getTenantId()
       const { error } = await core.from('orders').update({ status: 'approved' }).eq('id', id)
       if (error) throw new Error(error.message)
+
+      // Cascade: move deal to Won stage
+      const quote = await provider.getQuoteById(id)
+      if (quote?.dealId) {
+        const deal = await provider.getDealById(quote.dealId)
+        if (deal) {
+          const stages = await provider.getPipelineStages(deal.pipelineId)
+          const wonStage = stages.find((s) => s.isWon)
+          if (wonStage) await provider.moveDealToStage(deal.id, wonStage.id)
+        }
+      }
+
+      // Create invoice from quote (cross-plugin: writes to same orders table)
+      if (quote) {
+        const quoteOrder = await core.from('orders').select('*').eq('id', id).single()
+        const { data: quoteItems } = await core.from('order_items').select('*').eq('order_id', id).order('sort_order')
+        const itemsSummary = (quoteItems ?? []).map((i: any) => i.name).filter(Boolean).join(', ')
+
+        const { data: invoice } = await core.from('orders').insert({
+          tenant_id: tenantId, kind: 'invoice_receivable', status: 'open',
+          total: quote.totalAmount, party_id: quote.contactId,
+          due_at: quote.validUntil ? new Date(quote.validUntil).toISOString() : null,
+          currency: 'BRL',
+          metadata: { contactName: quote.contactName, itemsSummary, installmentCount: 1, sourceQuoteId: id },
+        }).select().single()
+
+        if (invoice) {
+          // Copy items
+          if (quoteItems && quoteItems.length > 0) {
+            await core.from('order_items').insert(
+              quoteItems.map((item: any, i: number) => ({
+                order_id: invoice.id, name: item.name,
+                quantity: item.quantity, unit_price: item.unit_price,
+                discount: item.discount ?? 0, total: item.total,
+                sort_order: i, metadata: item.metadata,
+              }))
+            )
+          }
+
+          // Create a single payment movement
+          await pub.from('financial_movements').insert({
+            tenant_id: tenantId, invoice_id: invoice.id,
+            direction: 'credit', movement_kind: 'bill',
+            amount: quote.totalAmount, paid_amount: 0, status: 'pending',
+            due_date: quote.validUntil ?? new Date().toISOString().slice(0, 10),
+            installment_number: 1,
+          })
+
+          // Update quote with invoice reference (merge metadata)
+          const existingMeta = (quoteOrder?.data as any)?.metadata ?? {}
+          await core.from('orders').update({
+            metadata: { ...existingMeta, convertedInvoiceId: invoice.id },
+          }).eq('id', id)
+        }
+
+        // Convert lead to client
+        if (quote.leadId) {
+          const { data: person } = await core.from('persons').select('metadata').eq('id', quote.leadId).single()
+          const existingMeta = (person as any)?.metadata ?? {}
+          await core.from('persons').update({
+            kind: 'client',
+            metadata: { ...existingMeta, convertedFromLead: true },
+          }).eq('id', quote.leadId)
+        }
+      }
+
       return (await provider.getQuoteById(id))!
     },
 
     async rejectQuote(id: string, reason: string): Promise<Quote> {
       const { core } = getClients()
-      const { error } = await core.from('orders').update({ status: 'rejected', metadata: { rejectionReason: reason } }).eq('id', id)
+      // Read existing metadata to merge
+      const { data: existing } = await core.from('orders').select('metadata').eq('id', id).single()
+      const existingMeta = (existing as any)?.metadata ?? {}
+      const { error } = await core.from('orders').update({
+        status: 'rejected',
+        metadata: { ...existingMeta, rejectionReason: reason },
+      }).eq('id', id)
       if (error) throw new Error(error.message)
+      // Cascade: move deal to Lost stage
+      const quote = await provider.getQuoteById(id)
+      if (quote?.dealId) {
+        const deal = await provider.getDealById(quote.dealId)
+        if (deal) {
+          const stages = await provider.getPipelineStages(deal.pipelineId)
+          const lostStage = stages.find((s) => s.isLost)
+          if (lostStage) await provider.moveDealToStage(deal.id, lostStage.id)
+        }
+      }
+      return quote!
+    },
+
+    async expireQuote(id: string): Promise<Quote> {
+      const { core } = getClients()
+      await core.from('orders').update({ status: 'expired' }).eq('id', id)
       return (await provider.getQuoteById(id))!
+    },
+
+    // Cross-entity lookups
+    async getQuotesByDealId(dealId: string): Promise<Quote[]> {
+      const { core } = getClients()
+      const { data } = await core.from('orders').select('*').eq('kind', 'quote')
+      return (data ?? [])
+        .filter((r: any) => r.metadata?.dealId === dealId)
+        .map((r: any) => ({
+          id: r.id, quoteNumber: r.reference_number ?? '', quoteDate: r.created_at?.slice(0, 10) ?? '',
+          validUntil: r.due_at?.slice(0, 10) ?? '', status: r.status ?? 'draft',
+          totalAmount: r.total ?? 0, contactId: r.party_id,
+          contactName: r.metadata?.contactName, dealId: r.metadata?.dealId, leadId: r.metadata?.leadId, convertedInvoiceId: r.metadata?.convertedInvoiceId,
+          items: [], tenantId: r.tenant_id, createdAt: r.created_at, updatedAt: r.updated_at,
+        } as Quote))
+    },
+
+    async getDealByLeadId(leadId: string): Promise<Deal | null> {
+      const { pub } = getClients()
+      const { data } = await pub.from('deal_extensions').select('order_id').eq('lead_id', leadId).limit(1)
+      if (!data || data.length === 0) return null
+      return provider.getDealById(data[0].order_id)
     },
 
     // --- Summary ---

@@ -254,7 +254,7 @@ export function FinancialPage({ config, provider, store, registries }: {
             {quickActions.length > 0 && <QuickActionsButton actions={quickActions} />}
             {registries && registries.length > 0 && (
               <button
-                onClick={() => navigate('settings', '/financial/settings/' + (registries[0]?.id ?? ''))}
+                onClick={() => { window.location.hash = '/settings/financial' }}
                 className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors"
                 title="Financial Settings"
               >

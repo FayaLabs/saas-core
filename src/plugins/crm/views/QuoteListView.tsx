@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { FileText } from 'lucide-react'
+import { FileText, Plus, Pencil } from 'lucide-react'
 import { useCrmStore, useCrmConfig, formatCurrency } from '../CrmContext'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { TableSkeleton } from '../../../components/ui/skeleton'
@@ -12,7 +12,7 @@ const STATUS_COLORS: Record<string, string> = {
   expired: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
 }
 
-export function QuoteListView({ onNew }: { onNew?: () => void }) {
+export function QuoteListView({ onNew, onEdit, onEditQuote }: { onNew?: () => void; onEdit?: (id: string) => void; onEditQuote?: (id: string) => void }) {
   const { currency } = useCrmConfig()
   const quotes = useCrmStore((s) => s.quotes)
   const quotesLoading = useCrmStore((s) => s.quotesLoading)
@@ -22,7 +22,15 @@ export function QuoteListView({ onNew }: { onNew?: () => void }) {
 
   return (
     <div className="space-y-4">
-      <SubpageHeader title="Quotes" subtitle={`${quotes.length} quotes`} />
+      <SubpageHeader
+        title="Quotes"
+        subtitle={`${quotes.length} quotes`}
+        actions={onNew && (
+          <button onClick={onNew} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+            <Plus className="h-3.5 w-3.5" /> New Quote
+          </button>
+        )}
+      />
       {quotesLoading ? (
         <TableSkeleton columns={5} />
       ) : quotes.length === 0 ? (
@@ -40,16 +48,26 @@ export function QuoteListView({ onNew }: { onNew?: () => void }) {
               <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Date</th>
               <th className="text-right font-medium text-muted-foreground px-4 py-2.5">Amount</th>
               <th className="text-center font-medium text-muted-foreground px-4 py-2.5">Status</th>
+              <th className="text-right font-medium text-muted-foreground px-4 py-2.5 w-16">Actions</th>
             </tr></thead>
             <tbody>
               {quotes.map((q) => (
-                <tr key={q.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer">
+                <tr key={q.id} onClick={() => onEdit?.(q.id)} className="border-b last:border-0 hover:bg-muted/20 transition-colors cursor-pointer">
                   <td className="px-4 py-3 text-xs text-muted-foreground">{q.quoteNumber}</td>
                   <td className="px-4 py-3 font-medium">{q.contactName || '—'}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{q.quoteDate}</td>
                   <td className="px-4 py-3 text-right font-medium">{formatCurrency(q.totalAmount, currency)}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${STATUS_COLORS[q.status] ?? 'bg-muted text-muted-foreground'}`}>{q.status}</span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onEditQuote?.(q.id) }}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      title="Edit quote"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
                   </td>
                 </tr>
               ))}

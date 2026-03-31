@@ -9,7 +9,7 @@ export function PayablesView({ intent, onNavigate }: {
   onNavigate: (view: string) => void
 }) {
   if (intent.mode === 'new') {
-    return <InvoiceFormView direction="debit" onSaved={() => onNavigate('payables-list')} />
+    return <InvoiceFormView direction="debit" onSaved={(id) => onNavigate(id ? `payables-detail:${id}` : 'payables-list')} />
   }
 
   if (intent.mode === 'edit' && intent.editId) {

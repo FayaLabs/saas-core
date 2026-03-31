@@ -18,8 +18,9 @@ import { LeadListView } from './views/LeadListView'
 import { LeadFormView } from './views/LeadFormView'
 import { QuoteListView } from './views/QuoteListView'
 import { QuoteFormView } from './views/QuoteFormView'
+import { QuoteDetailView } from './views/QuoteDetailView'
+import { LeadDetailView } from './views/LeadDetailView'
 import { ActivityListView } from './views/ActivityListView'
-import { ContactsView } from './views/ContactsView'
 
 function buildNav(config: ResolvedCrmConfig, view: string, navigate: (v: string) => void): ModuleNavItem[] {
   const items: ModuleNavItem[] = [
@@ -34,7 +35,7 @@ function buildNav(config: ResolvedCrmConfig, view: string, navigate: (v: string)
     id: 'leads', label: config.labels.leads, icon: 'UserPlus',
     children: [
       { id: 'leads-new', label: config.labels.leadsNew, active: view === 'leads-new', onClick: () => navigate('leads-new') },
-      { id: 'leads-list', label: config.labels.leadsList, active: view === 'leads-list', onClick: () => navigate('leads-list') },
+      { id: 'leads-list', label: config.labels.leadsList, active: view === 'leads-list' || view.startsWith('leads-detail:'), onClick: () => navigate('leads-list') },
     ],
   })
 
@@ -43,24 +44,13 @@ function buildNav(config: ResolvedCrmConfig, view: string, navigate: (v: string)
       id: 'quotes', label: config.labels.quotes, icon: 'FileText',
       children: [
         { id: 'quotes-new', label: config.labels.quotesNew, active: view === 'quotes-new', onClick: () => navigate('quotes-new') },
-        { id: 'quotes-list', label: config.labels.quotesList, active: view === 'quotes-list', onClick: () => navigate('quotes-list') },
+        { id: 'quotes-list', label: config.labels.quotesList, active: view === 'quotes-list' || view.startsWith('quotes-detail:') || view.startsWith('quotes-edit:'), onClick: () => navigate('quotes-list') },
       ],
     })
   }
 
   if (config.modules.activities) {
     items.push({ id: 'activities', label: config.labels.activities, icon: 'MessageCircle', active: view === 'activities', onClick: () => navigate('activities') })
-  }
-
-  if (config.modules.contacts) {
-    items.push({
-      id: 'contacts', label: config.labels.contacts, icon: 'Users',
-      children: [
-        { id: 'contacts-active', label: config.labels.contactsActive, active: view === 'contacts-active', onClick: () => navigate('contacts-active') },
-        { id: 'contacts-inactive', label: config.labels.contactsInactive, active: view === 'contacts-inactive', onClick: () => navigate('contacts-inactive') },
-        { id: 'contacts-vip', label: config.labels.contactsVip, active: view === 'contacts-vip', onClick: () => navigate('contacts-vip') },
-      ],
-    })
   }
 
   return items
@@ -74,17 +64,15 @@ export function CrmPage({ config, provider, store, registries }: {
 }) {
   const { view, animationClass, navigate } = useModuleNavigation('/sales', {
     dashboard: 0, pipeline: 0,
-    'leads-list': 0, 'leads-new': 1,
-    'quotes-list': 0, 'quotes-new': 1,
+    'leads-list': 0, 'leads-new': 1, 'leads-detail': 1,
+    'quotes-list': 0, 'quotes-new': 1, 'quotes-detail': 1, 'quotes-edit': 2,
     activities: 0,
-    'contacts-active': 0, 'contacts-inactive': 0, 'contacts-vip': 0,
     settings: 1,
   }, 'dashboard')
 
   const [onboardingComplete, setOnboardingComplete] = useState(() => {
     try { return localStorage.getItem('saas-core:crm-onboarded') === 'true' } catch { return false }
   })
-
   const isSettings = view === 'settings'
   const isSummary = view === 'dashboard'
   const nav = buildNav(config, view, navigate)
@@ -126,16 +114,31 @@ export function CrmPage({ config, provider, store, registries }: {
 
   function renderView() {
     switch (view) {
-      case 'pipeline': return <PipelineView />
-      case 'leads-list': return <LeadListView onNew={() => navigate('leads-new')} />
-      case 'leads-new': return <LeadFormView onSaved={() => navigate('leads-list')} />
-      case 'quotes-new': return <QuoteFormView onSaved={() => navigate('quotes-list')} />
-      case 'quotes-list': return <QuoteListView onNew={() => navigate('quotes-new')} />
+      case 'pipeline': return <PipelineView onViewLead={(id) => navigate(`leads-detail:${id}`)} onViewQuote={(id) => navigate(`quotes-detail:${id}`)} onAddLead={() => navigate('leads-new')} />
+      case 'leads-list': return <LeadListView onNew={() => navigate('leads-new')} onEdit={(id) => navigate(`leads-detail:${id}`)} />
+      case 'leads-new': return <LeadFormView onSaved={(id) => id ? navigate(`leads-detail:${id}`) : navigate('leads-list')} />
+      case 'quotes-new': {
+        const hashParams = new URLSearchParams(window.location.hash.split('?')[1] ?? '')
+        const lid = hashParams.get('leadId') ?? undefined
+        return <QuoteFormView leadId={lid} onSaved={() => lid ? navigate(`leads-detail:${lid}`) : navigate('quotes-list')} />
+      }
+      case 'quotes-list': return <QuoteListView onNew={() => navigate('quotes-new')} onEdit={(id) => navigate(`quotes-detail:${id}`)} onEditQuote={(id) => navigate(`quotes-edit:${id}`)} />
       case 'activities': return <ActivityListView />
-      case 'contacts-active': return <ContactsView segment="active" />
-      case 'contacts-inactive': return <ContactsView segment="inactive" />
-      case 'contacts-vip': return <ContactsView segment="vip" />
-      default: return <DashboardView />
+      default: {
+        if (view.startsWith('leads-detail:')) {
+          const id = view.slice('leads-detail:'.length)
+          return <LeadDetailView leadId={id} onBack={() => navigate('leads-list')} onCreateQuote={(lid) => navigate('quotes-new', `/sales/quotes/new?leadId=${lid}`)} onViewQuote={(qid) => navigate(`quotes-detail:${qid}`)} />
+        }
+        if (view.startsWith('quotes-detail:')) {
+          const id = view.slice('quotes-detail:'.length)
+          return <QuoteDetailView quoteId={id} onBack={() => navigate('quotes-list')} onEdit={() => navigate(`quotes-edit:${id}`)} />
+        }
+        if (view.startsWith('quotes-edit:')) {
+          const id = view.slice('quotes-edit:'.length)
+          return <QuoteFormView quoteId={id} onSaved={() => navigate(`quotes-detail:${id}`)} />
+        }
+        return <DashboardView />
+      }
     }
   }
 
@@ -151,7 +154,7 @@ export function CrmPage({ config, provider, store, registries }: {
             {quickActions.length > 0 && <QuickActionsButton actions={quickActions} />}
             {registries && registries.length > 0 && (
               <button
-                onClick={() => navigate('settings', '/sales/settings/' + (registries[0]?.id ?? ''))}
+                onClick={() => { window.location.hash = '/settings/crm' }}
                 className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors"
                 title="CRM Settings"
               >

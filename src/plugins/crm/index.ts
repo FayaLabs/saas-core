@@ -29,17 +29,12 @@ export interface CrmPluginLabels {
   quotesNew: string
   quotesList: string
   activities: string
-  contacts: string
-  contactsActive: string
-  contactsInactive: string
-  contactsVip: string
 }
 
 export interface CrmPluginOptions {
   modules?: {
     quotes?: boolean
     activities?: boolean
-    contacts?: boolean
     pipeline?: boolean
   }
   labels?: Partial<CrmPluginLabels>
@@ -76,10 +71,6 @@ const DEFAULT_LABELS: CrmPluginLabels = {
   quotesNew: 'New',
   quotesList: 'List',
   activities: 'Activities',
-  contacts: 'Contacts',
-  contactsActive: 'Active',
-  contactsInactive: 'Inactive',
-  contactsVip: 'VIP',
 }
 
 const DEFAULT_CURRENCY = { code: 'BRL', locale: 'pt-BR', symbol: 'R$' }
@@ -99,7 +90,6 @@ function resolveConfig(options?: CrmPluginOptions): ResolvedCrmConfig {
     modules: {
       quotes: options?.modules?.quotes !== false,
       activities: options?.modules?.activities !== false,
-      contacts: options?.modules?.contacts !== false,
       pipeline: options?.modules?.pipeline !== false,
     },
     labels: { ...DEFAULT_LABELS, ...options?.labels },
@@ -167,6 +157,7 @@ export function createCrmPlugin(options?: CrmPluginOptions): PluginManifest {
           { label: 'How many customers do we have?', verticalId: 'beauty' as const },
           { label: 'How many clients do we have?', verticalId: 'services' as const },
           { label: 'How many patients today?', verticalId: 'health' as const },
+          { label: 'Who are my top customers?' },
         ],
         permission: { feature: 'sales', action: 'read' as const },
       },
@@ -187,6 +178,8 @@ export function createCrmPlugin(options?: CrmPluginOptions): PluginManifest {
         permission: { feature: 'sales', action: 'read' as const },
         suggestions: [
           { label: 'Show new leads from this week' },
+          { label: 'Which leads need follow-up?' },
+          { label: "What's our conversion rate?" },
         ],
       },
     ],

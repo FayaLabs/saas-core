@@ -443,7 +443,6 @@ function buildSettingsTabs(
       { id: 'team', label: 'Team', icon: React.createElement(Users, { className: 'h-4 w-4' }), component: React.createElement(TeamTab) },
       { id: 'permissions', label: 'Permissions', icon: React.createElement(ShieldCheck, { className: 'h-4 w-4' }), component: React.createElement(PermissionProfilesTab) },
       { id: 'locations', label: 'Locations', icon: React.createElement(MapPin, { className: 'h-4 w-4' }), component: React.createElement(ConnectedLocationsOverview) },
-      { id: 'holidays', label: 'Holidays', icon: React.createElement(CalendarOff, { className: 'h-4 w-4' }), component: React.createElement(ConnectedHolidaysSettings) },
     )
   }
 

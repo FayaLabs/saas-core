@@ -4,6 +4,7 @@ import { useInventoryConfig, useInventoryStore, useInventoryProvider, formatCurr
 import { cn } from '../../../lib/cn'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { SearchSelect, type SearchSelectOption } from '../../../components/ui/search-select'
+import { DatePicker } from '../../../components/ui/date-picker'
 import type { MovementType, StockMovement, StockPosition } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -483,7 +484,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">Expiration Date</label>
-                    <input type="date" value={expirationDate} onChange={(e) => setExpirationDate(e.target.value)} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    <DatePicker value={expirationDate} onChange={setExpirationDate} className="mt-1" />
                   </div>
                 </>
               )}

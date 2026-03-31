@@ -20,6 +20,7 @@ export {
   ModalTrigger,
   ModalContent,
   ModalHeader,
+  ModalBody,
   ModalFooter,
   ModalTitle,
   ModalDescription,
@@ -57,11 +58,26 @@ export {
   CardDescription,
   CardContent,
 } from './card'
+export { ConfirmDialog } from './confirm-dialog'
+export { Popover, PopoverTrigger, PopoverAnchor, PopoverContent } from './popover'
 export { Checkbox } from './checkbox'
 export { Skeleton, TableSkeleton } from './skeleton'
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs'
 export { Separator } from './separator'
 export { DataTable, type DataTableProps } from './data-table'
+export {
+  Sheet,
+  SheetPortal,
+  SheetOverlay,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetBody,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from './sheet'
 export {
   BottomSheet,
   BottomSheetTrigger,
@@ -69,3 +85,5 @@ export {
   BottomSheetContent,
   BottomSheetOverlay,
 } from './bottom-sheet'
+export { DatePicker } from './date-picker'
+export { TimePicker } from './time-picker'

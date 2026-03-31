@@ -1,8 +1,31 @@
 import React, { useEffect } from 'react'
+import { BookOpen, Plus, Clock, Layers } from 'lucide-react'
 import { useInventoryStore } from '../InventoryContext'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 
-export function RecipesView() {
+function RecipeSkeleton() {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="rounded-lg border bg-card p-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-muted/40 animate-pulse" />
+            <div className="flex-1 space-y-1.5">
+              <div className="h-4 w-2/3 rounded bg-muted/40 animate-pulse" />
+              <div className="h-3 w-1/2 rounded bg-muted/30 animate-pulse" />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="h-3 w-20 rounded bg-muted/30 animate-pulse" />
+            <div className="h-3 w-16 rounded bg-muted/30 animate-pulse" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function RecipesView({ onNew, onView }: { onNew?: () => void; onView?: (id: string) => void }) {
   const recipes = useInventoryStore((s) => s.recipes)
   const recipesLoading = useInventoryStore((s) => s.recipesLoading)
   const fetchRecipes = useInventoryStore((s) => s.fetchRecipes)
@@ -11,24 +34,63 @@ export function RecipesView() {
 
   return (
     <div className="space-y-4">
-      <SubpageHeader title="Recipes" subtitle="Production formulas and technical specs" />
+      <SubpageHeader
+        title="Recipes"
+        subtitle={`${recipes.length} production formulas`}
+        actions={onNew && (
+          <button onClick={onNew} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+            <Plus className="h-3.5 w-3.5" /> New Recipe
+          </button>
+        )}
+      />
 
       {recipesLoading ? (
-        <div className="text-center py-12 text-sm text-muted-foreground">Loading...</div>
+        <RecipeSkeleton />
       ) : recipes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed border-muted">
+        <div className="flex flex-col items-center justify-center py-16 text-center rounded-lg border-2 border-dashed border-muted">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/30 mb-3">
+            <BookOpen className="h-5 w-5 text-muted-foreground/40" />
+          </div>
           <p className="text-sm text-muted-foreground">No recipes yet</p>
-          <p className="text-xs text-muted-foreground mt-1">Recipes define how to produce intermediate or final products</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5">Recipes define how to produce products from ingredients</p>
+          {onNew && <button onClick={onNew} className="text-xs text-primary hover:underline mt-2">Create your first recipe</button>}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {recipes.map((r) => (
-            <div key={r.id} className="rounded-lg border bg-card p-4 hover:bg-muted/20 transition-colors cursor-pointer">
-              <h3 className="text-sm font-semibold">{r.name}</h3>
-              {r.productName && <p className="text-xs text-muted-foreground mt-0.5">Produces: {r.productName}</p>}
-              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                {r.ingredientCount !== undefined && <span>{r.ingredientCount} ingredients</span>}
-                {r.preparationTimeMinutes && <span>{r.preparationTimeMinutes} min</span>}
+            <div
+              key={r.id}
+              onClick={() => onView?.(r.id)}
+              className="rounded-lg border bg-card p-4 hover:shadow-sm hover:border-primary/20 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 group-hover:bg-primary/15 transition-colors">
+                  <BookOpen className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold truncate">{r.name}</h3>
+                  {r.productName && <p className="text-[10px] text-muted-foreground truncate">Produces: {r.productName}</p>}
+                </div>
+              </div>
+              {r.description && (
+                <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{r.description}</p>
+              )}
+              <div className="flex items-center gap-4 mt-3 pt-2.5 border-t">
+                {r.ingredientCount != null && (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <Layers className="h-3 w-3" /> {r.ingredientCount} ingredients
+                  </span>
+                )}
+                {r.preparationTimeMinutes != null && (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <Clock className="h-3 w-3" /> {r.preparationTimeMinutes} min
+                  </span>
+                )}
+                {r.yieldQuantity > 0 && (
+                  <span className="text-[10px] text-muted-foreground ml-auto">
+                    Yield: {r.yieldQuantity}{r.yieldUnitName ? ` ${r.yieldUnitName}` : ''}
+                  </span>
+                )}
               </div>
             </div>
           ))}

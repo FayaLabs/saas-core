@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Save, Plus, Trash2, X, Check, ChevronDown } from 'lucide-react'
-import { useCrmConfig, useCrmStore, formatCurrency } from '../CrmContext'
+import { useCrmConfig, useCrmStore, useCrmProvider, formatCurrency } from '../CrmContext'
 import type { EntityLookupMap } from '../../../types/entity-lookup'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { SearchSelect, type SearchSelectOption } from '../../../components/ui/search-select'
 import { CurrencyInput } from '../../../components/ui/currency-input'
+import { DatePicker } from '../../../components/ui/date-picker'
 
 // ---------------------------------------------------------------------------
 // Status indicator pills
@@ -180,14 +181,21 @@ function AddItemStep({ itemTypes, onSelect, onCancel }: {
 }
 
 // ---------------------------------------------------------------------------
-// Quote form
+// Quote form (create + edit)
 // ---------------------------------------------------------------------------
 
-export function QuoteFormView({ onSaved }: { onSaved?: () => void }) {
+export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; leadId?: string; onSaved?: () => void }) {
   const config = useCrmConfig()
+  const provider = useCrmProvider()
   const { currency, itemTypes } = config
   const createQuote = useCrmStore((s) => s.createQuote)
+  const updateQuote = useCrmStore((s) => s.updateQuote)
 
+  const isEdit = !!quoteId
+  const [loadingExisting, setLoadingExisting] = useState(isEdit || !!leadId)
+
+  const [linkedLeadId, setLinkedLeadId] = useState(leadId ?? '')
+  const [linkedDealId, setLinkedDealId] = useState('')
   const [contactName, setContactName] = useState('')
   const [contactId, setContactId] = useState('')
   const [quoteDate, setQuoteDate] = useState(new Date().toISOString().slice(0, 10))
@@ -195,6 +203,7 @@ export function QuoteFormView({ onSaved }: { onSaved?: () => void }) {
     const d = new Date(); d.setDate(d.getDate() + 30)
     return d.toISOString().slice(0, 10)
   })
+  const [currentStatus, setCurrentStatus] = useState('draft')
   const [paymentConditions, setPaymentConditions] = useState('')
   const [observations, setObservations] = useState('')
   const [items, setItems] = useState<FormQuoteItem[]>([])
@@ -202,6 +211,50 @@ export function QuoteFormView({ onSaved }: { onSaved?: () => void }) {
   const [discountVisible, setDiscountVisible] = useState<Set<string>>(new Set())
   const [addingItem, setAddingItem] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Load existing quote for edit mode
+  useEffect(() => {
+    if (!quoteId) return
+    provider.getQuoteById(quoteId).then((q) => {
+      if (q) {
+        setContactName(q.contactName ?? '')
+        setContactId(q.contactId ?? '')
+        setLinkedLeadId(q.leadId ?? '')
+        setLinkedDealId(q.dealId ?? '')
+        setQuoteDate(q.quoteDate)
+        setValidUntil(q.validUntil)
+        setCurrentStatus(q.status)
+        setPaymentConditions(q.paymentConditions ?? '')
+        setObservations(q.observations ?? '')
+        setItems(q.items.map((it) => ({
+          _id: nextId(),
+          itemKind: it.itemKind,
+          description: it.description,
+          quantity: it.quantity,
+          unitPrice: it.unitPrice,
+          discount: it.discount,
+        })))
+        setDiscountVisible(new Set(q.items.filter((it) => it.discount > 0).map((_, i) => `qi${fid - q.items.length + i}`)))
+      }
+      setLoadingExisting(false)
+    })
+  }, [quoteId])
+
+  // Pre-fill from lead
+  useEffect(() => {
+    if (!leadId || quoteId) return
+    provider.getLeadById(leadId).then(async (lead) => {
+      if (lead) {
+        setContactName(lead.name)
+        setContactId(lead.id)
+        setLinkedLeadId(lead.id)
+        // Find existing deal for this lead
+        const deal = await provider.getDealByLeadId(lead.id)
+        if (deal) setLinkedDealId(deal.id)
+      }
+      setLoadingExisting(false)
+    })
+  }, [leadId])
 
   const totalAmount = items.reduce((sum, it) => sum + (it.quantity * it.unitPrice - it.discount), 0)
 
@@ -225,9 +278,11 @@ export function QuoteFormView({ onSaved }: { onSaved?: () => void }) {
     if (items.length === 0) return
     setSaving(true)
     try {
-      await createQuote({
+      const input = {
         contactId: contactId || undefined,
         contactName: contactName || undefined,
+        leadId: linkedLeadId || undefined,
+        dealId: linkedDealId || undefined,
         quoteDate,
         validUntil,
         paymentConditions: paymentConditions || undefined,
@@ -240,16 +295,49 @@ export function QuoteFormView({ onSaved }: { onSaved?: () => void }) {
           discount: it.discount,
           totalAmount: it.quantity * it.unitPrice - it.discount,
         })),
-      })
+      }
+      if (isEdit) {
+        await updateQuote(quoteId!, input)
+      } else {
+        await createQuote(input)
+      }
       onSaved?.()
     } finally { setSaving(false) }
+  }
+
+  if (loadingExisting) {
+    return (
+      <div className="space-y-5">
+        <SubpageHeader title="Edit Quote" subtitle="Loading..." onBack={onSaved} />
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="rounded-lg border bg-card p-5 space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="space-y-1.5">
+                <div className="h-3 w-16 rounded bg-muted/30 animate-pulse" />
+                <div className="h-9 w-full rounded-lg bg-muted/20 animate-pulse" />
+              </div>
+            ))}
+          </div>
+          <div className="lg:col-span-2 rounded-lg border bg-card p-5 space-y-3">
+            <div className="h-4 w-24 rounded bg-muted/30 animate-pulse" />
+            {[1, 2].map((i) => (
+              <div key={i} className="flex items-center gap-3 py-2">
+                <div className="h-4 w-4 rounded bg-muted/30 animate-pulse" />
+                <div className="h-4 flex-1 rounded bg-muted/20 animate-pulse" />
+                <div className="h-4 w-20 rounded bg-muted/30 animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-5">
       <SubpageHeader
-        title="New Quote"
-        subtitle="Create a proposal for your client"
+        title={isEdit ? 'Edit Quote' : 'New Quote'}
+        subtitle={isEdit ? 'Update this proposal' : 'Create a proposal for your client'}
         onBack={onSaved}
         actions={
           <div className="flex items-center gap-2">
@@ -259,7 +347,7 @@ export function QuoteFormView({ onSaved }: { onSaved?: () => void }) {
               </button>
             )}
             <button onClick={handleSave} disabled={items.length === 0 || saving} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
-              <Save className="h-3 w-3" /> {saving ? 'Saving...' : 'Save Quote'}
+              <Save className="h-3 w-3" /> {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Quote'}
             </button>
           </div>
         }
@@ -268,7 +356,7 @@ export function QuoteFormView({ onSaved }: { onSaved?: () => void }) {
       {/* Status indicator */}
       <div className="flex gap-2">
         {STATUSES.map((s) => (
-          <span key={s.value} className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${s.value === 'draft' ? s.color : 'bg-muted/30 text-muted-foreground/50'}`}>
+          <span key={s.value} className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${s.value === currentStatus ? s.color : 'bg-muted/30 text-muted-foreground/50'}`}>
             {s.label}
           </span>
         ))}
@@ -296,12 +384,12 @@ export function QuoteFormView({ onSaved }: { onSaved?: () => void }) {
 
           <div>
             <label className="text-xs font-medium text-muted-foreground">Quote Date</label>
-            <input type="date" value={quoteDate} onChange={(e) => setQuoteDate(e.target.value)} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            <DatePicker value={quoteDate} onChange={setQuoteDate} className="mt-1" />
           </div>
 
           <div>
             <label className="text-xs font-medium text-muted-foreground">Valid Until</label>
-            <input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            <DatePicker value={validUntil} onChange={setValidUntil} className="mt-1" />
           </div>
 
           <div>

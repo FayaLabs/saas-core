@@ -39,8 +39,8 @@ export interface SearchSelectProps {
   allowCreate?: boolean
   /** Label for create action (default: "Add") */
   createLabel?: string
-  /** Callback when create is clicked */
-  onCreate?: (query: string) => void
+  /** Callback when create is clicked. Can be async — component shows optimistic state while waiting. */
+  onCreate?: (query: string) => void | Promise<void>
   /** Custom render for each option */
   renderOption?: (option: SearchSelectOption) => React.ReactNode
   /** Additional className for the container */
@@ -74,6 +74,7 @@ export function SearchSelect({
   const [query, setQuery] = React.useState('')
   const [results, setResults] = React.useState<SearchSelectOption[]>([])
   const [loading, setLoading] = React.useState(false)
+  const [creating, setCreating] = React.useState(false)
   const [selectedLabel, setSelectedLabel] = React.useState(displayValue ?? '')
   const containerRef = React.useRef<HTMLDivElement>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
@@ -132,8 +133,22 @@ export function SearchSelect({
     setResults([])
   }
 
+  async function handleCreate(name: string) {
+    if (!onCreate) return
+    setCreating(true)
+    setSelectedLabel(name)
+    setOpen(false)
+    setQuery('')
+    setResults([])
+    try {
+      await onCreate(name)
+    } finally {
+      setCreating(false)
+    }
+  }
+
   function handleOpen() {
-    if (disabled) return
+    if (disabled || creating) return
     setOpen(true)
     setQuery('')
     setTimeout(() => inputRef.current?.focus(), 0)
@@ -187,9 +202,14 @@ export function SearchSelect({
             type="button"
             onClick={handleOpen}
             className="flex-1 text-left py-2 pr-3 text-sm outline-none"
-            disabled={disabled}
+            disabled={disabled || creating}
           >
-            {hasValue ? (
+            {creating ? (
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span className="font-medium text-foreground">{selectedLabel}</span>
+              </span>
+            ) : hasValue ? (
               <span className="font-medium">{selectedLabel}</span>
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>
@@ -218,7 +238,7 @@ export function SearchSelect({
               <p className="text-xs text-muted-foreground">No results for "{query}"</p>
               {allowCreate && onCreate && (
                 <button
-                  onClick={() => { onCreate(query); setOpen(false); setQuery('') }}
+                  onClick={() => handleCreate(query)}
                   className="mt-2 text-xs text-primary hover:underline"
                 >
                   + {createLabel} "{query}"
@@ -260,7 +280,7 @@ export function SearchSelect({
               ))}
               {allowCreate && onCreate && (
                 <button
-                  onClick={() => { onCreate(query); setOpen(false); setQuery('') }}
+                  onClick={() => handleCreate(query)}
                   className="w-full text-left px-3 py-2 text-xs text-primary hover:bg-muted/50 transition-colors border-t"
                 >
                   + {createLabel} "{query}"

@@ -152,6 +152,8 @@ export function createInventoryPlugin(options?: InventoryPluginOptions): PluginM
         suggestions: [
           { label: 'Which products are running low?' },
           { label: 'What ingredients need restocking?', verticalId: 'food' as const },
+          { label: 'Show me a stock summary' },
+          { label: 'What are my most used products?' },
         ],
         permission: { feature: 'inventory', action: 'read' as const },
       },

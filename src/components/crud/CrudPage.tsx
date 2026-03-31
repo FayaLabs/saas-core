@@ -165,10 +165,11 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
 
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasFetched = useRef(false)
   const currentOrgId = useOrganizationStore((s) => s.currentOrg?.id)
 
   useEffect(() => {
-    store.fetch()
+    store.fetch().then(() => { hasFetched.current = true })
   }, [currentOrgId])
 
   const navigateToList = () => { window.location.hash = basePath }
@@ -288,8 +289,8 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
       }, 350)
     }
 
-    const isEmpty = store.items.length === 0 && !store.loading
-    const isInitialLoad = store.loading && store.items.length === 0
+    const isInitialLoad = (!hasFetched.current || store.loading) && store.items.length === 0
+    const isEmpty = store.items.length === 0 && !store.loading && hasFetched.current
     const columns = fieldToColumns(entityDef.fields)
 
     content = (
@@ -325,7 +326,7 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
         {isInitialLoad ? (
           display === 'cards' ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: 2 }).map((_, i) => (
                 <Card key={i} className="overflow-hidden">
                   <div className="p-5 space-y-3">
                     <div className="h-5 w-2/3 animate-pulse rounded bg-muted" />
@@ -354,7 +355,7 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {Array.from({ length: 5 }).map((_, i) => (
+                    {Array.from({ length: 2 }).map((_, i) => (
                       <tr key={i}>
                         {columns.map((col, ci) => (
                           <td key={col.key} className="p-4">

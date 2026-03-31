@@ -177,21 +177,31 @@ function OverviewTab({
   )
 }
 
-function getArchetypeTabs(layout?: FormLayout): DetailTab[] {
+function getArchetypeTabs(layout?: FormLayout, archetypeKind?: string): DetailTab[] {
+  let tabs: DetailTab[]
   switch (layout) {
     case 'person':
-      return PERSON_DETAIL_TABS
+      tabs = PERSON_DETAIL_TABS
+      break
     case 'product':
-      return PRODUCT_DETAIL_TABS
+      tabs = PRODUCT_DETAIL_TABS
+      break
     case 'service':
-      return SERVICE_DETAIL_TABS
+      tabs = SERVICE_DETAIL_TABS
+      break
     case 'location':
-      return LOCATION_DETAIL_TABS
+      tabs = LOCATION_DETAIL_TABS
+      break
     case 'subject':
-      return SUBJECT_DETAIL_TABS
+      tabs = SUBJECT_DETAIL_TABS
+      break
     default:
-      return []
+      tabs = []
   }
+  if (archetypeKind) {
+    tabs = tabs.filter((tab) => !tab.visibleFor || tab.visibleFor.includes(archetypeKind))
+  }
+  return tabs
 }
 
 export function CrudDetailPage({
@@ -211,7 +221,7 @@ export function CrudDetailPage({
   const initial = typeof displayValue === 'string' ? displayValue.charAt(0).toUpperCase() : '?'
 
   // Merge archetype tabs + custom entity tabs
-  const archetypeTabs = getArchetypeTabs(entityDef.layout)
+  const archetypeTabs = getArchetypeTabs(entityDef.layout, entityDef.data?.archetypeKind)
   const customTabs = [...archetypeTabs, ...(entityDef.detailTabs ?? [])]
   const entityId = entityDef.name.toLowerCase().replace(/\s+/g, '-')
   const widgetZone = `${entityId}.detail.tabs`

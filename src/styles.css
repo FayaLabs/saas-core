@@ -57,16 +57,16 @@
     --secondary-foreground: 0 0% 95%;
     --accent: 0 0% 15%;
     --accent-foreground: 0 0% 95%;
-    --background: 0 0% 7%;
+    --background: 0 0% 10.6%;
     --foreground: 0 0% 95%;
-    --card: 0 0% 9%;
+    --card: 0 0% 13%;
     --card-foreground: 0 0% 95%;
-    --muted: 0 0% 15%;
+    --muted: 0 0% 17%;
     --muted-foreground: 0 0% 55%;
     --border: 0 0% 18%;
     --input: 0 0% 18%;
     --ring: 0 0% 60%;
-    --popover: 0 0% 9%;
+    --popover: 0 0% 13%;
     --popover-foreground: 0 0% 95%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 95%;
@@ -76,13 +76,13 @@
     --warning-foreground: 0 0% 95%;
 
     /* Layout Surfaces */
-    --sidebar: 0 0% 5%;
+    --sidebar: 0 0% 8%;
     --sidebar-foreground: 0 0% 90%;
     --sidebar-border: 0 0% 15%;
     --sidebar-accent: 0 0% 15%;
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-muted: 0 0% 50%;
-    --content: 0 0% 7%;
+    --content: 0 0% 10.6%;
 
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.1);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
@@ -153,35 +153,15 @@
 .duration-300 { animation-duration: 300ms; }
 
 /* Modal & overlay animations */
-.saas-overlay[data-state="open"] {
-  animation: saas-fade-in 200ms ease-out both;
-}
-.saas-overlay[data-state="closed"] {
-  animation: saas-fade-out 150ms ease-in both;
-}
-.saas-modal[data-state="open"] {
-  animation: saas-modal-in 250ms ease-out both;
-}
-.saas-modal[data-state="closed"] {
-  animation: saas-modal-out 150ms ease-in both;
-}
+.saas-mdl-ov[data-state="open"]   { animation: saas-mdl-ov-in 200ms ease-out both; }
+.saas-mdl-ov[data-state="closed"] { animation: saas-mdl-ov-out 150ms ease-in both; }
+.saas-mdl-ct[data-state="open"]   { animation: saas-mdl-ct-in 250ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.saas-mdl-ct[data-state="closed"] { animation: saas-mdl-ct-out 180ms ease-in both; }
 
-@keyframes saas-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes saas-fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-@keyframes saas-modal-in {
-  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
-@keyframes saas-modal-out {
-  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  to { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
-}
+@keyframes saas-mdl-ov-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes saas-mdl-ov-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes saas-mdl-ct-in  { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes saas-mdl-ct-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.97); } }
 
 /* Page transition tokens — override in SaaS theme to customize */
 :root {

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { X, Check, Banknote, QrCode, CreditCard, Building2, ArrowRightLeft, FileCheck, Pencil } from 'lucide-react'
 import { useFinancialConfig, useFinancialStore, formatCurrency } from '../FinancialContext'
 import { CurrencyInput } from '../../../components/ui/currency-input'
+import { DatePicker } from '../../../components/ui/date-picker'
 import type { FinancialMovement, PaymentMethodType } from '../types'
 
 const TYPE_ICONS: Record<string, React.ElementType> = {
@@ -214,7 +215,7 @@ export function PaymentModal({ movement, onClose, onPaid }: {
                 />
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">Date</label>
-                  <input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  <DatePicker value={paymentDate} onChange={setPaymentDate} className="mt-1" />
                 </div>
               </div>
 

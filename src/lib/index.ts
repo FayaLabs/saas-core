@@ -33,3 +33,15 @@ export {
 } from './plugins'
 export { createArchetypeLookup } from './archetype-lookup'
 export { resolveDataProvider } from './data-providers/resolve'
+export {
+  getSchedules,
+  saveSchedule,
+  deleteSchedule,
+  replaceWeeklySchedules,
+  saveException,
+  deleteException,
+} from './schedule-service'
+export type { ScheduleRecord, SaveScheduleInput, BlockSettings } from './schedule-service'
+export { parseBlockSettings, mergeBlockSettings } from './schedule-service'
+export { setScheduleBlockConfig, getScheduleBlockConfig } from './schedule-config'
+export type { ScheduleBlockConfig } from './schedule-config'

@@ -34,8 +34,15 @@ export interface CrmDataProvider {
   getQuotes(query: QuoteQuery): Promise<PaginatedResult<Quote>>
   getQuoteById(id: string): Promise<Quote | null>
   createQuote(input: CreateQuoteInput): Promise<Quote>
+  updateQuote(id: string, input: CreateQuoteInput): Promise<Quote>
+  sendQuote(id: string): Promise<Quote>
   approveQuote(id: string): Promise<Quote>
   rejectQuote(id: string, reason: string): Promise<Quote>
+  expireQuote(id: string): Promise<Quote>
+
+  // Cross-entity lookups
+  getQuotesByDealId(dealId: string): Promise<Quote[]>
+  getDealByLeadId(leadId: string): Promise<Deal | null>
 
   // Summary
   getSummary(): Promise<CrmSummary>

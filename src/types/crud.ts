@@ -46,6 +46,8 @@ export interface DetailTab {
   icon?: string
   /** React component to render as tab content. Receives { item, entityDef } props */
   component?: React.ComponentType<{ item: any; entityDef: EntityDef }>
+  /** Restrict tab visibility to specific archetypeKind values. If omitted, tab shows for all. */
+  visibleFor?: string[]
 }
 
 export type FormLayout = 'person' | 'product' | 'service' | 'location' | 'order' | 'subject' | 'generic'

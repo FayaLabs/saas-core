@@ -210,6 +210,7 @@ export function createFinancialPlugin(options?: FinancialPluginOptions): PluginM
         suggestions: [
           { label: 'How much did we make today?' },
           { label: "What's this month's revenue?" },
+          { label: "Compare this week's revenue to last week" },
         ],
       },
       {
@@ -228,6 +229,9 @@ export function createFinancialPlugin(options?: FinancialPluginOptions): PluginM
           },
           required: ['contact', 'amount'],
         },
+        suggestions: [
+          { label: 'Create an invoice for a new client' },
+        ],
         permission: { feature: 'financial', action: 'create' as const },
       },
       {
@@ -247,6 +251,7 @@ export function createFinancialPlugin(options?: FinancialPluginOptions): PluginM
         permission: { feature: 'financial', action: 'read' as const },
         suggestions: [
           { label: 'Show me overdue bills' },
+          { label: 'What bills are due this week?' },
         ],
       },
     ],

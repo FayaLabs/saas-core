@@ -4,6 +4,7 @@ import { Plus, Trash2, Save, Search, LayoutList, X, ChevronDown, Percent, Tag, B
 import { useFinancialConfig, useFinancialStore, useFinancialProvider, formatCurrency } from '../FinancialContext'
 import { SearchSelect } from '../../../components/ui/search-select'
 import { CurrencyInput } from '../../../components/ui/currency-input'
+import { DatePicker } from '../../../components/ui/date-picker'
 import type { EntityLookupMap } from '../../../types/entity-lookup'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import type { TransactionDirection, CreateInvoiceItemInput, CreateMovementInput } from '../types'
@@ -361,7 +362,7 @@ interface FormInstallment {
 export function InvoiceFormView({ direction, editId, onSaved }: {
   direction: TransactionDirection
   editId?: string
-  onSaved?: () => void
+  onSaved?: (id?: string) => void
 }) {
   const config = useFinancialConfig()
   const { currency, itemTypes, locations } = config
@@ -554,8 +555,9 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
           observations: observations || undefined,
           totalAmount,
         })
+        onSaved?.(editId)
       } else {
-        await createInvoice({
+        const invoice = await createInvoice({
           direction,
           invoiceDate,
           contactId,
@@ -566,8 +568,8 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
           items: items.map(({ _id, ...rest }) => rest),
           installments: movInputs,
         })
+        onSaved?.(invoice.id)
       }
-      onSaved?.()
     } finally {
       setSaving(false)
     }
@@ -585,7 +587,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
         actions={
           <div className="flex items-center gap-2">
             {onSaved && (
-              <button onClick={onSaved} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+              <button onClick={() => onSaved?.()} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
                 <X className="h-3 w-3" /> Close
               </button>
             )}
@@ -650,12 +652,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
           )}
           <div className={hasLocations ? 'sm:col-span-2' : 'sm:col-span-3'}>
             <label className="text-xs font-medium text-muted-foreground">Date</label>
-            <input
-              type="date"
-              value={invoiceDate}
-              onChange={(e) => setInvoiceDate(e.target.value)}
-              className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
+            <DatePicker value={invoiceDate} onChange={setInvoiceDate} className="mt-1" />
           </div>
           <div className={hasLocations ? 'sm:col-span-3' : 'sm:col-span-3'}>
             <label className="text-xs font-medium text-muted-foreground">Fiscal Number (optional)</label>
@@ -813,15 +810,13 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
                       <span className="text-[10px] font-medium text-muted-foreground">#{i + 1}</span>
                       <span className="text-sm font-semibold">{formatCurrency(inst.amount, currency)}</span>
                     </div>
-                    <input
-                      type="date"
+                    <DatePicker
                       value={inst.dueDate}
-                      onChange={(e) => {
+                      onChange={(v) => {
                         const updated = [...installments]
-                        updated[i] = { ...inst, dueDate: e.target.value }
+                        updated[i] = { ...inst, dueDate: v }
                         setInstallments(updated)
                       }}
-                      className="w-full rounded border bg-background px-2 py-1 text-xs"
                     />
                   </div>
                 ))}

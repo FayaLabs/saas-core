@@ -9,7 +9,7 @@ export function ReceivablesView({ intent, onNavigate }: {
   onNavigate: (view: string) => void
 }) {
   if (intent.mode === 'new') {
-    return <InvoiceFormView direction="credit" onSaved={() => onNavigate('receivables-list')} />
+    return <InvoiceFormView direction="credit" onSaved={(id) => onNavigate(id ? `receivables-detail:${id}` : 'receivables-list')} />
   }
 
   if (intent.mode === 'edit' && intent.editId) {

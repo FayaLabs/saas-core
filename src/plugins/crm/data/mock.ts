@@ -6,6 +6,7 @@ import type {
   PaginatedResult, CrmSummary, FunnelStage,
   LeadStatus, DealStatus, QuoteStatus,
 } from '../types'
+import { deriveLeadStatus, deriveQuoteStatus } from '../cascade'
 
 let nextId = 1
 function uid(): string { return String(nextId++) }
@@ -78,7 +79,25 @@ export function createMockCrmProvider(options?: {
 }): CrmDataProvider {
   const store = createStore(options?.dealStages)
   const tenantId = 'mock-tenant'
-  let quoteCounter = 1
+
+  // --- Cascade helper: sync lead + quote statuses when a deal moves ---
+  function cascadeFromStage(deal: Deal, stage: PipelineStage) {
+    // Cascade to lead
+    if (deal.leadId) {
+      const lead = store.leads.find((l) => l.id === deal.leadId)
+      if (lead) {
+        lead.status = deriveLeadStatus(stage)
+        lead.updatedAt = now()
+      }
+    }
+    // Cascade to quotes
+    for (const q of store.quotes) {
+      if (q.dealId === deal.id) {
+        q.status = deriveQuoteStatus(stage, q.status)
+        q.updatedAt = now()
+      }
+    }
+  }
 
   const provider: CrmDataProvider = {
     async getPipelines() { return store.pipelines },
@@ -185,13 +204,18 @@ export function createMockCrmProvider(options?: {
       const deal = store.deals.find((d) => d.id === dealId)
       if (!deal) throw new Error(`Deal ${dealId} not found`)
       const stage = store.stages.find((s) => s.id === stageId)
+      if (!stage) throw new Error(`Stage ${stageId} not found`)
       deal.stageId = stageId
-      deal.stageName = stage?.name
-      deal.stageColor = stage?.color
-      deal.probability = stage?.probability ?? 0
-      if (stage?.isWon) deal.status = 'won'
-      if (stage?.isLost) deal.status = 'lost'
+      deal.stageName = stage.name
+      deal.stageColor = stage.color
+      deal.probability = stage.probability ?? 0
+      if (stage.isWon) deal.status = 'won'
+      if (stage.isLost) deal.status = 'lost'
       deal.updatedAt = now()
+
+      // Cascade to lead + quotes
+      cascadeFromStage(deal, stage)
+
       return deal
     },
 
@@ -252,8 +276,9 @@ export function createMockCrmProvider(options?: {
       }))
       const totalAmount = items.reduce((sum, i) => sum + i.totalAmount, 0)
       const quote: Quote = {
-        id: quoteId, dealId: input.dealId, contactId: input.contactId,
-        contactName: input.contactName, quoteNumber: `Q-${String(quoteCounter++).padStart(4, '0')}`,
+        id: quoteId, dealId: input.dealId, leadId: input.leadId,
+        contactId: input.contactId,
+        contactName: input.contactName, quoteNumber: `Q-${String(store.quotes.length + 1).padStart(4, '0')}`,
         quoteDate: input.quoteDate, validUntil: input.validUntil,
         status: 'draft', totalAmount, observations: input.observations,
         paymentConditions: input.paymentConditions, items, tenantId,
@@ -263,11 +288,63 @@ export function createMockCrmProvider(options?: {
       return quote
     },
 
+    async updateQuote(id, input: CreateQuoteInput) {
+      const quote = store.quotes.find((q) => q.id === id)
+      if (!quote) throw new Error(`Quote ${id} not found`)
+      const items: QuoteItem[] = input.items.map((item) => ({
+        id: uid(), quoteId: id, ...item, createdAt: now(),
+      }))
+      const totalAmount = items.reduce((sum, i) => sum + i.totalAmount, 0)
+      quote.contactId = input.contactId
+      quote.contactName = input.contactName
+      quote.dealId = input.dealId
+      quote.leadId = input.leadId
+      quote.quoteDate = input.quoteDate
+      quote.validUntil = input.validUntil
+      quote.observations = input.observations
+      quote.paymentConditions = input.paymentConditions
+      quote.items = items
+      quote.totalAmount = totalAmount
+      quote.updatedAt = now()
+      return quote
+    },
+
+    async sendQuote(id) {
+      const quote = store.quotes.find((q) => q.id === id)
+      if (!quote) throw new Error(`Quote ${id} not found`)
+      quote.status = 'sent'
+      quote.updatedAt = now()
+      return quote
+    },
+
     async approveQuote(id) {
       const quote = store.quotes.find((q) => q.id === id)
       if (!quote) throw new Error(`Quote ${id} not found`)
       quote.status = 'approved'
       quote.updatedAt = now()
+
+      // Cascade: move deal to Won stage
+      if (quote.dealId) {
+        const deal = store.deals.find((d) => d.id === quote.dealId)
+        if (deal) {
+          const wonStage = store.stages.find((s) => s.pipelineId === deal.pipelineId && s.isWon)
+          if (wonStage) {
+            await provider.moveDealToStage(deal.id, wonStage.id)
+          }
+        }
+      }
+
+      // Generate mock invoice
+      quote.convertedInvoiceId = uid()
+
+      // Convert lead to client
+      if (quote.leadId) {
+        const lead = store.leads.find((l) => l.id === quote.leadId)
+        if (lead) {
+          lead.metadata = { ...lead.metadata, convertedFromLead: true }
+        }
+      }
+
       return quote
     },
 
@@ -277,7 +354,35 @@ export function createMockCrmProvider(options?: {
       quote.status = 'rejected'
       quote.rejectionReason = reason
       quote.updatedAt = now()
+
+      // Cascade: move deal to Lost stage
+      if (quote.dealId) {
+        const deal = store.deals.find((d) => d.id === quote.dealId)
+        if (deal) {
+          const lostStage = store.stages.find((s) => s.pipelineId === deal.pipelineId && s.isLost)
+          if (lostStage) {
+            await provider.moveDealToStage(deal.id, lostStage.id)
+          }
+        }
+      }
       return quote
+    },
+
+    async expireQuote(id) {
+      const quote = store.quotes.find((q) => q.id === id)
+      if (!quote) throw new Error(`Quote ${id} not found`)
+      quote.status = 'expired'
+      quote.updatedAt = now()
+      return quote
+    },
+
+    // Cross-entity lookups
+    async getQuotesByDealId(dealId) {
+      return store.quotes.filter((q) => q.dealId === dealId)
+    },
+
+    async getDealByLeadId(leadId) {
+      return store.deals.find((d) => d.leadId === leadId) ?? null
     },
 
     // Summary

@@ -58,7 +58,7 @@ function DataTable<TData, TValue>({
               </tr>
             </thead>
             <tbody className="[&_tr:last-child]:border-0">
-              {Array.from({ length: 5 }).map((_, i) => (
+              {Array.from({ length: 2 }).map((_, i) => (
                 <tr key={i} className="border-b transition-colors">
                   {columns.map((_, j) => (
                     <td key={j} className="p-4 align-middle">

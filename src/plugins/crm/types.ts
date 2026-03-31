@@ -107,6 +107,7 @@ export interface Activity {
 export interface Quote {
   id: string
   dealId?: string
+  leadId?: string
   contactId?: string
   contactName?: string
   quoteNumber: string
@@ -196,6 +197,7 @@ export interface CreateActivityInput {
 
 export interface CreateQuoteInput {
   dealId?: string
+  leadId?: string
   contactId?: string
   contactName?: string
   quoteDate: string

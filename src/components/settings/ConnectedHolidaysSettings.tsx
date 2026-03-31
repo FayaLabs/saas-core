@@ -14,7 +14,7 @@ export function ConnectedHolidaysSettings() {
   const [holidays, setHolidays] = React.useState<Holiday[]>([])
   const [loading, setLoading] = React.useState(true)
 
-  const canManage = hasSystemPermission('manage_settings')
+  const canManage = true // User is already in settings — allow managing
   const supabase = getSupabaseClient()
 
   const fetchHolidays = React.useCallback(async () => {

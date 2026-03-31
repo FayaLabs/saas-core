@@ -18,6 +18,35 @@ export interface ResolvedToolGroup {
   tools: ResolvedToolEntry[]
 }
 
+/**
+ * Detects which plugin "owns" the current page based on route matching.
+ * Returns the plugin ID or null for non-plugin pages (e.g. settings/general, dashboard).
+ */
+function detectActivePluginId(runtime: ReturnType<typeof usePluginRuntimeOptional>): string | null {
+  if (!runtime) return null
+  const path = runtime.context.currentPath
+
+  // Check each active plugin's routes for a match
+  for (const plugin of runtime.activePlugins) {
+    for (const route of plugin.routes) {
+      if (path === route.path || path.startsWith(`${route.path}/`)) {
+        return plugin.id
+      }
+    }
+  }
+
+  // Also match settings sub-pages: /settings/financial → financial
+  const settingsMatch = path.match(/^\/settings\/([^/]+)/)
+  if (settingsMatch) {
+    const tabId = settingsMatch[1]
+    if (runtime.activePlugins.some((p) => p.id === tabId)) {
+      return tabId
+    }
+  }
+
+  return null
+}
+
 export function useAITools(): {
   tools: PluginAITool[]
   suggestions: ResolvedSuggestion[]
@@ -28,6 +57,7 @@ export function useAITools(): {
   return React.useMemo(() => {
     const hasPermission = runtime?.context.hasPermission
     const verticalId = runtime?.context.tenant?.verticalId
+    const activePluginId = detectActivePluginId(runtime)
 
     // Collect all tools: core + plugin-declared + auto-generated from registries
     const allTools: PluginAITool[] = [...coreAITools]
@@ -56,17 +86,27 @@ export function useAITools(): {
     })
 
     // Flatten suggestions, filter by vertical
-    const suggestions: ResolvedSuggestion[] = []
+    const allSuggestions: ResolvedSuggestion[] = []
     for (const tool of tools) {
       if (!tool.suggestions) continue
       for (const suggestion of tool.suggestions) {
         if (suggestion.verticalId && suggestion.verticalId !== verticalId) continue
-        suggestions.push({
+        allSuggestions.push({
           ...suggestion,
           toolId: tool.id,
           category: tool.category ?? 'General',
         })
       }
+    }
+
+    // Prioritize suggestions from the active plugin's context
+    let suggestions: ResolvedSuggestion[]
+    if (activePluginId) {
+      const contextual = allSuggestions.filter((s) => s.toolId.startsWith(`${activePluginId}.`))
+      const others = allSuggestions.filter((s) => !s.toolId.startsWith(`${activePluginId}.`))
+      suggestions = [...contextual, ...others]
+    } else {
+      suggestions = allSuggestions
     }
 
     // Group tools by category with signatures

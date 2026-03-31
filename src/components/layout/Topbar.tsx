@@ -60,6 +60,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   UserPlus,
+  TreePalm,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
@@ -91,7 +92,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   ClipboardList, Briefcase, UserCog, BookOpen, MessageCircle, Globe,
   Percent, Tag, Camera, UtensilsCrossed, Search, MapPin, Handshake,
   Contact, Building2, ChevronDown, Filter, Plus, List, Dog, Cat, PawPrint, Heart, LayoutTemplate, LeafyGreen, Apple, Egg, Wheat,
-  ArrowDownCircle, ArrowUpCircle, Landmark, Receipt, TrendingUp, CircleDollarSign, Clock, AlertTriangle, Sparkles, Wallet, Warehouse, Ruler, ArrowUpRight, ArrowDownRight, UserPlus,
+  ArrowDownCircle, ArrowUpCircle, Landmark, Receipt, TrendingUp, CircleDollarSign, Clock, AlertTriangle, Sparkles, Wallet, Warehouse, Ruler, ArrowUpRight, ArrowDownRight, UserPlus, TreePalm,
 }
 
 // Also add to BottomNav

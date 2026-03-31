@@ -1,0 +1,515 @@
+import React, { useRef, useEffect, useCallback, useMemo, useState } from 'react'
+import '../calendar-styles.css'
+import FullCalendar from '@fullcalendar/react'
+import dayGridPlugin from '@fullcalendar/daygrid'
+import timeGridPlugin from '@fullcalendar/timegrid'
+import resourceTimeGridPlugin from '@fullcalendar/resource-timegrid'
+import interactionPlugin from '@fullcalendar/interaction'
+import listPlugin from '@fullcalendar/list'
+import type { EventInput, EventClickArg, DateSelectArg, EventDropArg } from '@fullcalendar/core'
+import { ChevronLeft, ChevronRight, Plus, ChevronDown, Settings } from 'lucide-react'
+import { usePluginPrefs } from '../../../hooks/usePluginPrefs'
+import { useAgendaConfig, useAgendaStore } from '../AgendaContext'
+import { MiniCalendar } from '../components/MiniCalendar'
+import { AppointmentModal } from '../components/AppointmentModal'
+import { AppointmentPopover } from '../components/AppointmentPopover'
+import { EventContextMenu } from '../components/EventContextMenu'
+import type { CalendarBooking, Schedule } from '../types'
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function bookingToEvent(booking: CalendarBooking, statusColors: Record<string, string>): EventInput {
+  const color = statusColors[booking.status] ?? '#6b7280'
+  const serviceNames = booking.services?.map((s) => s.name).join(', ') ?? ''
+  return {
+    id: booking.id,
+    resourceId: booking.professionalId ?? undefined,
+    title: booking.clientName ?? 'Unknown',
+    start: booking.startsAt,
+    end: booking.endsAt ?? undefined,
+    backgroundColor: color + '20',
+    borderColor: color,
+    textColor: color,
+    extendedProps: { booking, serviceNames },
+  }
+}
+
+/**
+ * Generate FullCalendar background events showing unavailable time.
+ * For each day, creates background blocks for the gaps OUTSIDE working hours
+ * within the visible business hours window. This grays out non-working time.
+ */
+function generateAvailabilityEvents(
+  schedules: Schedule[],
+  professionals: { id: string }[],
+  dateRange: { start: string; end: string } | null,
+  businessHours?: { startTime: string; endTime: string },
+): EventInput[] {
+  if (!dateRange || schedules.length === 0) return []
+
+  const bgEvents: EventInput[] = []
+  const startDate = new Date(dateRange.start)
+  const endDate = new Date(dateRange.end)
+  const bizStart = businessHours?.startTime ?? '08:00'
+  const bizEnd = businessHours?.endTime ?? '20:00'
+
+  // Group schedules by assignee
+  const byAssignee = new Map<string, Schedule[]>()
+  for (const s of schedules) {
+    const aid = s.assigneeId
+    if (!aid) continue
+    const list = byAssignee.get(aid) ?? []
+    list.push(s)
+    byAssignee.set(aid, list)
+  }
+
+  function timeToMinutes(t: string): number {
+    const [h, m] = t.split(':').map(Number)
+    return h * 60 + m
+  }
+
+  function minutesToTime(m: number): string {
+    return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+  }
+
+  const bizStartMin = timeToMinutes(bizStart)
+  const bizEndMin = timeToMinutes(bizEnd)
+
+  for (const prof of professionals) {
+    const profSchedules = byAssignee.get(prof.id) ?? []
+
+    // Separate weekly and date-specific schedules
+    const weekly = profSchedules.filter((s) => s.dayOfWeek != null && !s.specificDate)
+    const exceptions = profSchedules.filter((s) => s.specificDate != null)
+    const exceptionDates = new Set(exceptions.map((s) => s.specificDate!))
+
+    const current = new Date(startDate)
+    while (current < endDate) {
+      const dateStr = current.toISOString().slice(0, 10)
+      const dayOfWeek = current.getDay()
+
+      // Get working periods for this day
+      let daySchedules: Schedule[]
+      if (exceptionDates.has(dateStr)) {
+        daySchedules = exceptions.filter((s) => s.specificDate === dateStr && s.isActive)
+      } else {
+        daySchedules = weekly.filter((s) => s.dayOfWeek === dayOfWeek && s.isActive)
+      }
+
+      // Convert working periods to sorted minute ranges
+      const workRanges = daySchedules
+        .map((s) => ({ start: timeToMinutes(s.startsAt), end: timeToMinutes(s.endsAt) }))
+        .sort((a, b) => a.start - b.start)
+
+      // Render working hours as available background
+      for (const range of workRanges) {
+        const start = Math.max(range.start, bizStartMin)
+        const end = Math.min(range.end, bizEndMin)
+        if (start < end) {
+          bgEvents.push({
+            resourceId: prof.id,
+            start: dateStr + 'T' + minutesToTime(start) + ':00',
+            end: dateStr + 'T' + minutesToTime(end) + ':00',
+            display: 'background',
+            classNames: ['fc-available-bg'],
+          })
+        }
+      }
+
+      current.setDate(current.getDate() + 1)
+    }
+  }
+
+  return bgEvents
+}
+
+const VIEW_OPTIONS = [
+  { key: 'resourceTimeGridDay', label: 'Day' },
+  { key: 'timeGridWeek', label: 'Week' },
+  { key: 'dayGridMonth', label: 'Month' },
+] as const
+
+// ---------------------------------------------------------------------------
+// Calendar View
+// ---------------------------------------------------------------------------
+
+export function CalendarView() {
+  const config = useAgendaConfig()
+  const calendarRef = useRef<FullCalendar>(null)
+  const prefs = usePluginPrefs('agenda', { calendarView: 'timeGridWeek' })
+
+  const bookings = useAgendaStore((s) => s.bookings)
+  const professionals = useAgendaStore((s) => s.professionals)
+  const currentView = useAgendaStore((s) => s.currentView)
+  const selectedProfIds = useAgendaStore((s) => s.selectedProfessionalIds)
+  const selectedStatuses = useAgendaStore((s) => s.selectedStatuses)
+  const schedules = useAgendaStore((s) => s.schedules)
+  const fetchBookings = useAgendaStore((s) => s.fetchBookings)
+  const fetchProfessionals = useAgendaStore((s) => s.fetchProfessionals)
+  const fetchSchedules = useAgendaStore((s) => s.fetchSchedules)
+  const rescheduleBooking = useAgendaStore((s) => s.rescheduleBooking)
+  const setView = useAgendaStore((s) => s.setView)
+  const setFilters = useAgendaStore((s) => s.setFilters)
+  const openModal = useAgendaStore((s) => s.openAppointmentModal)
+  const closeModal = useAgendaStore((s) => s.closeAppointmentModal)
+  const modalState = useAgendaStore((s) => s.appointmentModal)
+
+  const [selectedBooking, setSelectedBooking] = useState<CalendarBooking | null>(null)
+  const [popoverAnchor, setPopoverAnchor] = useState<{ x: number; y: number } | null>(null)
+  const [popoverVisible, setPopoverVisible] = useState(false)  // true = popover is showing or animating out
+  const [contextMenu, setContextMenu] = useState<{ booking: CalendarBooking; x: number; y: number } | null>(null)
+  const [contextMenuVisible, setContextMenuVisible] = useState(false)
+  const [calendarTitle, setCalendarTitle] = useState('')
+  const [selectedDate, setSelectedDate] = useState(new Date())
+  const [profSectionOpen, setProfSectionOpen] = useState(true)
+  const [statusSectionOpen, setStatusSectionOpen] = useState(false)
+  const [visibleRange, setVisibleRange] = useState<{ start: string; end: string } | null>(null)
+
+  const statusColors = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const s of config.statuses) map[s.value] = s.color
+    return map
+  }, [config.statuses])
+
+  useEffect(() => { fetchProfessionals(); fetchSchedules() }, [])
+
+  const resources = useMemo(() => {
+    const filtered = selectedProfIds.length > 0
+      ? professionals.filter((p) => selectedProfIds.includes(p.id))
+      : professionals
+    return filtered.map((p) => ({
+      id: p.id, title: p.name,
+      extendedProps: { avatarUrl: p.avatarUrl, locationName: p.locationName },
+    }))
+  }, [professionals, selectedProfIds])
+
+  const bookingEvents = useMemo(() =>
+    bookings.map((b) => bookingToEvent(b, statusColors)), [bookings, statusColors])
+
+  const availabilityEvents = useMemo(() =>
+    generateAvailabilityEvents(schedules, professionals, visibleRange, config.businessHours),
+    [schedules, professionals, visibleRange, config.businessHours])
+
+  const events = useMemo(() =>
+    [...bookingEvents, ...availabilityEvents], [bookingEvents, availabilityEvents])
+
+  // ── Calendar handlers ──
+  const handleDatesSet = useCallback((arg: { startStr: string; endStr: string; view: { title: string; type: string } }) => {
+    setCalendarTitle(arg.view.title)
+    setView(arg.view.type)
+    setVisibleRange({ start: arg.startStr, end: arg.endStr })
+    fetchBookings({ start: arg.startStr, end: arg.endStr })
+  }, [fetchBookings, setView])
+
+  // Double-click → open edit directly
+  // Right-click → context menu
+  const handleEventDidMount = useCallback((arg: { event: any; el: HTMLElement }) => {
+    arg.el.addEventListener('dblclick', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      skipClickRef.current = true
+      const booking = arg.event.extendedProps.booking as CalendarBooking
+      setSelectedBooking(null)
+      setPopoverAnchor(null)
+      setContextMenu(null)
+      openModal('edit', { bookingId: booking.id })
+    })
+    arg.el.addEventListener('contextmenu', (e) => {
+      e.preventDefault()
+      const booking = arg.event.extendedProps.booking as CalendarBooking
+      const menuW = 210, menuH = 200
+      let x = e.clientX + 4
+      let y = e.clientY + 4
+      if (x + menuW > window.innerWidth - 12) x = x - menuW
+      if (y + menuH > window.innerHeight - 12) y = y - menuH
+      setContextMenu({ booking, x, y })
+      setContextMenuVisible(true)
+      setSelectedBooking(null)
+      setPopoverAnchor(null)
+    })
+  }, [])
+
+  // Flag to suppress single-click after a double-click
+  const skipClickRef = useRef(false)
+
+  // Single click — open popover instantly, or slide to new position if already open
+  const handleEventClick = useCallback((arg: EventClickArg) => {
+    if (skipClickRef.current) { skipClickRef.current = false; return }
+    // Ignore clicks on background availability events
+    if (arg.event.display === 'background') return
+    setContextMenu(null); setContextMenuVisible(false)
+    const booking = arg.event.extendedProps.booking as CalendarBooking
+    if (!booking) return
+    const rect = arg.el.getBoundingClientRect()
+    const popW = 320, popH = 340
+    let x = rect.right + 8
+    let y = rect.top + rect.height / 2 - popH / 2
+    if (x + popW > window.innerWidth - 16) x = rect.left - popW - 8
+    if (x < 16) x = Math.max(16, rect.left + rect.width / 2 - popW / 2)
+    if (y + popH > window.innerHeight - 16) y = window.innerHeight - popH - 16
+    if (y < 16) y = 16
+    // Always update — if popover is already open it slides to the new position
+    setSelectedBooking(booking)
+    setPopoverAnchor({ x, y })
+    setPopoverVisible(true)
+  }, [])
+
+  const handleSelect = useCallback((arg: DateSelectArg) => {
+    // Don't open create if popover/context menu is showing — the click was to dismiss them
+    if (popoverVisible || contextMenuVisible) {
+      // Clear the selection highlight
+      calendarRef.current?.getApi().unselect()
+      return
+    }
+    openModal('create', { prefill: { startsAt: arg.startStr, professionalId: arg.resource?.id } })
+  }, [openModal, popoverVisible, contextMenuVisible])
+
+  const handleEventDrop = useCallback(async (arg: EventDropArg) => {
+    const booking = arg.event.extendedProps.booking as CalendarBooking
+    try { await rescheduleBooking(booking.id, arg.event.startStr, arg.event.endStr, arg.newResource?.id ?? undefined) }
+    catch { arg.revert() }
+  }, [rescheduleBooking])
+
+  const handleViewChange = useCallback((v: string) => {
+    calendarRef.current?.getApi().changeView(v)
+    prefs.set('calendarView', v)
+  }, [prefs])
+  const handlePrev = useCallback(() => calendarRef.current?.getApi().prev(), [])
+  const handleNext = useCallback(() => calendarRef.current?.getApi().next(), [])
+  const handleToday = useCallback(() => { calendarRef.current?.getApi().today(); setSelectedDate(new Date()) }, [])
+
+  function handleMiniDateSelect(date: Date) {
+    setSelectedDate(date)
+    calendarRef.current?.getApi().gotoDate(date)
+  }
+
+  function toggleProfessional(id: string) {
+    const next = selectedProfIds.includes(id)
+      ? selectedProfIds.filter((p) => p !== id)
+      : [...selectedProfIds, id]
+    setFilters({ professionalIds: next })
+  }
+
+  function toggleStatus(value: string) {
+    const next = selectedStatuses.includes(value)
+      ? selectedStatuses.filter((s) => s !== value)
+      : [...selectedStatuses, value]
+    setFilters({ statuses: next })
+  }
+
+  const resourceLabelContent = useCallback((arg: any) => {
+    const { title, extendedProps } = arg.resource
+    const initials = title.split(' ').map((n: string) => n[0]).join('').slice(0, 2)
+    return (
+      <div className="flex items-center gap-2 px-2 py-1.5">
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">{initials}</div>
+        <div className="min-w-0">
+          <p className="text-xs font-medium truncate">{title}</p>
+          {extendedProps?.locationName && <p className="text-[10px] text-muted-foreground truncate">{extendedProps.locationName}</p>}
+        </div>
+      </div>
+    )
+  }, [])
+
+  const eventContent = useCallback((arg: any) => {
+    const serviceNames = arg.event.extendedProps?.serviceNames
+    return (
+      <div className="px-1.5 py-0.5 overflow-hidden leading-tight">
+        <p className="text-[11px] font-semibold truncate">{arg.event.title}</p>
+        {serviceNames && <p className="text-[10px] opacity-70 truncate">{serviceNames}</p>}
+      </div>
+    )
+  }, [])
+
+  return (
+    <div className="flex h-[calc(100vh-7.5rem)]">
+      {/* ═══ LEFT SIDEBAR — hidden on mobile ═══ */}
+      <div className="hidden md:flex w-[220px] shrink-0 flex-col overflow-y-auto py-4 px-3 mr-4">
+        {/* + Create button */}
+        <button
+          onClick={() => openModal('create')}
+          className="flex items-center gap-2 rounded-2xl bg-primary text-primary-foreground pl-4 pr-6 py-2.5 text-sm font-medium hover:bg-primary/90 shadow-md hover:shadow-lg transition-all mb-6 w-fit"
+        >
+          <Plus className="h-5 w-5" />
+          Create
+        </button>
+
+        {/* Mini month calendar */}
+        <MiniCalendar selectedDate={selectedDate} onDateSelect={handleMiniDateSelect} />
+
+        <div className="h-px bg-border my-4" />
+
+        {/* Agendas */}
+        <button onClick={() => setProfSectionOpen((p) => !p)}
+          className="flex items-center justify-between w-full text-xs font-medium text-muted-foreground hover:text-foreground py-1 transition-colors">
+          <span>Agendas</span>
+          <ChevronDown className={`h-3.5 w-3.5 transition-transform ${profSectionOpen ? '' : '-rotate-90'}`} />
+        </button>
+        {profSectionOpen && (
+          <div className="mt-1.5 space-y-0.5">
+            {professionals.map((prof) => {
+              const active = selectedProfIds.length === 0 || selectedProfIds.includes(prof.id)
+              return (
+                <label key={prof.id} className="flex items-center gap-2.5 rounded px-1 py-1 cursor-pointer hover:bg-muted/50 transition-colors">
+                  <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border-2 transition-colors ${
+                    active ? 'border-primary bg-primary' : 'border-muted-foreground/30'
+                  }`}>
+                    {active && <svg className="h-2.5 w-2.5 text-primary-foreground" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </span>
+                  <span className={`text-xs truncate ${active ? 'text-foreground' : 'text-muted-foreground'}`}>{prof.name}</span>
+                  <input type="checkbox" className="sr-only" checked={active} onChange={() => toggleProfessional(prof.id)} />
+                </label>
+              )
+            })}
+          </div>
+        )}
+
+        <div className="h-px bg-border my-4" />
+
+        {/* Status */}
+        <button onClick={() => setStatusSectionOpen((p) => !p)}
+          className="flex items-center justify-between w-full text-xs font-medium text-muted-foreground hover:text-foreground py-1 transition-colors">
+          <span>Status</span>
+          <ChevronDown className={`h-3.5 w-3.5 transition-transform ${statusSectionOpen ? '' : '-rotate-90'}`} />
+        </button>
+        {statusSectionOpen && (
+          <div className="mt-1.5 space-y-0.5">
+            {config.statuses.map((st) => {
+              const active = selectedStatuses.length === 0 || selectedStatuses.includes(st.value)
+              return (
+                <label key={st.value} className="flex items-center gap-2.5 rounded px-1 py-1 cursor-pointer hover:bg-muted/50 transition-colors">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border-2 transition-colors"
+                    style={{ borderColor: active ? st.color : st.color + '40', backgroundColor: active ? st.color : 'transparent' }}>
+                    {active && <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </span>
+                  <span className={`text-xs ${active ? 'text-foreground' : 'text-muted-foreground'}`}>{st.label}</span>
+                  <input type="checkbox" className="sr-only" checked={active} onChange={() => toggleStatus(st.value)} />
+                </label>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ═══ MAIN AREA ═══ */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between px-4 h-12 shrink-0 border-b">
+          <div className="flex items-center gap-3">
+            {/* Mobile create button */}
+            <button onClick={() => openModal('create')}
+              className="md:hidden flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+              <Plus className="h-4 w-4" />
+            </button>
+
+            <button onClick={handleToday}
+              className="rounded-md border px-3 py-1 text-sm font-medium hover:bg-muted/50 transition-colors">
+              Today
+            </button>
+            <div className="flex items-center gap-0.5">
+              <button onClick={handlePrev} className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted transition-colors">
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button onClick={handleNext} className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted transition-colors">
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+            <h1 className="text-base sm:text-lg font-normal truncate">{calendarTitle}</h1>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <div className="hidden sm:flex items-center gap-1">
+              {VIEW_OPTIONS.map((opt) => (
+                <button key={opt.key} onClick={() => handleViewChange(opt.key)}
+                  className={`rounded-md px-3 py-1 text-sm transition-colors ${
+                    currentView === opt.key
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-muted-foreground hover:bg-muted/50'
+                  }`}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => window.location.hash = '/settings/agenda'}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors ml-1"
+              title="Agenda Settings"
+            >
+              <Settings className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </div>
+        </div>
+
+        {/* Calendar */}
+        <div className="flex-1 overflow-hidden agenda-calendar">
+          <FullCalendar
+            ref={calendarRef}
+            plugins={[dayGridPlugin, timeGridPlugin, resourceTimeGridPlugin, interactionPlugin, listPlugin]}
+            initialView={prefs.get('calendarView')}
+            schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
+            resources={resources}
+            events={events}
+            headerToolbar={false}
+            height="100%"
+            slotMinTime={config.businessHours.startTime + ':00'}
+            slotMaxTime={config.businessHours.endTime + ':00'}
+            slotDuration={{ minutes: config.slotDuration }}
+            allDaySlot={false}
+            nowIndicator={true}
+            editable={config.modules.dragAndDrop}
+            selectable={true}
+            selectMirror={true}
+            eventOverlap={false}
+            datesSet={handleDatesSet}
+            eventDidMount={handleEventDidMount}
+            eventClick={handleEventClick}
+            select={handleSelect}
+            eventDrop={handleEventDrop}
+            resourceLabelContent={resourceLabelContent}
+            eventContent={eventContent}
+            resourceOrder="title"
+            stickyHeaderDates={true}
+            expandRows={false}
+            eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
+            slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
+          />
+        </div>
+      </div>
+
+      {/* Popover — stays mounted until animation finishes */}
+      {selectedBooking && popoverAnchor && popoverVisible && (
+        <AppointmentPopover booking={selectedBooking} position={popoverAnchor}
+          onClose={() => {
+            // Called AFTER the popover's exit animation finishes
+            setPopoverVisible(false)
+            setSelectedBooking(null)
+            setPopoverAnchor(null)
+          }}
+          onEdit={(id) => {
+            openModal('edit', { bookingId: id })
+            // Don't clear popover here — let its exit animation call onClose
+          }} />
+      )}
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <EventContextMenu
+          booking={contextMenu.booking}
+          position={{ x: contextMenu.x, y: contextMenu.y }}
+          onClose={() => { setContextMenuVisible(false); setContextMenu(null) }}
+          onEdit={(id) => { openModal('edit', { bookingId: id }) }}
+        />
+      )}
+
+      {/* Modal — always mounted, Radix controls open/close animation */}
+      <AppointmentModal
+        open={modalState.open}
+        mode={modalState.mode}
+        bookingId={modalState.bookingId}
+        prefill={modalState.prefill}
+        onClose={closeModal} />
+    </div>
+  )
+}

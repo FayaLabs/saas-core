@@ -33,7 +33,9 @@ export function useModuleNavigation(hashBase: string, depthMap?: DepthMap, homeV
   const depths = { ...DEFAULT_DEPTHS, ...depthMap }
 
   function getInitialView(): string {
-    const hash = window.location.hash.slice(1) || '/'
+    const rawHash = window.location.hash.slice(1) || '/'
+    // Strip query string from hash before parsing segments
+    const hash = rawHash.split('?')[0]
     if (hash === hashBase || hash === hashBase + '/') return homeView
     if (hash.startsWith(hashBase + '/settings')) return 'settings'
     if (hash.startsWith(hashBase + '/')) {
@@ -61,7 +63,7 @@ export function useModuleNavigation(hashBase: string, depthMap?: DepthMap, homeV
   // Sync view from external hash changes (e.g., topbar nav clicking the module link)
   useEffect(() => {
     function handler() {
-      const hash = window.location.hash.slice(1) || '/'
+      const hash = (window.location.hash.slice(1) || '/').split('?')[0]
       // Only react if the hash is within our module's base
       if (hash === hashBase || hash === hashBase + '/' || hash.startsWith(hashBase + '/')) {
         const newView = getInitialView()
