@@ -80,47 +80,52 @@ export function createSupabaseAgendaProvider(): AgendaDataProvider {
       const tenantId = getTenantId()
       if (!tenantId) throw new Error('No active tenant')
 
+      const hasServices = input.services.length > 0
       const totalDuration = input.services.reduce((sum, s) => sum + s.durationMinutes, 0)
       const totalPrice = input.services.reduce((sum, s) => sum + s.price, 0)
-      const endsAt = addMinutes(input.startsAt, totalDuration)
+      const endsAt = addMinutes(input.startsAt, totalDuration || 30)
 
-      // Step 1: Create order (financial document)
-      const { data: order, error: orderErr } = await core.from('orders').insert({
-        tenant_id: tenantId,
-        kind: 'service_order',
-        party_id: input.clientId,
-        assignee_id: input.professionalId,
-        location_id: input.locationId ?? null,
-        status: 'draft',
-        subtotal: totalPrice,
-        total: totalPrice,
-        notes: 'Appointment',
-        metadata: { source: 'agenda' },
-      }).select('id').single()
-      if (orderErr) throw orderErr
+      let orderId: string | null = null
 
-      // Step 2: Create order items
-      const orderItems = input.services.map((s, i) => ({
-        order_id: order.id,
-        service_id: s.serviceId,
-        name: s.name,
-        quantity: 1,
-        unit_price: s.price,
-        total: s.price,
-        sort_order: i,
-        metadata: { duration_minutes: s.durationMinutes },
-      }))
-      const { error: oiErr } = await core.from('order_items').insert(orderItems)
-      if (oiErr) throw oiErr
+      // Create order only when services exist (appointments with services)
+      if (hasServices) {
+        const { data: order, error: orderErr } = await core.from('orders').insert({
+          tenant_id: tenantId,
+          kind: 'service_order',
+          party_id: input.clientId,
+          assignee_id: input.professionalId,
+          location_id: input.locationId ?? null,
+          status: 'draft',
+          subtotal: totalPrice,
+          total: totalPrice,
+          notes: 'Appointment',
+          metadata: { source: 'agenda' },
+        }).select('id').single()
+        if (orderErr) throw orderErr
+        orderId = order.id
 
-      // Step 3: Create booking (time reservation)
+        const orderItems = input.services.map((s, i) => ({
+          order_id: order.id,
+          service_id: s.serviceId,
+          name: s.name,
+          quantity: 1,
+          unit_price: s.price,
+          total: s.price,
+          sort_order: i,
+          metadata: { duration_minutes: s.durationMinutes },
+        }))
+        const { error: oiErr } = await core.from('order_items').insert(orderItems)
+        if (oiErr) throw oiErr
+      }
+
+      // Create booking (time reservation)
       const { data: booking, error: bkErr } = await core.from('bookings').insert({
         tenant_id: tenantId,
-        kind: 'appointment',
-        party_id: input.clientId,
+        kind: input.kind ?? 'appointment',
+        party_id: input.clientId || null,
         assignee_id: input.professionalId,
         location_id: input.locationId ?? null,
-        order_id: order.id,
+        order_id: orderId,
         starts_at: input.startsAt,
         ends_at: endsAt,
         status: 'scheduled',
@@ -129,18 +134,20 @@ export function createSupabaseAgendaProvider(): AgendaDataProvider {
       }).select('id').single()
       if (bkErr) throw bkErr
 
-      // Step 4: Create booking items
-      const bookingItems = input.services.map((s, i) => ({
-        booking_id: booking.id,
-        service_id: s.serviceId,
-        assignee_id: s.assigneeId ?? input.professionalId,
-        name: s.name,
-        duration_minutes: s.durationMinutes,
-        price: s.price,
-        sort_order: i,
-      }))
-      const { error: biErr } = await core.from('booking_items').insert(bookingItems)
-      if (biErr) throw biErr
+      // Create booking items (only when services exist)
+      if (hasServices) {
+        const bookingItems = input.services.map((s, i) => ({
+          booking_id: booking.id,
+          service_id: s.serviceId,
+          assignee_id: s.assigneeId ?? input.professionalId,
+          name: s.name,
+          duration_minutes: s.durationMinutes,
+          price: s.price,
+          sort_order: i,
+        }))
+        const { error: biErr } = await core.from('booking_items').insert(bookingItems)
+        if (biErr) throw biErr
+      }
 
       // Return the full booking from the view
       return (await this.getBookingById(booking.id))!

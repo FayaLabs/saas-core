@@ -6,15 +6,19 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import resourceTimeGridPlugin from '@fullcalendar/resource-timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
+import ptBrLocale from '@fullcalendar/core/locales/pt-br'
 import type { EventInput, EventClickArg, DateSelectArg, EventDropArg } from '@fullcalendar/core'
 import { ChevronLeft, ChevronRight, Plus, ChevronDown, Settings } from 'lucide-react'
 import { usePluginPrefs } from '../../../hooks/usePluginPrefs'
+import { useLocaleStore } from '../../../stores/locale.store'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { useAgendaConfig, useAgendaStore } from '../AgendaContext'
 import { MiniCalendar } from '../components/MiniCalendar'
 import { AppointmentModal } from '../components/AppointmentModal'
 import { AppointmentPopover } from '../components/AppointmentPopover'
 import { PersonLink } from '../../../components/shared/PersonLink'
 import { EventContextMenu } from '../components/EventContextMenu'
+import { ConfirmDialog } from '../../../components/ui/confirm-dialog'
 import type { CalendarBooking, Schedule } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -30,7 +34,7 @@ function bookingToEvent(booking: CalendarBooking, statusColors: Record<string, s
     title: booking.clientName ?? 'Unknown',
     start: booking.startsAt,
     end: booking.endsAt ?? undefined,
-    backgroundColor: color + '40',
+    backgroundColor: color + '30',
     borderColor: color,
     textColor: color,
     extendedProps: { booking, serviceNames },
@@ -219,9 +223,9 @@ function CalendarSkeleton({ profCount = 2 }: { profCount?: number }) {
 }
 
 const VIEW_OPTIONS = [
-  { key: 'resourceTimeGridDay', label: 'Day' },
-  { key: 'resourceTimeGridWeek', label: 'Week' },
-  { key: 'dayGridMonth', label: 'Month' },
+  { key: 'resourceTimeGridDay', labelKey: 'agenda.calendar.viewDay' },
+  { key: 'resourceTimeGridWeek', labelKey: 'agenda.calendar.viewWeek' },
+  { key: 'dayGridMonth', labelKey: 'agenda.calendar.viewMonth' },
 ] as const
 
 // ---------------------------------------------------------------------------
@@ -231,6 +235,9 @@ const VIEW_OPTIONS = [
 export function CalendarView() {
   injectCalendarStyles()
   const config = useAgendaConfig()
+  const { t } = useTranslation()
+  const currentLocale = useLocaleStore((s) => s.locale)
+  const fcLocale = currentLocale === 'pt-BR' ? ptBrLocale : undefined
   const calendarRef = useRef<FullCalendar>(null)
   const prefs = usePluginPrefs('agenda', { calendarView: 'resourceTimeGridWeek' })
 
@@ -250,20 +257,32 @@ export function CalendarView() {
   const rescheduleBooking = useAgendaStore((s) => s.rescheduleBooking)
   const setView = useAgendaStore((s) => s.setView)
   const setFilters = useAgendaStore((s) => s.setFilters)
-  const openModal = useAgendaStore((s) => s.openAppointmentModal)
+  const _openModal = useAgendaStore((s) => s.openAppointmentModal)
   const closeModal = useAgendaStore((s) => s.closeAppointmentModal)
   const modalState = useAgendaStore((s) => s.appointmentModal)
 
   const [selectedBooking, setSelectedBooking] = useState<CalendarBooking | null>(null)
   const [popoverAnchor, setPopoverAnchor] = useState<{ x: number; y: number } | null>(null)
-  const [popoverVisible, setPopoverVisible] = useState(false)  // true = popover is showing or animating out
+  const [popoverVisible, _setPopoverVisible] = useState(false)
+  const popoverVisibleRef = useRef(false)
+  const setPopoverVisible = useCallback((v: boolean) => { popoverVisibleRef.current = v; _setPopoverVisible(v) }, [])
   const [contextMenu, setContextMenu] = useState<{ booking: CalendarBooking; x: number; y: number } | null>(null)
-  const [contextMenuVisible, setContextMenuVisible] = useState(false)
+  const [contextMenuVisible, _setContextMenuVisible] = useState(false)
+  const contextMenuVisibleRef = useRef(false)
+  const setContextMenuVisible = useCallback((v: boolean) => { contextMenuVisibleRef.current = v; _setContextMenuVisible(v) }, [])
+  const [scheduleConfirm, setScheduleConfirm] = useState<{ onConfirm: () => void } | null>(null)
   const [calendarTitle, setCalendarTitle] = useState('')
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [profSectionOpen, setProfSectionOpen] = useState(true)
   const [statusSectionOpen, setStatusSectionOpen] = useState(false)
   const [visibleRange, setVisibleRange] = useState<{ start: string; end: string } | null>(null)
+
+  // Wrap openModal to always dismiss popover/context menu first
+  const openModal: typeof _openModal = useCallback((...args) => {
+    setPopoverVisible(false); setSelectedBooking(null); setPopoverAnchor(null)
+    setContextMenuVisible(false); setContextMenu(null)
+    _openModal(...args)
+  }, [_openModal])
 
   const statusColors = useMemo(() => {
     const map: Record<string, string> = {}
@@ -402,15 +421,53 @@ export function CalendarView() {
     setPopoverVisible(true)
   }, [])
 
+  // Find the schedule block covering a given time slot for a professional
+  const findScheduleForSlot = useCallback((professionalId: string | undefined, dateTimeStr: string): Schedule | null => {
+    if (!professionalId) return null
+    const dt = new Date(dateTimeStr)
+    const dateStr = dt.toISOString().slice(0, 10)
+    const dayOfWeek = dt.getDay()
+    const timeMin = dt.getHours() * 60 + dt.getMinutes()
+
+    const profSchedules = schedules.filter((s) => s.assigneeId === professionalId)
+    const exceptions = profSchedules.filter((s) => s.specificDate === dateStr && s.isActive)
+    const weekly = profSchedules.filter((s) => s.dayOfWeek === dayOfWeek && s.isActive && !s.specificDate)
+    const daySchedules = exceptions.length > 0 ? exceptions : weekly
+
+    for (const s of daySchedules) {
+      const [sh, sm] = s.startsAt.split(':').map(Number)
+      const [eh, em] = s.endsAt.split(':').map(Number)
+      if (timeMin >= sh * 60 + sm && timeMin < eh * 60 + em) return s
+    }
+    return null
+  }, [schedules])
+
   const handleSelect = useCallback((arg: DateSelectArg) => {
-    // Don't open create if popover/context menu is showing — the click was to dismiss them
-    if (popoverVisible || contextMenuVisible) {
-      // Clear the selection highlight
-      calendarRef.current?.getApi().unselect()
+    calendarRef.current?.getApi().unselect()
+
+    // Don't open create if popover/context menu is showing — dismiss them instead
+    if (popoverVisibleRef.current || contextMenuVisibleRef.current) {
+      setPopoverVisible(false); setSelectedBooking(null); setPopoverAnchor(null)
+      setContextMenuVisible(false); setContextMenu(null)
       return
     }
-    openModal('create', { prefill: { startsAt: arg.startStr, professionalId: arg.resource?.id } })
-  }, [openModal, popoverVisible, contextMenuVisible])
+
+    const professionalId = arg.resource?.id
+    const schedule = findScheduleForSlot(professionalId, arg.startStr)
+
+    const proceed = () => {
+      const locId = schedule?.locationId ?? (schedule?.metadata?.locationId as string | undefined)
+      openModal('create', { prefill: { startsAt: arg.startStr, endsAt: arg.endStr, professionalId, locationId: locId || undefined } })
+    }
+
+    // Warn if no schedule covers this slot
+    if (!schedule) {
+      setScheduleConfirm({ onConfirm: proceed })
+      return
+    }
+
+    proceed()
+  }, [openModal, findScheduleForSlot])
 
   const handleEventDrop = useCallback(async (arg: EventDropArg) => {
     const booking = arg.event.extendedProps.booking as CalendarBooking
@@ -509,7 +566,7 @@ export function CalendarView() {
           className="flex items-center gap-2 rounded-2xl bg-primary text-primary-foreground pl-4 pr-6 py-2.5 text-sm font-medium hover:bg-primary/90 shadow-md hover:shadow-lg transition-all mb-6 w-fit"
         >
           <Plus className="h-5 w-5" />
-          Create
+          {t('agenda.sidebar.create')}
         </button>
 
         {/* Mini month calendar */}
@@ -582,7 +639,7 @@ export function CalendarView() {
 
             <button onClick={handleToday}
               className="rounded-md border px-3 py-1 text-sm font-medium hover:bg-muted/50 transition-colors">
-              Today
+              {t('agenda.toolbar.today')}
             </button>
             <div className="flex items-center gap-0.5">
               <button onClick={handlePrev} className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted transition-colors">
@@ -604,7 +661,7 @@ export function CalendarView() {
                       ? 'bg-primary/10 text-primary font-medium'
                       : 'text-muted-foreground hover:bg-muted/50'
                   }`}>
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </button>
               ))}
             </div>
@@ -631,6 +688,7 @@ export function CalendarView() {
             resources={resources}
             events={events}
             headerToolbar={false}
+            locale={fcLocale}
             height="100%"
             slotMinTime={config.businessHours.startTime + ':00'}
             slotMaxTime={config.businessHours.endTime + ':00'}
@@ -670,8 +728,10 @@ export function CalendarView() {
             setPopoverAnchor(null)
           }}
           onEdit={(id) => {
+            setPopoverVisible(false)
+            setSelectedBooking(null)
+            setPopoverAnchor(null)
             openModal('edit', { bookingId: id })
-            // Don't clear popover here — let its exit animation call onClose
           }} />
       )}
 
@@ -681,9 +741,20 @@ export function CalendarView() {
           booking={contextMenu.booking}
           position={{ x: contextMenu.x, y: contextMenu.y }}
           onClose={() => { setContextMenuVisible(false); setContextMenu(null) }}
-          onEdit={(id) => { openModal('edit', { bookingId: id }) }}
+          onEdit={(id) => { setContextMenuVisible(false); setContextMenu(null); openModal('edit', { bookingId: id }) }}
         />
       )}
+
+      {/* No-schedule confirm */}
+      <ConfirmDialog
+        open={!!scheduleConfirm}
+        variant="warning"
+        title={t('agenda.calendar.noScheduleConfirm')}
+        confirmLabel={t('common.confirm')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => { const cb = scheduleConfirm?.onConfirm; setScheduleConfirm(null); cb?.() }}
+        onCancel={() => setScheduleConfirm(null)}
+      />
 
       {/* Modal — always mounted, Radix controls open/close animation */}
       <AppointmentModal

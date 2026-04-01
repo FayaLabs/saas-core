@@ -1,12 +1,12 @@
 import * as React from 'react'
 import * as Avatar from '@radix-ui/react-avatar'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { LogOut, User, Settings, CreditCard, HelpCircle, Moon, Sun, Globe } from 'lucide-react'
+import { LogOut, User, Settings, CreditCard, HelpCircle, Moon, Sun, Monitor, ChevronRight, Check } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useThemeStore } from '../../stores/theme.store'
 import { useTranslation } from '../../hooks/useTranslation'
 import { useLocaleStore } from '../../stores/locale.store'
-import { useI18nConfig } from '../../lib/i18n'
+import { SUPPORTED_LOCALES, getLocaleOption } from '../../lib/locale-config'
 
 interface UserMenuUser {
   fullName: string
@@ -52,17 +52,11 @@ export function UserMenu({
   const setMode = useThemeStore((s) => s.setMode)
   const { t } = useTranslation()
   const { locale, setLocale } = useLocaleStore()
-  const i18nConfig = useI18nConfig()
+  const currentLocale = getLocaleOption(locale)
 
-  const LOCALE_LABELS: Record<string, string> = {
-    en: 'English',
-    'pt-BR': 'Português (BR)',
-  }
-
-  const nextLocale = () => {
-    const supported = i18nConfig.supported.length > 1 ? i18nConfig.supported : ['en', 'pt-BR']
-    const idx = supported.indexOf(locale)
-    return supported[(idx + 1) % supported.length]
+  function handleLocaleChange(code: string) {
+    setLocale(code)
+    window.location.reload()
   }
 
   return (
@@ -155,25 +149,71 @@ export function UserMenu({
 
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
 
-          {/* Theme Toggle — simple light/dark switch */}
-          <DropdownMenu.Item
-            className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted"
-            onSelect={() => setMode(mode === 'dark' ? 'light' : 'dark')}
-          >
-            {mode === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            {mode === 'dark' ? t('layout.userMenu.lightMode') : t('layout.userMenu.darkMode')}
-          </DropdownMenu.Item>
+          {/* Theme Submenu */}
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger className="flex cursor-pointer items-center justify-between rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted data-[state=open]:bg-muted">
+              <span className="flex items-center gap-2">
+                {mode === 'dark' ? <Moon className="h-4 w-4" /> : mode === 'system' ? <Monitor className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                {mode === 'dark' ? t('layout.userMenu.darkMode') : mode === 'system' ? t('layout.userMenu.systemMode') : t('layout.userMenu.lightMode')}
+              </span>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            </DropdownMenu.SubTrigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.SubContent
+                sideOffset={4}
+                className="z-50 min-w-[160px] rounded-md border border-border bg-card p-1 shadow-md animate-in fade-in-0 zoom-in-95"
+              >
+                {([
+                  { value: 'light' as const, label: t('layout.userMenu.lightMode'), icon: Sun },
+                  { value: 'dark' as const, label: t('layout.userMenu.darkMode'), icon: Moon },
+                  { value: 'system' as const, label: t('layout.userMenu.systemMode'), icon: Monitor },
+                ]).map((opt) => (
+                  <DropdownMenu.Item
+                    key={opt.value}
+                    className="flex cursor-pointer items-center justify-between rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted"
+                    onSelect={() => setMode(opt.value)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <opt.icon className="h-4 w-4" />
+                      {opt.label}
+                    </span>
+                    {mode === opt.value && <Check className="h-3.5 w-3.5 text-primary" />}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Sub>
 
-          {/* Language Toggle */}
-          <DropdownMenu.Item
-            className="flex cursor-pointer items-center justify-between rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted"
-            onSelect={() => setLocale(nextLocale())}
-          >
-            <span className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              {LOCALE_LABELS[locale] ?? locale}
-            </span>
-          </DropdownMenu.Item>
+          {/* Language Submenu */}
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger className="flex cursor-pointer items-center justify-between rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted data-[state=open]:bg-muted">
+              <span className="flex items-center gap-2">
+                <span className="text-base leading-none">{currentLocale.flag}</span>
+                {currentLocale.label}
+              </span>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            </DropdownMenu.SubTrigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.SubContent
+                sideOffset={4}
+                className="z-50 min-w-[180px] rounded-md border border-border bg-card p-1 shadow-md animate-in fade-in-0 zoom-in-95"
+              >
+                {SUPPORTED_LOCALES.map((loc) => (
+                  <DropdownMenu.Item
+                    key={loc.code}
+                    className="flex cursor-pointer items-center justify-between rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted"
+                    onSelect={() => handleLocaleChange(loc.code)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-base leading-none">{loc.flag}</span>
+                      {loc.label}
+                    </span>
+                    {locale === loc.code && <Check className="h-3.5 w-3.5 text-primary" />}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Sub>
 
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
 

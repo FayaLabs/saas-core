@@ -160,10 +160,10 @@ export function createMockAgendaProvider(): AgendaDataProvider {
       const totalDuration = input.services.reduce((sum, s) => sum + s.durationMinutes, 0)
       const totalPrice = input.services.reduce((sum, s) => sum + s.price, 0)
       const booking: CalendarBooking = {
-        id: uid(), tenantId: 'mock', kind: 'appointment',
-        startsAt: input.startsAt, endsAt: addMinutes(input.startsAt, totalDuration),
+        id: uid(), tenantId: 'mock', kind: input.kind ?? 'appointment',
+        startsAt: input.startsAt, endsAt: addMinutes(input.startsAt, totalDuration || 30),
         status: 'scheduled', notes: input.notes ?? null,
-        orderId: uid(), locationId: input.locationId ?? null, metadata: {},
+        orderId: input.services.length > 0 ? uid() : null, locationId: input.locationId ?? null, metadata: {},
         clientId: input.clientId, clientName: 'New Client', clientPhone: null, clientEmail: null, clientAvatarUrl: null,
         professionalId: input.professionalId,
         professionalName: professionals.find((p) => p.id === input.professionalId)?.name ?? 'Unknown',

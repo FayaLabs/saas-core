@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { ArrowLeft, UserPlus, FileText } from 'lucide-react'
+import { UserPlus, FileText } from 'lucide-react'
 import { useCrmProvider, useCrmConfig, formatCurrency } from '../CrmContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { QuoteStatusDropdown } from '../components/QuoteStatusDropdown'
+import { Breadcrumb } from '../../../components/ui/breadcrumb'
 import type { Lead, Deal, Quote } from '../types'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -31,6 +33,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
 }) {
   const provider = useCrmProvider()
   const { currency } = useCrmConfig()
+  const { t } = useTranslation()
   const [lead, setLead] = useState<Lead | null>(null)
   const [deal, setDeal] = useState<Deal | null>(null)
   const [quotes, setQuotes] = useState<Quote[]>([])
@@ -55,13 +58,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
   if (loading) {
     return (
       <div className="space-y-6">
-        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <button type="button" onClick={onBack} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-            <ArrowLeft className="h-3.5 w-3.5" /> Leads
-          </button>
-          <span>/</span>
-          <span className="text-muted-foreground">Loading...</span>
-        </nav>
+        <Breadcrumb parent={t('crm.leads.title')} current={t('crm.leadDetail.loading')} onBack={onBack} />
         <div className="flex items-start gap-5">
           <div className="h-20 w-20 shrink-0 rounded-2xl bg-muted/40 animate-pulse" />
           <div className="flex-1 space-y-2 pt-1">
@@ -89,17 +86,11 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
   if (!lead) {
     return (
       <div className="space-y-6">
-        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <button type="button" onClick={onBack} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-            <ArrowLeft className="h-3.5 w-3.5" /> Leads
-          </button>
-          <span>/</span>
-          <span className="text-foreground font-medium">Not found</span>
-        </nav>
+        <Breadcrumb parent={t('crm.leads.title')} current={t('crm.leadDetail.notFound')} onBack={onBack} />
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed border-muted">
           <UserPlus className="h-8 w-8 text-muted-foreground/30 mb-2" />
-          <p className="text-sm text-muted-foreground">Lead not found</p>
-          <button onClick={onBack} className="text-xs text-primary hover:underline mt-1">Back to list</button>
+          <p className="text-sm text-muted-foreground">{t('crm.leadDetail.leadNotFound')}</p>
+          <button onClick={onBack} className="text-xs text-primary hover:underline mt-1">{t('crm.leadDetail.backToList')}</button>
         </div>
       </div>
     )
@@ -110,13 +101,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <button type="button" onClick={onBack} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-          <ArrowLeft className="h-3.5 w-3.5" /> Leads
-        </button>
-        <span>/</span>
-        <span className="text-foreground font-medium truncate max-w-[200px]">{lead.name}</span>
-      </nav>
+      <Breadcrumb parent={t('crm.leads.title')} current={lead.name} onBack={onBack} />
 
       {/* Hero */}
       <div className="flex items-start gap-5">
@@ -145,7 +130,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
             onClick={() => onCreateQuote(leadId)}
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
           >
-            <FileText className="h-3 w-3" /> Create Quote
+            <FileText className="h-3 w-3" /> {t('crm.leadDetail.createQuote')}
           </button>
         )}
       </div>
@@ -155,20 +140,20 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
 
       {/* Contact Information */}
       <div>
-        <h3 className="text-sm font-semibold text-foreground mb-1">Contact Information</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">{t('crm.leadDetail.contactInfo')}</h3>
         <div className="rounded-xl border bg-card">
           <dl className="grid divide-y md:grid-cols-2 md:divide-y-0">
             <div className="px-5 md:border-b">
-              <FieldRow label="Email" value={lead.email ? <a href={`mailto:${lead.email}`} className="text-primary hover:underline">{lead.email}</a> : null} />
+              <FieldRow label={t('crm.leadDetail.email')} value={lead.email ? <a href={`mailto:${lead.email}`} className="text-primary hover:underline">{lead.email}</a> : null} />
             </div>
             <div className="px-5 md:border-b">
-              <FieldRow label="Phone" value={lead.phone ? <a href={`tel:${lead.phone}`} className="text-primary hover:underline">{lead.phone}</a> : null} />
+              <FieldRow label={t('crm.leadDetail.phone')} value={lead.phone ? <a href={`tel:${lead.phone}`} className="text-primary hover:underline">{lead.phone}</a> : null} />
             </div>
             <div className="px-5 md:border-b md:last:border-b-0">
-              <FieldRow label="Company" value={lead.company} />
+              <FieldRow label={t('crm.leadDetail.company')} value={lead.company} />
             </div>
             <div className="px-5 md:border-b md:last:border-b-0">
-              <FieldRow label="Source" value={lead.sourceName} />
+              <FieldRow label={t('crm.leadDetail.source')} value={lead.sourceName} />
             </div>
           </dl>
         </div>
@@ -177,11 +162,11 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
       {/* Pipeline / Deal */}
       {deal && (
         <div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">Pipeline</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-1">{t('crm.leadDetail.pipeline')}</h3>
           <div className="rounded-xl border bg-card">
             <dl className="grid divide-y md:grid-cols-2 md:divide-y-0">
               <div className="px-5 md:border-b">
-                <FieldRow label="Stage" value={deal.stageName ? (
+                <FieldRow label={t('crm.leadDetail.stage')} value={deal.stageName ? (
                   <span className="inline-flex items-center gap-1.5">
                     {deal.stageColor && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: deal.stageColor }} />}
                     {deal.stageName}
@@ -189,13 +174,13 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
                 ) : null} />
               </div>
               <div className="px-5 md:border-b">
-                <FieldRow label="Deal value" value={deal.value > 0 ? formatCurrency(deal.value, currency) : null} />
+                <FieldRow label={t('crm.leadDetail.dealValue')} value={deal.value > 0 ? formatCurrency(deal.value, currency) : null} />
               </div>
               <div className="px-5 md:border-b md:last:border-b-0">
-                <FieldRow label="Probability" value={`${deal.probability}%`} />
+                <FieldRow label={t('crm.leadDetail.probability')} value={`${deal.probability}%`} />
               </div>
               <div className="px-5 md:border-b md:last:border-b-0">
-                <FieldRow label="Deal status" value={deal.status} />
+                <FieldRow label={t('crm.leadDetail.dealStatus')} value={deal.status} />
               </div>
             </dl>
           </div>
@@ -205,7 +190,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
       {/* Quotes */}
       {quotes.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">Quotes</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-1">{t('crm.leadDetail.quotes')}</h3>
           <div className="rounded-xl border bg-card divide-y">
             {quotes.map((q) => (
               <div
@@ -232,20 +217,20 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
 
       {/* Details */}
       <div>
-        <h3 className="text-sm font-semibold text-foreground mb-1">Details</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">{t('crm.leadDetail.details')}</h3>
         <div className="rounded-xl border bg-card">
           <dl className="grid divide-y md:grid-cols-2 md:divide-y-0">
             <div className="px-5 md:border-b">
-              <FieldRow label="Value" value={lead.value != null && lead.value > 0 ? lead.value : null} />
+              <FieldRow label={t('crm.leadDetail.value')} value={lead.value != null && lead.value > 0 ? lead.value : null} />
             </div>
             <div className="px-5 md:border-b">
-              <FieldRow label="Assigned to" value={lead.assignedToName} />
+              <FieldRow label={t('crm.leadDetail.assignedTo')} value={lead.assignedToName} />
             </div>
             <div className="px-5 md:border-b md:last:border-b-0">
-              <FieldRow label="Created" value={lead.createdAt?.slice(0, 10)} />
+              <FieldRow label={t('crm.leadDetail.created')} value={lead.createdAt?.slice(0, 10)} />
             </div>
             <div className="px-5 md:border-b md:last:border-b-0">
-              <FieldRow label="Updated" value={lead.updatedAt?.slice(0, 10)} />
+              <FieldRow label={t('crm.leadDetail.updated')} value={lead.updatedAt?.slice(0, 10)} />
             </div>
           </dl>
         </div>
@@ -254,7 +239,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
       {/* Tags */}
       {lead.tags && lead.tags.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">Tags</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-1">{t('crm.leadDetail.tags')}</h3>
           <div className="rounded-xl border bg-card px-5 py-4">
             <div className="flex gap-1.5 flex-wrap">
               {lead.tags.map((tag) => (
@@ -268,7 +253,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
       {/* Notes */}
       {lead.notes && (
         <div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">Notes</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-1">{t('crm.leadDetail.notes')}</h3>
           <div className="rounded-xl border bg-card px-5 py-4">
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{lead.notes}</p>
           </div>

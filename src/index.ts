@@ -470,9 +470,12 @@ function buildSettingsTabs(
     }
 
     const IconComp = tab.icon ? (LucideIcons as any)[tab.icon] ?? Puzzle : Puzzle
+    // Try to translate plugin settings tab label via t('settings.plugin.{id}'), fallback to raw label
+    const pluginLabelKey = `settings.plugin.${tab.id}`
+    const pluginLabel = t(pluginLabelKey)
     settingsTabs.push({
       id: tab.id,
-      label: tab.label,
+      label: pluginLabel === pluginLabelKey ? tab.label : pluginLabel,
       icon: React.createElement(IconComp, { className: 'h-4 w-4' }),
       component: React.createElement(tab.component),
       isPlugin: true,
@@ -811,9 +814,12 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
       }
     }, [setFeatures])
 
-    // Initialize locale store
+    // Initialize locale store — respect persisted user preference
     React.useEffect(() => {
-      useLocaleStore.getState().setLocale(config.locale?.default ?? 'en')
+      const persisted = typeof localStorage !== 'undefined' && localStorage.getItem('saas-core:locale')
+      if (!persisted) {
+        useLocaleStore.getState().setLocale(config.locale?.default ?? 'en')
+      }
     }, [])
 
     let inner: React.ReactNode = React.createElement(

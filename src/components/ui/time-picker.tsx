@@ -31,10 +31,14 @@ interface TimePickerProps {
   /** Read-only mode */
   readOnly?: boolean
   className?: string
+  /** Open the dropdown immediately on mount */
+  defaultOpen?: boolean
+  /** Called when the dropdown opens or closes */
+  onOpenChange?: (open: boolean) => void
 }
 
-export function TimePicker({ value, onChange, interval = 15, min = '00:00', max = '23:45', use12h = false, readOnly, className }: TimePickerProps) {
-  const [open, setOpen] = useState(false)
+export function TimePicker({ value, onChange, interval = 15, min = '00:00', max = '23:45', use12h = false, readOnly, className, defaultOpen, onOpenChange }: TimePickerProps) {
+  const [open, setOpen] = useState(defaultOpen ?? false)
   const ref = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
@@ -54,6 +58,7 @@ export function TimePicker({ value, onChange, interval = 15, min = '00:00', max 
       if (ref.current?.contains(target)) return
       if (listRef.current?.contains(target)) return
       setOpen(false)
+      onOpenChange?.(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -120,8 +125,8 @@ export function TimePicker({ value, onChange, interval = 15, min = '00:00', max 
 
       {/* Dropdown — portal to escape overflow containers */}
       {open && !readOnly && createPortal(
-        <div ref={listRef}
-          style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}
+        <div ref={listRef} data-modal-passthrough
+          style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, zIndex: 9999, pointerEvents: 'auto' }}
           className="min-w-[120px] max-h-48 overflow-y-auto rounded-xl border bg-popover shadow-xl py-1">
           {slots.map((slot) => {
             const selected = slot.value === value

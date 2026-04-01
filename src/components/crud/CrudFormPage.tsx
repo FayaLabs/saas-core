@@ -211,7 +211,9 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
   }
 
   const title = mode === 'create' ? t('crud.form.addTitle', { entity: entityDef.name }) : t('crud.form.editTitle', { entity: entityDef.name })
-  const breadcrumbLabel = mode === 'create' ? t('crud.form.newBreadcrumb', { entity: entityDef.name }) : (initialData?.[displayField] ?? t('common.edit'))
+  const breadcrumbLabel = mode === 'create'
+    ? t('crud.form.newBreadcrumb', { entity: entityDef.name })
+    : (values[displayField] || initialData?.[displayField] || t('common.edit'))
 
   // Organize fields by groups
   const groups = entityDef.fieldGroups ?? []
@@ -293,23 +295,15 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
   return (
     <div className="w-full flex flex-col items-center">
       <div className="w-full max-w-3xl space-y-6">
-        {/* Breadcrumb */}
+        {/* Breadcrumb + subtitle */}
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <button type="button" onClick={onCancel} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
             <ArrowLeft className="h-3.5 w-3.5" />
             {namePlural}
           </button>
           <span>/</span>
-          <span className="text-foreground font-medium">{breadcrumbLabel}</span>
+          <span className="text-foreground font-medium truncate max-w-[200px]">{breadcrumbLabel}</span>
         </nav>
-
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold">{title}</h1>
-          <p className="text-muted-foreground">
-            {mode === 'create' ? t('crud.form.createDescription', { entity: entityDef.name.toLowerCase() }) : t('crud.form.editDescription', { entity: entityDef.name.toLowerCase() })}
-          </p>
-        </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">

@@ -31,7 +31,7 @@ export function LeadFormView({ onSaved }: { onSaved?: (id?: string) => void }) {
 
   return (
     <div className="space-y-5">
-      <SubpageHeader title={t('crm.leadForm.title')} subtitle={t('crm.leadForm.subtitle')} onBack={onSaved} actions={
+      <SubpageHeader title={t('crm.leadForm.title')} subtitle={t('crm.leadForm.subtitle')} onBack={onSaved} parentLabel={t('crm.leads.title')} actions={
         <div className="flex items-center gap-2">
           {onSaved && <button onClick={() => onSaved()} className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">{t('crm.leadForm.cancel')}</button>}
           <button onClick={handleSave} disabled={!name.trim() || saving} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
@@ -41,14 +41,14 @@ export function LeadFormView({ onSaved }: { onSaved?: (id?: string) => void }) {
       } />
       <div className="rounded-lg border bg-card p-5 space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <div><label className="text-xs font-medium text-muted-foreground">Name *</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Contact name" autoFocus className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></div>
-          <div><label className="text-xs font-medium text-muted-foreground">Company</label><input type="text" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Company name" className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></div>
+          <div><label className="text-xs font-medium text-muted-foreground">{t('crm.leadForm.name')}</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('crm.leadForm.namePlaceholder')} autoFocus className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></div>
+          <div><label className="text-xs font-medium text-muted-foreground">{t('crm.leadForm.company')}</label><input type="text" value={company} onChange={(e) => setCompany(e.target.value)} placeholder={t('crm.leadForm.companyPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div><label className="text-xs font-medium text-muted-foreground">Email</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></div>
-          <div><label className="text-xs font-medium text-muted-foreground">Phone</label><input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+55 11 99999-9999" className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></div>
+          <div><label className="text-xs font-medium text-muted-foreground">{t('crm.leadForm.email')}</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('crm.leadForm.emailPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></div>
+          <div><label className="text-xs font-medium text-muted-foreground">{t('crm.leadForm.phone')}</label><input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('crm.leadForm.phonePlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></div>
         </div>
-        <div><label className="text-xs font-medium text-muted-foreground">Notes</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Additional notes..." className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" /></div>
+        <div><label className="text-xs font-medium text-muted-foreground">{t('crm.leadForm.notes')}</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={t('crm.leadForm.notesPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" /></div>
       </div>
     </div>
   )

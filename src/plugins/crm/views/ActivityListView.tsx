@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Phone, Mail, Users, FileText, CheckSquare, MessageCircle, Check, Clock, Filter, Calendar } from 'lucide-react'
 import { useCrmStore } from '../CrmContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import type { ActivityType } from '../types'
 
@@ -35,6 +36,7 @@ function ActivitySkeleton() {
 }
 
 export function ActivityListView() {
+  const { t } = useTranslation()
   const activities = useCrmStore((s) => s.activities)
   const activitiesLoading = useCrmStore((s) => s.activitiesLoading)
   const fetchActivities = useCrmStore((s) => s.fetchActivities)
@@ -57,8 +59,8 @@ export function ActivityListView() {
   return (
     <div className="space-y-4">
       <SubpageHeader
-        title="Activities"
-        subtitle={`${activities.length} activities${pendingCount > 0 ? ` · ${pendingCount} pending` : ''}${overdueCount > 0 ? ` · ${overdueCount} overdue` : ''}`}
+        title={t('crm.activities.title')}
+        subtitle={`${activities.length} ${t('crm.activities.title').toLowerCase()}${pendingCount > 0 ? ` · ${pendingCount} ${t('crm.activities.pending')}` : ''}${overdueCount > 0 ? ` · ${overdueCount} ${t('crm.activities.overdue')}` : ''}`}
       />
 
       {/* Filters */}
@@ -69,7 +71,7 @@ export function ActivityListView() {
             onClick={() => setTypeFilter(null)}
             className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${typeFilter === null ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}
           >
-            All
+            {t('crm.activities.all')}
           </button>
           {Object.entries(TYPE_CONFIG).map(([type, cfg]) => {
             const Icon = cfg.icon
@@ -94,13 +96,13 @@ export function ActivityListView() {
             onClick={() => setShowCompleted(showCompleted === false ? null : false)}
             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${showCompleted === false ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}
           >
-            <Clock className="h-3 w-3" /> Pending
+            <Clock className="h-3 w-3" /> {t('crm.activities.pendingFilter')}
           </button>
           <button
             onClick={() => setShowCompleted(showCompleted === true ? null : true)}
             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${showCompleted === true ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}
           >
-            <Check className="h-3 w-3" /> Completed
+            <Check className="h-3 w-3" /> {t('crm.activities.completedFilter')}
           </button>
         </div>
       </div>
@@ -113,8 +115,8 @@ export function ActivityListView() {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/30 mb-3">
             <Calendar className="h-5 w-5 text-muted-foreground/40" />
           </div>
-          <p className="text-sm text-muted-foreground">No activities{typeFilter ? ` of type "${TYPE_CONFIG[typeFilter]?.label}"` : ''}</p>
-          <p className="text-[10px] text-muted-foreground/60 mt-0.5">Activities are logged from lead and deal interactions</p>
+          <p className="text-sm text-muted-foreground">{typeFilter ? t('crm.activities.noActivitiesOfType', { type: TYPE_CONFIG[typeFilter]?.label ?? typeFilter }) : t('crm.activities.noActivities')}</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5">{t('crm.activities.activitiesLogged')}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -136,12 +138,12 @@ export function ActivityListView() {
                     <p className="text-sm font-medium truncate">{a.title}</p>
                     {a.completedAt && (
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">
-                        <Check className="h-2.5 w-2.5" /> Done
+                        <Check className="h-2.5 w-2.5" /> {t('crm.activities.done')}
                       </span>
                     )}
                     {isOverdue && (
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-medium text-red-700 dark:bg-red-500/20 dark:text-red-400">
-                        Overdue
+                        {t('crm.activities.overdueLabel')}
                       </span>
                     )}
                   </div>

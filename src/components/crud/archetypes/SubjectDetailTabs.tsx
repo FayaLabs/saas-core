@@ -4,8 +4,10 @@ import { Card, CardContent } from '../../ui/card'
 import { Badge } from '../../ui/badge'
 import { PersonLink } from './EntityLink'
 import { getSupabaseClientOptional } from '../../../lib/supabase'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 function ComingSoon({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
+  const { t } = useTranslation()
   return (
     <Card>
       <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -14,13 +16,14 @@ function ComingSoon({ icon: Icon, title, description }: { icon: React.ElementTyp
         </div>
         <p className="text-sm font-medium">{title}</p>
         <p className="text-xs text-muted-foreground mt-1 max-w-xs">{description}</p>
-        <Badge variant="secondary" className="mt-3 text-[10px]">Coming Soon</Badge>
+        <Badge variant="secondary" className="mt-3 text-[10px]">{t('crud.archetype.comingSoon')}</Badge>
       </CardContent>
     </Card>
   )
 }
 
 export function OwnerTab({ item }: { item: any }) {
+  const { t } = useTranslation()
   const [person, setPerson] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -59,19 +62,19 @@ export function OwnerTab({ item }: { item: any }) {
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
             <User className="h-5 w-5 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium">No owner assigned</p>
-          <p className="text-xs text-muted-foreground mt-1">Edit this record to assign an owner.</p>
+          <p className="text-sm font-medium">{t('crud.archetype.owner.noOwner')}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t('crud.archetype.owner.assignHint')}</p>
         </CardContent>
       </Card>
     )
   }
 
   const fields = [
-    { label: 'Name', value: person.name },
-    { label: 'Phone', value: person.phone, href: person.phone ? `tel:${person.phone}` : undefined },
-    { label: 'Email', value: person.email, href: person.email ? `mailto:${person.email}` : undefined },
-    { label: 'Document', value: person.document_number },
-    { label: 'Address', value: [person.address, person.city, person.state].filter(Boolean).join(', ') },
+    { label: t('crud.archetype.owner.name'), value: person.name },
+    { label: t('crud.archetype.owner.phone'), value: person.phone, href: person.phone ? `tel:${person.phone}` : undefined },
+    { label: t('crud.archetype.owner.email'), value: person.email, href: person.email ? `mailto:${person.email}` : undefined },
+    { label: t('crud.archetype.owner.document'), value: person.document_number },
+    { label: t('crud.archetype.owner.address'), value: [person.address, person.city, person.state].filter(Boolean).join(', ') },
   ].filter((f) => f.value)
 
   return (
@@ -88,7 +91,7 @@ export function OwnerTab({ item }: { item: any }) {
             <div className="flex items-center gap-2 mt-0.5">
               <Badge variant="secondary" className="text-[10px] capitalize">{person.kind}</Badge>
               <Badge variant={person.is_active ? 'default' : 'secondary'} className="text-[10px]">
-                {person.is_active ? 'Active' : 'Inactive'}
+                {person.is_active ? t('crud.archetype.owner.active') : t('crud.archetype.owner.inactive')}
               </Badge>
             </div>
           </div>
@@ -111,21 +114,23 @@ export function OwnerTab({ item }: { item: any }) {
 }
 
 export function SubjectHistoryTab() {
+  const { t } = useTranslation()
   return (
     <ComingSoon
       icon={Clock}
-      title="History"
-      description="View visit history, past reports, treatments, and timeline of events."
+      title={t('crud.archetype.history.title')}
+      description={t('crud.archetype.history.description')}
     />
   )
 }
 
 export function SubjectDocumentsTab() {
+  const { t } = useTranslation()
   return (
     <ComingSoon
       icon={FileText}
-      title="Documents"
-      description="Attach and manage files, lab results, images, and certificates."
+      title={t('crud.archetype.subjectDocuments.title')}
+      description={t('crud.archetype.subjectDocuments.description')}
     />
   )
 }

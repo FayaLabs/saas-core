@@ -23,13 +23,6 @@ interface SettingsPageProps {
   afterContent?: React.ReactNode
 }
 
-const DEFAULT_TABS: SettingsTab[] = [
-  { id: 'general', label: 'General', icon: <Building2 className="h-4 w-4" />, component: <ConnectedCompanySettings /> },
-  { id: 'profile', label: 'Profile', icon: <User className="h-4 w-4" />, component: <ConnectedUserProfile /> },
-  { id: 'security', label: 'Security', icon: <Shield className="h-4 w-4" />, component: <ConnectedSecuritySettings /> },
-  { id: 'branding', label: 'Branding', icon: <Palette className="h-4 w-4" />, component: <ConnectedBrandingSettings /> },
-]
-
 export function SettingsPage({
   tabs,
   extraTabs,
@@ -39,7 +32,15 @@ export function SettingsPage({
   afterContent,
 }: SettingsPageProps) {
   const { t } = useTranslation()
-  const baseTabs = tabs ?? DEFAULT_TABS
+
+  const defaultTabs: SettingsTab[] = React.useMemo(() => [
+    { id: 'general', label: t('settings.general'), icon: <Building2 className="h-4 w-4" />, component: <ConnectedCompanySettings /> },
+    { id: 'profile', label: t('settings.profile'), icon: <User className="h-4 w-4" />, component: <ConnectedUserProfile /> },
+    { id: 'security', label: t('settings.security'), icon: <Shield className="h-4 w-4" />, component: <ConnectedSecuritySettings /> },
+    { id: 'branding', label: t('settings.branding'), icon: <Palette className="h-4 w-4" />, component: <ConnectedBrandingSettings /> },
+  ], [t])
+
+  const baseTabs = tabs ?? defaultTabs
   const resolvedTabs = extraTabs ? [...baseTabs, ...extraTabs] : baseTabs
 
   // Detect active tab from URL: /settings/financial/... → 'financial'

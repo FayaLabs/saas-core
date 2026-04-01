@@ -1,12 +1,22 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
+import { useTranslation } from '../../hooks/useTranslation'
+import { useLocaleStore } from '../../stores/locale.store'
 
 // ---------------------------------------------------------------------------
 // DatePicker — custom dropdown calendar, Google Calendar style
 // ---------------------------------------------------------------------------
 
-const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const DAY_LABELS: Record<string, string[]> = {
+  en: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+  'pt-BR': ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+}
+
+function toDateLocale(locale: string): string {
+  if (locale === 'pt-BR') return 'pt-BR'
+  return 'en-US'
+}
 
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -14,8 +24,8 @@ function isSameDay(a: Date, b: Date) {
 
 function isToday(d: Date) { return isSameDay(d, new Date()) }
 
-function formatDate(date: Date, locale = 'en-US') {
-  return date.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })
+function formatDate(date: Date, locale: string) {
+  return date.toLocaleDateString(toDateLocale(locale), { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function toDateStr(d: Date) {
@@ -31,18 +41,26 @@ interface DatePickerProps {
   /** Value as YYYY-MM-DD string */
   value: string
   onChange: (value: string) => void
-  locale?: string
   className?: string
+  /** Open the dropdown immediately on mount */
+  defaultOpen?: boolean
+  /** Called when the dropdown opens or closes */
+  onOpenChange?: (open: boolean) => void
 }
 
-export function DatePicker({ value, onChange, locale = 'en-US', className }: DatePickerProps) {
-  const [open, setOpen] = useState(false)
+export function DatePicker({ value, onChange, className, defaultOpen, onOpenChange }: DatePickerProps) {
+  const { t } = useTranslation()
+  const locale = useLocaleStore((s) => s.locale)
+  const [open, setOpen] = useState(defaultOpen ?? false)
   const ref = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const selectedDate = value ? parseDate(value) : new Date()
   const [viewMonth, setViewMonth] = useState(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1))
   const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
+
+  const dayLabels = DAY_LABELS[locale] ?? DAY_LABELS.en
+  const dateLocale = toDateLocale(locale)
 
   // Position the portal dropdown relative to the trigger
   useEffect(() => {
@@ -62,10 +80,11 @@ export function DatePicker({ value, onChange, locale = 'en-US', className }: Dat
       if (ref.current?.contains(target)) return
       if (dropdownRef.current?.contains(target)) return
       setOpen(false)
+      onOpenChange?.(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [open])
+  }, [open, onOpenChange])
 
   // Sync view month when value changes externally
   useEffect(() => {
@@ -75,7 +94,7 @@ export function DatePicker({ value, onChange, locale = 'en-US', className }: Dat
     }
   }, [value])
 
-  const monthLabel = viewMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+  const monthLabel = viewMonth.toLocaleDateString(dateLocale, { month: 'long', year: 'numeric' })
 
   const weeks = useMemo(() => {
     const year = viewMonth.getFullYear()
@@ -86,15 +105,12 @@ export function DatePicker({ value, onChange, locale = 'en-US', className }: Dat
     const prevMonthDays = new Date(year, month, 0).getDate()
 
     const cells: { date: Date; inMonth: boolean }[] = []
-    // Previous month fill
     for (let i = startOffset - 1; i >= 0; i--) {
       cells.push({ date: new Date(year, month - 1, prevMonthDays - i), inMonth: false })
     }
-    // Current month
     for (let d = 1; d <= daysInMonth; d++) {
       cells.push({ date: new Date(year, month, d), inMonth: true })
     }
-    // Next month fill
     while (cells.length % 7 !== 0) {
       cells.push({ date: new Date(year, month + 1, cells.length - startOffset - daysInMonth + 1), inMonth: false })
     }
@@ -115,17 +131,17 @@ export function DatePicker({ value, onChange, locale = 'en-US', className }: Dat
       <button ref={triggerRef} type="button" onClick={() => setOpen((p) => !p)}
         className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm hover:bg-muted/30 transition-colors w-full text-left">
         <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        <span>{value ? formatDate(selectedDate, locale) : 'Select date'}</span>
+        <span>{value ? formatDate(selectedDate, locale) : t('common.selectDate')}</span>
       </button>
 
       {/* Dropdown — portal to escape overflow containers */}
       {open && createPortal(
-        <div ref={dropdownRef}
-          style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
+        <div ref={dropdownRef} data-modal-passthrough
+          style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999, pointerEvents: 'auto' }}
           className="rounded-xl border bg-popover shadow-xl p-3 w-[260px]">
           {/* Month nav */}
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">{monthLabel}</span>
+            <span className="text-sm font-medium capitalize">{monthLabel}</span>
             <div className="flex items-center gap-0.5">
               <button type="button" onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))}
                 className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted transition-colors">
@@ -140,7 +156,7 @@ export function DatePicker({ value, onChange, locale = 'en-US', className }: Dat
 
           {/* Day labels */}
           <div className="grid grid-cols-7 mb-1">
-            {DAY_LABELS.map((l, i) => (
+            {dayLabels.map((l, i) => (
               <div key={i} className="flex h-8 items-center justify-center text-[11px] font-medium text-muted-foreground">{l}</div>
             ))}
           </div>
@@ -173,7 +189,7 @@ export function DatePicker({ value, onChange, locale = 'en-US', className }: Dat
           {/* Today shortcut */}
           <div className="mt-2 pt-2 border-t">
             <button type="button" onClick={() => { handleSelect(new Date()) }}
-              className="text-xs text-primary font-medium hover:underline">Today</button>
+              className="text-xs text-primary font-medium hover:underline">{t('agenda.calendar.today')}</button>
           </div>
         </div>,
         document.body,

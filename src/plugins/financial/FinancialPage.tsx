@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
 import { Settings } from 'lucide-react'
+import { useTranslation } from '../../hooks/useTranslation'
 import { ModulePage, type ModuleNavItem } from '../../components/layout/ModulePage'
 import { FinancialContextProvider, type ResolvedFinancialConfig } from './FinancialContext'
 import type { FinancialDataProvider } from './data/types'
@@ -49,11 +50,12 @@ function buildNav(
   config: ResolvedFinancialConfig,
   activeView: string,
   navigate: (view: string, hash?: string) => void,
+  t: (key: string, params?: Record<string, string | number>) => string,
 ): ModuleNavItem[] {
   const items: ModuleNavItem[] = [
     {
       id: 'summary',
-      label: config.labels.summary,
+      label: t('financial.nav.summary'),
       icon: 'BarChart3',
       active: activeView === 'summary',
       onClick: () => navigate('summary'),
@@ -63,13 +65,13 @@ function buildNav(
   if (config.modules.payables) {
     items.push({
       id: 'payables',
-      label: config.labels.payables,
+      label: t('financial.nav.payables'),
       icon: 'ArrowUpCircle',
       active: activeView.startsWith('payables'),
       children: [
-        { id: 'payables-new', label: config.labels.payablesNew, active: activeView === 'payables-new', onClick: () => navigate('payables-new') },
-        { id: 'payables-list', label: config.labels.payablesList, active: activeView === 'payables-list', onClick: () => navigate('payables-list') },
-        { id: 'payables-recurring', label: config.labels.payablesRecurring, active: activeView === 'payables-recurring', onClick: () => navigate('payables-recurring') },
+        { id: 'payables-new', label: t('financial.nav.new'), active: activeView === 'payables-new', onClick: () => navigate('payables-new') },
+        { id: 'payables-list', label: t('financial.nav.list'), active: activeView === 'payables-list', onClick: () => navigate('payables-list') },
+        { id: 'payables-recurring', label: t('financial.nav.recurringExpenses'), active: activeView === 'payables-recurring', onClick: () => navigate('payables-recurring') },
       ],
     })
   }
@@ -77,12 +79,12 @@ function buildNav(
   if (config.modules.receivables) {
     items.push({
       id: 'receivables',
-      label: config.labels.receivables,
+      label: t('financial.nav.receivables'),
       icon: 'ArrowDownCircle',
       active: activeView.startsWith('receivables'),
       children: [
-        { id: 'receivables-new', label: config.labels.receivablesNew, active: activeView === 'receivables-new', onClick: () => navigate('receivables-new') },
-        { id: 'receivables-list', label: config.labels.receivablesList, active: activeView === 'receivables-list', onClick: () => navigate('receivables-list') },
+        { id: 'receivables-new', label: t('financial.nav.new'), active: activeView === 'receivables-new', onClick: () => navigate('receivables-new') },
+        { id: 'receivables-list', label: t('financial.nav.list'), active: activeView === 'receivables-list', onClick: () => navigate('receivables-list') },
       ],
     })
   }
@@ -90,7 +92,7 @@ function buildNav(
   if (config.modules.cashRegisters) {
     items.push({
       id: 'cash-registers',
-      label: config.labels.cashRegisters,
+      label: t('financial.nav.cashRegisters'),
       icon: 'Landmark',
       active: activeView === 'cash-registers',
       onClick: () => navigate('cash-registers'),
@@ -100,7 +102,7 @@ function buildNav(
   if (config.modules.statements) {
     items.push({
       id: 'statements',
-      label: config.labels.statements,
+      label: t('financial.nav.statements'),
       icon: 'Receipt',
       active: activeView === 'statements',
       onClick: () => navigate('statements'),
@@ -110,11 +112,11 @@ function buildNav(
   if (config.modules.commissions) {
     items.push({
       id: 'commissions',
-      label: config.labels.commissions,
+      label: t('financial.nav.commissions'),
       icon: 'Users',
       children: [
-        { id: 'commissions-overview', label: config.labels.commissionsOverview, active: activeView === 'commissions', onClick: () => navigate('commissions') },
-        { id: 'commissions-rules', label: config.labels.commissionsRules, active: activeView === 'commissions', onClick: () => navigate('commissions') },
+        { id: 'commissions-overview', label: t('financial.nav.overview'), active: activeView === 'commissions', onClick: () => navigate('commissions') },
+        { id: 'commissions-rules', label: t('financial.nav.rules'), active: activeView === 'commissions', onClick: () => navigate('commissions') },
       ],
     })
   }
@@ -122,11 +124,11 @@ function buildNav(
   if (config.modules.cards) {
     items.push({
       id: 'cards',
-      label: config.labels.cards,
+      label: t('financial.nav.cards'),
       icon: 'CreditCard',
       children: [
-        { id: 'cards-overview', label: config.labels.cardsOverview, active: activeView === 'cards', onClick: () => navigate('cards') },
-        { id: 'cards-reconciliation', label: config.labels.cardsReconciliation, active: activeView === 'cards', onClick: () => navigate('cards') },
+        { id: 'cards-overview', label: t('financial.nav.overview'), active: activeView === 'cards', onClick: () => navigate('cards') },
+        { id: 'cards-reconciliation', label: t('financial.nav.reconciliation'), active: activeView === 'cards', onClick: () => navigate('cards') },
       ],
     })
   }
@@ -155,36 +157,37 @@ export function FinancialPage({ config, provider, store, registries }: {
     try { return localStorage.getItem('saas-core:financial-onboarded') === 'true' } catch { return false }
   })
 
+  const { t } = useTranslation()
   const intent = parseIntent(view)
   const isSettings = view === 'settings'
-  const nav = buildNav(config, view, navigate)
+  const nav = buildNav(config, view, navigate, t)
 
   const quickActions = useMemo<PluginQuickAction[]>(() => {
     const actions: PluginQuickAction[] = []
     if (config.modules.payables) {
       actions.push({
         id: 'new-payable',
-        label: 'New Payable',
+        label: t('financial.quickActions.newPayable'),
         icon: 'ArrowUpCircle',
-        description: 'Record an expense or bill to pay',
+        description: t('financial.quickActions.newPayableDesc'),
         action: () => navigate('payables-new'),
       })
     }
     if (config.modules.receivables) {
       actions.push({
         id: 'new-receivable',
-        label: 'New Receivable',
+        label: t('financial.quickActions.newReceivable'),
         icon: 'ArrowDownCircle',
-        description: 'Record income or amount to receive',
+        description: t('financial.quickActions.newReceivableDesc'),
         action: () => navigate('receivables-new'),
       })
     }
     if (config.modules.cashRegisters) {
       actions.push({
         id: 'open-cash',
-        label: 'Open Cash Register',
+        label: t('financial.quickActions.openCashRegister'),
         icon: 'Landmark',
-        description: 'Start a new cash session',
+        description: t('financial.quickActions.openCashRegisterDesc'),
         action: () => navigate('cash-registers'),
       })
     }
@@ -211,8 +214,8 @@ export function FinancialPage({ config, provider, store, registries }: {
       <FinancialContextProvider config={config} provider={provider} store={store}>
         <div key="settings" className={animationClass}>
           <PluginSettingsPanel
-            title="Financial Settings"
-            subtitle="Preferences, payment methods, and accounts"
+            title={t('financial.settingsPage.title')}
+            subtitle={t('financial.settingsPage.subtitle')}
             generalSettings={<FinancialGeneralSettings />}
             registries={registries}
             routeBase="/financial/settings"
@@ -256,7 +259,7 @@ export function FinancialPage({ config, provider, store, registries }: {
               <button
                 onClick={() => { window.location.hash = '/settings/financial' }}
                 className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors"
-                title="Financial Settings"
+                title={t('financial.settingsPage.title')}
               >
                 <Settings className="h-4 w-4 text-muted-foreground" />
               </button>

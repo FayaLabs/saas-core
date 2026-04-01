@@ -3,6 +3,7 @@ import { Save, Plus, Trash2, X, GripVertical } from 'lucide-react'
 import { useInventoryStore, useInventoryProvider } from '../InventoryContext'
 import { toast } from 'sonner'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { SearchSelect } from '../../../components/ui/search-select'
 import type { CreateRecipeIngredientInput } from '../types'
 
@@ -20,6 +21,7 @@ let fid = 1
 function nextId() { return `ri${fid++}` }
 
 export function RecipeFormView({ onSaved }: { onSaved?: (id?: string) => void }) {
+  const { t } = useTranslation()
   const provider = useInventoryProvider()
   const createRecipe = useInventoryStore((s) => s.createRecipe)
 
@@ -87,18 +89,19 @@ export function RecipeFormView({ onSaved }: { onSaved?: (id?: string) => void })
   return (
     <div className="space-y-5">
       <SubpageHeader
-        title="New Recipe"
-        subtitle="Define a production formula"
+        title={t('inventory.recipeForm.newRecipe')}
+        subtitle={t('inventory.recipeForm.subtitle')}
         onBack={() => onSaved?.()}
+        parentLabel={t('inventory.nav.recipes')}
         actions={
           <div className="flex items-center gap-2">
             {onSaved && (
               <button onClick={() => onSaved()} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
-                <X className="h-3 w-3" /> Cancel
+                <X className="h-3 w-3" /> {t('inventory.recipeForm.cancel')}
               </button>
             )}
             <button onClick={handleSave} disabled={!name.trim() || !productId || ingredients.length === 0 || saving} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
-              <Save className="h-3 w-3" /> {saving ? 'Saving...' : 'Save Recipe'}
+              <Save className="h-3 w-3" /> {saving ? t('inventory.recipeForm.saving') : t('inventory.recipeForm.saveRecipe')}
             </button>
           </div>
         }
@@ -107,27 +110,27 @@ export function RecipeFormView({ onSaved }: { onSaved?: (id?: string) => void })
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Left: Recipe details */}
         <div className="rounded-lg border bg-card p-5 space-y-4">
-          <h3 className="text-sm font-semibold">Recipe Details</h3>
+          <h3 className="text-sm font-semibold">{t('inventory.recipeForm.recipeDetails')}</h3>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Recipe Name *</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Tomato Sauce" autoFocus className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            <label className="text-xs font-medium text-muted-foreground">{t('inventory.recipeForm.recipeName')} *</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('inventory.recipeForm.recipeNamePlaceholder')} autoFocus className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Description</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Brief description..." className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+            <label className="text-xs font-medium text-muted-foreground">{t('inventory.recipeForm.description')}</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder={t('inventory.recipeForm.descriptionPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
           </div>
 
           <SearchSelect
-            label="Produces (Product) *"
+            label={`${t('inventory.recipeForm.produces')} *`}
             value={productId}
             displayValue={productName}
             onChange={(id, opt) => { setProductId(id); setProductName(opt?.label ?? '') }}
             onSearch={searchProducts}
-            placeholder="Search product..."
+            placeholder={t('inventory.recipeForm.searchProduct')}
             allowCreate
-            createLabel="Create product"
+            createLabel={t('inventory.recipeForm.createProduct')}
             onCreate={async (q) => {
               const p = await quickCreateProduct(q, 'sale')
               if (p) { setProductId(p.id); setProductName(p.name) }
@@ -136,43 +139,43 @@ export function RecipeFormView({ onSaved }: { onSaved?: (id?: string) => void })
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Yield Quantity</label>
+              <label className="text-xs font-medium text-muted-foreground">{t('inventory.recipeForm.yieldQuantity')}</label>
               <input type="number" min={0.01} step={0.01} value={yieldQuantity} onChange={(e) => setYieldQuantity(Number(e.target.value) || 1)} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Prep Time (min)</label>
+              <label className="text-xs font-medium text-muted-foreground">{t('inventory.recipeForm.prepTime')}</label>
               <input type="number" min={0} value={prepTime} onChange={(e) => setPrepTime(e.target.value)} placeholder="—" className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Instructions</label>
-            <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={4} placeholder="Step-by-step preparation instructions..." className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+            <label className="text-xs font-medium text-muted-foreground">{t('inventory.recipeForm.instructions')}</label>
+            <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={4} placeholder={t('inventory.recipeForm.instructionsPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
           </div>
         </div>
 
         {/* Right: Ingredients */}
         <div className="lg:col-span-2 rounded-lg border bg-card overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b">
-            <h3 className="text-sm font-semibold">Ingredients</h3>
+            <h3 className="text-sm font-semibold">{t('inventory.recipeForm.ingredients')}</h3>
             <button onClick={addIngredient} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-              <Plus className="h-3 w-3" /> Add Ingredient
+              <Plus className="h-3 w-3" /> {t('inventory.recipeForm.addIngredient')}
             </button>
           </div>
 
           <div className="flex-1">
             {ingredients.length === 0 ? (
               <div className="py-12 text-center">
-                <p className="text-sm text-muted-foreground">No ingredients added</p>
-                <button onClick={addIngredient} className="text-xs text-primary hover:underline mt-1">Add your first ingredient</button>
+                <p className="text-sm text-muted-foreground">{t('inventory.recipeForm.noIngredients')}</p>
+                <button onClick={addIngredient} className="text-xs text-primary hover:underline mt-1">{t('inventory.recipeForm.addFirstIngredient')}</button>
               </div>
             ) : (
               <div className="divide-y">
                 {/* Header */}
                 <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider bg-muted/20">
-                  <div className="col-span-5">Ingredient</div>
-                  <div className="col-span-2">Quantity</div>
-                  <div className="col-span-4">Notes</div>
+                  <div className="col-span-5">{t('inventory.recipeForm.ingredient')}</div>
+                  <div className="col-span-2">{t('inventory.recipeForm.quantity')}</div>
+                  <div className="col-span-4">{t('inventory.recipeForm.notes')}</div>
                   <div className="col-span-1" />
                 </div>
                 {ingredients.map((ing, idx) => (
@@ -183,9 +186,9 @@ export function RecipeFormView({ onSaved }: { onSaved?: (id?: string) => void })
                         displayValue={ing.productName}
                         onChange={(id, opt) => updateIngredient(ing._id, { productId: id, productName: opt?.label ?? '' })}
                         onSearch={searchProducts}
-                        placeholder="Search ingredient..."
+                        placeholder={t('inventory.recipeForm.searchIngredient')}
                         allowCreate
-                        createLabel="Create ingredient"
+                        createLabel={t('inventory.recipeForm.createIngredient')}
                         onCreate={async (q) => {
                           const p = await quickCreateProduct(q, 'ingredient')
                           if (p) updateIngredient(ing._id, { productId: p.id, productName: p.name })
@@ -207,7 +210,7 @@ export function RecipeFormView({ onSaved }: { onSaved?: (id?: string) => void })
                         type="text"
                         value={ing.notes}
                         onChange={(e) => updateIngredient(ing._id, { notes: e.target.value })}
-                        placeholder="e.g. diced, fresh"
+                        placeholder={t('inventory.recipeForm.notesPlaceholder')}
                         className="w-full rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
@@ -225,7 +228,7 @@ export function RecipeFormView({ onSaved }: { onSaved?: (id?: string) => void })
           {/* Footer */}
           {ingredients.length > 0 && (
             <div className="px-4 py-3 border-t bg-muted/20 text-xs text-muted-foreground">
-              {ingredients.filter((i) => i.productId).length} of {ingredients.length} ingredients configured
+              {t('inventory.recipeForm.ingredientsConfigured', { configured: String(ingredients.filter((i) => i.productId).length), total: String(ingredients.length) })}
             </div>
           )}
         </div>

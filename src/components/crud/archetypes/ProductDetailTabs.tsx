@@ -2,8 +2,10 @@ import React from 'react'
 import { BarChart3, Truck, Tag, Clock } from 'lucide-react'
 import { Card, CardContent } from '../../ui/card'
 import { Badge } from '../../ui/badge'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 function ComingSoon({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
+  const { t } = useTranslation()
   return (
     <Card>
       <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -12,48 +14,52 @@ function ComingSoon({ icon: Icon, title, description }: { icon: React.ElementTyp
         </div>
         <p className="text-sm font-medium">{title}</p>
         <p className="text-xs text-muted-foreground mt-1 max-w-xs">{description}</p>
-        <Badge variant="secondary" className="mt-3 text-[10px]">Coming Soon</Badge>
+        <Badge variant="secondary" className="mt-3 text-[10px]">{t('crud.archetype.comingSoon')}</Badge>
       </CardContent>
     </Card>
   )
 }
 
 export function InventoryTab() {
+  const { t } = useTranslation()
   return (
     <ComingSoon
       icon={BarChart3}
-      title="Inventory & Stock"
-      description="Track stock levels, view movement history, set reorder alerts, and manage inventory across locations."
+      title={t('crud.archetype.inventory.title')}
+      description={t('crud.archetype.inventory.description')}
     />
   )
 }
 
 export function SuppliersTab() {
+  const { t } = useTranslation()
   return (
     <ComingSoon
       icon={Truck}
-      title="Suppliers"
-      description="View and manage which suppliers provide this product, compare costs, and track purchase orders."
+      title={t('crud.archetype.suppliers.title')}
+      description={t('crud.archetype.suppliers.description')}
     />
   )
 }
 
 export function PricingTab() {
+  const { t } = useTranslation()
   return (
     <ComingSoon
       icon={Tag}
-      title="Pricing History"
-      description="View price changes over time, manage promotional pricing, and set location-specific prices."
+      title={t('crud.archetype.pricing.title')}
+      description={t('crud.archetype.pricing.description')}
     />
   )
 }
 
 export function ProductActivityTab() {
+  const { t } = useTranslation()
   return (
     <ComingSoon
       icon={Clock}
-      title="Activity"
-      description="View a log of all changes, stock adjustments, and events related to this product."
+      title={t('crud.archetype.productActivity.title')}
+      description={t('crud.archetype.productActivity.description')}
     />
   )
 }

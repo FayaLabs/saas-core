@@ -11,6 +11,7 @@ import {
 import type { ScheduleRecord, BlockSettings } from '../../../lib/schedule-service'
 import { getScheduleBlockConfig, subscribeScheduleBlockConfig } from '../../../lib/schedule-config'
 import type { ScheduleBlockConfig } from '../../../lib/schedule-config'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { BlockSettingsPopover } from './BlockSettingsPopover'
 import { Card, CardContent } from '../../ui/card'
 import { Button } from '../../ui/button'
@@ -26,7 +27,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../../
 // Constants
 // ---------------------------------------------------------------------------
 
-const DAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0] // Mon–Sun display order
 
 interface Period {
@@ -143,12 +144,13 @@ function PeriodRow({
   onRemove, onCopyToAll, onToggleSettings, onCloseSettings,
   onAddBlock,
 }: PeriodRowProps) {
+  const { t } = useTranslation()
   const gearRef = useRef<HTMLButtonElement>(null)
   const bufferValue = period.settings?.bufferMinutes ?? blockConfig?.defaults.bufferMinutes ?? 0
   const hasCustomSettings = period.settings && Object.entries(period.settings).some(
     ([k, v]) => k !== 'bufferMinutes' && v !== undefined,
   )
-  const dayName = DAY_NAMES_SHORT[dayOfWeek]
+  const dayName = t(`schedule.days.${DAY_KEYS[dayOfWeek]}`)
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -177,10 +179,10 @@ function PeriodRow({
                 onChange={(e) => onUpdateBuffer(Number(e.target.value) || 0)}
                 className="w-8 bg-transparent text-xs text-center tabular-nums outline-none"
               />
-              <span className="text-[10px] text-muted-foreground">min</span>
+              <span className="text-[10px] text-muted-foreground">{t('schedule.editor.min')}</span>
             </div>
           </TooltipTrigger>
-          <TooltipContent>Buffer time between appointments</TooltipContent>
+          <TooltipContent>{t('schedule.editor.bufferTooltip')}</TooltipContent>
         </Tooltip>
 
         {/* Actions */}
@@ -192,7 +194,7 @@ function PeriodRow({
                 <X className="h-3.5 w-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>Remove interval</TooltipContent>
+            <TooltipContent>{t('schedule.editor.removeInterval')}</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -202,7 +204,7 @@ function PeriodRow({
                 <Plus className="h-3.5 w-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>New interval for {dayName}</TooltipContent>
+            <TooltipContent>{t('schedule.editor.newInterval', { day: dayName })}</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -212,7 +214,7 @@ function PeriodRow({
                 <Copy className="h-3.5 w-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>Copy to all days</TooltipContent>
+            <TooltipContent>{t('schedule.editor.copyToAll')}</TooltipContent>
           </Tooltip>
 
           {blockConfig && (
@@ -227,7 +229,7 @@ function PeriodRow({
                   <Settings className="h-3.5 w-3.5" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Block settings</TooltipContent>
+              <TooltipContent>{t('schedule.blockSettings.title')}</TooltipContent>
             </Tooltip>
           )}
         </div>
@@ -257,6 +259,7 @@ interface ScheduleEditorProps {
 }
 
 export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
+  const { t } = useTranslation()
   const [week, setWeek] = useState<WeekSchedule>({})
   const [exceptions, setExceptions] = useState<ExceptionEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -289,7 +292,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
       setExceptions(schedulesToExceptions(data))
       setWeekDirty(false)
     } catch {
-      toast.error('Failed to load schedule')
+      toast.error(t('schedule.editor.failedToLoad'))
     }
     setLoading(false)
   }, [assigneeId])
@@ -386,10 +389,10 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
     setSaving(true)
     try {
       await replaceWeeklySchedules(assigneeId, week)
-      toast.success('Working hours saved')
+      toast.success(t('schedule.editor.saved'))
       loadData()
     } catch (err: any) {
-      toast.error('Failed to save', { description: err?.message })
+      toast.error(t('schedule.editor.failedToSave'), { description: err?.message })
     }
     setSaving(false)
   }
@@ -398,12 +401,12 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
 
   async function handleAddException() {
     if (!newExStartDate) {
-      toast.error('Please select a start date')
+      toast.error(t('schedule.editor.selectStartDate'))
       return
     }
     const endDate = newExEndDate || newExStartDate
     if (endDate < newExStartDate) {
-      toast.error('End date must be after start date')
+      toast.error(t('schedule.editor.endDateAfterStart'))
       return
     }
     setSavingException(true)
@@ -416,7 +419,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
         periods: newExType === 'unavailable' ? [] : newExPeriods,
         notes: newExNotes || undefined,
       })
-      toast.success('Exception added')
+      toast.success(t('schedule.editor.exceptionAdded'))
       setShowAddException(false)
       setNewExStartDate('')
       setNewExEndDate('')
@@ -425,7 +428,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
       setNewExNotes('')
       loadData()
     } catch (err: any) {
-      toast.error('Failed to save exception', { description: err?.message })
+      toast.error(t('schedule.editor.failedToSaveException'), { description: err?.message })
     }
     setSavingException(false)
   }
@@ -433,10 +436,10 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
   async function handleDeleteException(startDate: string, endDate: string) {
     try {
       await deleteException(assigneeId, startDate, endDate)
-      toast.success('Exception removed')
+      toast.success(t('schedule.editor.exceptionRemoved'))
       loadData()
     } catch (err: any) {
-      toast.error('Failed to delete', { description: err?.message })
+      toast.error(t('schedule.editor.failedToDelete'), { description: err?.message })
     }
   }
 
@@ -497,14 +500,14 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
               <Clock className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold">Weekly Working Hours</h3>
-              <p className="text-xs text-muted-foreground">Set when this professional is regularly available</p>
+              <h3 className="text-sm font-semibold">{t('schedule.editor.weeklyTitle')}</h3>
+              <p className="text-xs text-muted-foreground">{t('schedule.editor.weeklyDescription')}</p>
             </div>
           </div>
           {weekDirty && (
             <Button size="sm" onClick={handleSaveWeekly} disabled={saving}>
               <Save className="h-4 w-4 mr-1.5" />
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? t('common.saving') : t('common.save')}
             </Button>
           )}
         </div>
@@ -533,7 +536,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
                       {day.enabled && <Check className="h-3 w-3" strokeWidth={3} />}
                     </span>
                     <span className={`text-sm font-medium ${day.enabled ? '' : 'text-muted-foreground/40'}`}>
-                      {DAY_NAMES_SHORT[dayOfWeek]}
+                      {t(`schedule.days.${DAY_KEYS[dayOfWeek]}`)}
                     </span>
                   </button>
 
@@ -563,7 +566,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
                   ) : (
                     <TooltipProvider delayDuration={300}>
                       <div className="flex items-center gap-2 pt-1.5">
-                        <span className="text-sm text-muted-foreground/40">Unavailable</span>
+                        <span className="text-sm text-muted-foreground/40">{t('schedule.editor.unavailable')}</span>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
@@ -574,7 +577,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
                               <Plus className="h-3.5 w-3.5" />
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent>Add hours for {DAY_NAMES_SHORT[dayOfWeek]}</TooltipContent>
+                          <TooltipContent>{t('schedule.editor.addHoursFor', { day: t(`schedule.days.${DAY_KEYS[dayOfWeek]}`) })}</TooltipContent>
                         </Tooltip>
                       </div>
                     </TooltipProvider>
@@ -594,8 +597,8 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
               <CalendarOff className="h-4 w-4 text-orange-600" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold">Date Exceptions</h3>
-              <p className="text-xs text-muted-foreground">Override working hours for specific dates</p>
+              <h3 className="text-sm font-semibold">{t('schedule.editor.exceptionsTitle')}</h3>
+              <p className="text-xs text-muted-foreground">{t('schedule.editor.exceptionsDescription')}</p>
             </div>
           </div>
           <Button
@@ -604,7 +607,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
             onClick={() => setShowAddException(true)}
           >
             <CalendarPlus className="h-4 w-4 mr-1.5" />
-            Add Exception
+            {t('schedule.editor.addException')}
           </Button>
         </div>
 
@@ -612,15 +615,15 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
         <Modal open={showAddException} onOpenChange={setShowAddException}>
           <ModalContent size="md">
             <ModalHeader>
-              <ModalTitle>Add Exception</ModalTitle>
-              <ModalDescription>Override working hours for specific dates</ModalDescription>
+              <ModalTitle>{t('schedule.editor.addException')}</ModalTitle>
+              <ModalDescription>{t('schedule.editor.exceptionsDescription')}</ModalDescription>
             </ModalHeader>
 
             <ModalBody className="space-y-5">
               {/* Date range */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Start date</label>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t('schedule.editor.startDate')}</label>
                   <DatePicker
                     value={newExStartDate}
                     onChange={(v) => {
@@ -630,7 +633,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">End date</label>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t('schedule.editor.endDate')}</label>
                   <DatePicker
                     value={newExEndDate || newExStartDate}
                     onChange={setNewExEndDate}
@@ -640,16 +643,16 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
 
               {/* Type — segmented tabs */}
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Type</label>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t('schedule.editor.type')}</label>
                 <Tabs value={newExType} onValueChange={(v) => setNewExType(v as 'unavailable' | 'available')}>
                   <TabsList className="h-9 w-full">
                     <TabsTrigger value="unavailable" className="text-xs gap-1.5 flex-1">
                       <CalendarOff className="h-3.5 w-3.5" />
-                      Unavailable
+                      {t('schedule.editor.unavailable')}
                     </TabsTrigger>
                     <TabsTrigger value="available" className="text-xs gap-1.5 flex-1">
                       <Clock className="h-3.5 w-3.5" />
-                      Custom hours
+                      {t('schedule.editor.customHours')}
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
@@ -658,7 +661,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
               {/* Custom hours — only when type=available */}
               {newExType === 'available' && (
                 <div className="space-y-3">
-                  <label className="text-xs font-medium text-muted-foreground">Working hours</label>
+                  <label className="text-xs font-medium text-muted-foreground">{t('schedule.editor.workingHours')}</label>
                   {newExPeriods.map((period, idx) => (
                     <div key={idx} className="flex items-center gap-3">
                       <TimePicker
@@ -671,7 +674,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
                         interval={30}
                         className="flex-1"
                       />
-                      <span className="text-xs text-muted-foreground shrink-0">to</span>
+                      <span className="text-xs text-muted-foreground shrink-0">{t('schedule.editor.to')}</span>
                       <TimePicker
                         value={period.endsAt}
                         onChange={(v) => {
@@ -702,19 +705,19 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
                     }}
                     className="flex items-center gap-1 text-xs text-primary hover:underline"
                   >
-                    <Plus className="h-3 w-3" /> Add time block
+                    <Plus className="h-3 w-3" /> {t('schedule.editor.addTimeBlock')}
                   </button>
                 </div>
               )}
 
               {/* Notes */}
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Notes</label>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t('schedule.editor.notes')}</label>
                 <input
                   type="text"
                   value={newExNotes}
                   onChange={(e) => setNewExNotes(e.target.value)}
-                  placeholder="e.g. Vacation, Holiday, Training..."
+                  placeholder={t('schedule.editor.notesPlaceholder')}
                   className="block w-full rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                 />
               </div>
@@ -722,11 +725,11 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
 
             <ModalFooter>
               <Button variant="ghost" onClick={() => setShowAddException(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button onClick={handleAddException} disabled={savingException}>
                 <Save className="h-3.5 w-3.5 mr-1.5" />
-                {savingException ? 'Saving...' : 'Save Exception'}
+                {savingException ? t('common.saving') : t('schedule.editor.saveException')}
               </Button>
             </ModalFooter>
           </ModalContent>
@@ -752,7 +755,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-medium">{dateLabel}</span>
                           <Badge variant="secondary" className="text-[10px]">
-                            {ex.type === 'unavailable' ? 'Unavailable' : 'Custom hours'}
+                            {ex.type === 'unavailable' ? t('schedule.editor.unavailable') : t('schedule.editor.customHours')}
                           </Badge>
                           {ex.type === 'available' && ex.periods.length > 0 && (
                             <span className="text-xs text-muted-foreground">
@@ -769,7 +772,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
                       type="button"
                       onClick={() => handleDeleteException(ex.startDate, ex.endDate)}
                       className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors shrink-0 ml-2"
-                      title="Remove exception"
+                      title={t('schedule.editor.removeException')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -782,7 +785,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
           !showAddException && (
             <Card>
               <CardContent className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-                No date exceptions configured
+                {t('schedule.editor.noExceptions')}
               </CardContent>
             </Card>
           )

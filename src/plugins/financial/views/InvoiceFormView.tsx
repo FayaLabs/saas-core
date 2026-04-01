@@ -7,6 +7,7 @@ import { CurrencyInput } from '../../../components/ui/currency-input'
 import { DatePicker } from '../../../components/ui/date-picker'
 import type { EntityLookupMap } from '../../../types/entity-lookup'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
+import { useTranslation } from '../../../hooks/useTranslation'
 import type { TransactionDirection, CreateInvoiceItemInput, CreateMovementInput } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -24,6 +25,7 @@ function LocationSelector({ locations, value, onChange }: {
   value: string
   onChange: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const ref = useRef<HTMLDivElement>(null)
@@ -43,14 +45,14 @@ function LocationSelector({ locations, value, onChange }: {
 
   return (
     <div ref={ref} className="relative">
-      <label className="text-xs font-medium text-muted-foreground">Unit</label>
+      <label className="text-xs font-medium text-muted-foreground">{t('financial.invoiceForm.unit')}</label>
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="w-full mt-1 flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm text-left hover:bg-muted/30 transition-colors"
       >
         <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        <span className="flex-1 truncate">{selected?.name ?? 'Select unit'}</span>
+        <span className="flex-1 truncate">{selected?.name ?? t('financial.invoiceForm.selectUnit')}</span>
         <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
@@ -58,7 +60,7 @@ function LocationSelector({ locations, value, onChange }: {
         <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-lg border bg-popover shadow-lg overflow-hidden min-w-[260px]">
           <div className="flex items-center gap-2 px-3 py-2 border-b">
             <Building2 className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-semibold">Select Unit</span>
+            <span className="text-sm font-semibold">{t('financial.invoiceForm.selectUnitTitle')}</span>
             <button onClick={() => setOpen(false)} className="ml-auto text-muted-foreground hover:text-foreground">
               <X className="h-3.5 w-3.5" />
             </button>
@@ -71,7 +73,7 @@ function LocationSelector({ locations, value, onChange }: {
                 autoFocus
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search unit..."
+                placeholder={t('financial.invoiceForm.searchUnit')}
                 className="flex-1 bg-transparent text-sm outline-none"
               />
             </div>
@@ -90,12 +92,12 @@ function LocationSelector({ locations, value, onChange }: {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{loc.name}</p>
-                  {loc.isHQ && <p className="text-[10px] text-muted-foreground">Headquarters</p>}
+                  {loc.isHQ && <p className="text-[10px] text-muted-foreground">{t('financial.invoiceForm.headquarters')}</p>}
                 </div>
               </button>
             ))}
             {filtered.length === 0 && (
-              <p className="px-3 py-4 text-center text-xs text-muted-foreground">No units found</p>
+              <p className="px-3 py-4 text-center text-xs text-muted-foreground">{t('financial.invoiceForm.noUnitsFound')}</p>
             )}
           </div>
         </div>
@@ -130,8 +132,9 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
   onRemove: () => void
   entityLookups: EntityLookupMap
 }) {
+  const { t } = useTranslation()
   const total = item.quantity * item.unitPrice - (item.discount ?? 0) + (item.surcharge ?? 0)
-  const kindLabel = itemTypes.find((t) => t.value === item.itemKind)?.label ?? item.itemKind
+  const kindLabel = itemTypes.find((tp) => tp.value === item.itemKind)?.label ?? item.itemKind
   const hasAdjustments = (item.discount ?? 0) > 0 || (item.surcharge ?? 0) > 0
   const [showAdjustments, setShowAdjustments] = useState(hasAdjustments)
 
@@ -147,7 +150,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
         <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium bg-muted text-muted-foreground shrink-0">
           {kindLabel}
         </span>
-        <span className="text-sm truncate flex-1 min-w-0">{item.description || <span className="text-muted-foreground italic">No description</span>}</span>
+        <span className="text-sm truncate flex-1 min-w-0">{item.description || <span className="text-muted-foreground italic">{t('financial.invoiceForm.noDescription')}</span>}</span>
         <span className="text-xs text-muted-foreground shrink-0">{item.quantity} x {formatCurrency(item.unitPrice, currency)}</span>
         {hasAdjustments && <Tag className="h-3 w-3 text-amber-500 shrink-0" />}
         <span className="text-sm font-semibold shrink-0 min-w-[80px] text-right">{formatCurrency(total, currency)}</span>
@@ -164,17 +167,17 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
         <div className="px-4 pb-4 pt-1 ml-8 space-y-3 bg-muted/10">
           {/* Type selector */}
           <div className="flex gap-1.5">
-            {itemTypes.map((t) => (
+            {itemTypes.map((tp) => (
               <button
-                key={t.value}
-                onClick={() => onUpdate({ itemKind: t.value })}
+                key={tp.value}
+                onClick={() => onUpdate({ itemKind: tp.value })}
                 className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors ${
-                  item.itemKind === t.value
+                  item.itemKind === tp.value
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
               >
-                {t.label}
+                {tp.label}
               </button>
             ))}
           </div>
@@ -184,7 +187,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
             <div className="col-span-6 sm:col-span-7">
               {entityLookups[item.itemKind] ? (
                 <SearchSelect
-                  label="Item"
+                  label={t('financial.invoiceForm.item')}
                   value={item.referenceId ?? ''}
                   displayValue={item.description}
                   onChange={(id, opt) => {
@@ -205,7 +208,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
                       data: r,
                     }))
                   }}
-                  placeholder={`Search ${itemTypes.find((t) => t.value === item.itemKind)?.label?.toLowerCase() ?? 'item'}...`}
+                  placeholder={`Search ${itemTypes.find((tp) => tp.value === item.itemKind)?.label?.toLowerCase() ?? 'item'}...`}
                   renderOption={(opt) => (
                     <div className="min-w-0 flex-1">
                       <p className="text-sm truncate">{opt.label}</p>
@@ -215,12 +218,12 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
                 />
               ) : (
                 <>
-                  <label className="text-[10px] font-medium text-muted-foreground">Description</label>
+                  <label className="text-[10px] font-medium text-muted-foreground">{t('financial.invoiceForm.description')}</label>
                   <input
                     type="text"
                     value={item.description}
                     onChange={(e) => onUpdate({ description: e.target.value })}
-                    placeholder="Item description"
+                    placeholder={t('financial.invoiceForm.itemDescription')}
                     autoFocus
                     className="w-full mt-0.5 rounded-md border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
@@ -228,7 +231,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
               )}
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label className="text-[10px] font-medium text-muted-foreground">Qty</label>
+              <label className="text-[10px] font-medium text-muted-foreground">{t('financial.invoiceForm.qty')}</label>
               <input
                 type="number"
                 min={1}
@@ -239,7 +242,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
             </div>
             <div className="col-span-4">
               <CurrencyInput
-                label="Unit Price"
+                label={t('financial.invoiceForm.unitPrice')}
                 value={item.unitPrice}
                 onChange={(v) => onUpdate({ unitPrice: v })}
                 symbol={currency.symbol}
@@ -255,12 +258,12 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
               onClick={() => setShowAdjustments(true)}
               className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Plus className="h-3 w-3" /> Discount / Surcharge
+              <Plus className="h-3 w-3" /> {t('financial.invoiceForm.discountSurcharge')}
             </button>
           ) : (
             <div className="flex items-center gap-3">
               <div className="flex-1">
-                <label className="text-[10px] font-medium text-muted-foreground">Discount</label>
+                <label className="text-[10px] font-medium text-muted-foreground">{t('financial.invoiceForm.discount')}</label>
                 <div className="flex items-center mt-0.5 rounded-md border bg-background focus-within:ring-2 focus-within:ring-primary/20">
                   <span className="pl-2 text-xs text-muted-foreground">{currency.symbol}</span>
                   <input
@@ -274,7 +277,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
                 </div>
               </div>
               <div className="flex-1">
-                <label className="text-[10px] font-medium text-muted-foreground">Surcharge</label>
+                <label className="text-[10px] font-medium text-muted-foreground">{t('financial.invoiceForm.surcharge')}</label>
                 <div className="flex items-center mt-0.5 rounded-md border bg-background focus-within:ring-2 focus-within:ring-primary/20">
                   <span className="pl-2 text-xs text-muted-foreground">{currency.symbol}</span>
                   <input
@@ -290,7 +293,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
               <button
                 onClick={() => { onUpdate({ discount: 0, surcharge: 0 }); setShowAdjustments(false) }}
                 className="mt-3 p-1 text-muted-foreground hover:text-destructive transition-colors"
-                title="Remove adjustments"
+                title={t('financial.invoiceForm.removeAdjustments')}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -303,7 +306,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
               onClick={onToggle}
               className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             >
-              <Check className="h-3 w-3" /> Done
+              <Check className="h-3 w-3" /> {t('financial.invoiceForm.done')}
             </button>
           </div>
         </div>
@@ -321,9 +324,10 @@ function AddItemStep({ itemTypes, onSelect, onCancel }: {
   onSelect: (kind: string) => void
   onCancel: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="border-b px-4 py-3 bg-primary/5 animate-in fade-in-0 slide-in-from-top-1">
-      <p className="text-xs font-medium text-muted-foreground mb-2">Select item type:</p>
+      <p className="text-xs font-medium text-muted-foreground mb-2">{t('financial.invoiceForm.selectItemType')}</p>
       <div className="flex gap-2 flex-wrap">
         {itemTypes.map((t) => (
           <button
@@ -338,7 +342,7 @@ function AddItemStep({ itemTypes, onSelect, onCancel }: {
           onClick={onCancel}
           className="inline-flex items-center rounded-lg px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          Cancel
+          {t('financial.invoiceForm.cancel')}
         </button>
       </div>
     </div>
@@ -364,6 +368,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
   editId?: string
   onSaved?: (id?: string) => void
 }) {
+  const { t } = useTranslation()
   const config = useFinancialConfig()
   const { currency, itemTypes, locations } = config
   const provider = useFinancialProvider()
@@ -575,8 +580,8 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
     }
   }
 
-  const title = direction === 'debit' ? 'Accounts Payable' : 'Accounts Receivable'
-  const subtitle = isEdit ? 'Editing invoice' : 'Creating new invoice'
+  const title = direction === 'debit' ? t('financial.invoice.accountsPayable') : t('financial.invoice.accountsReceivable')
+  const subtitle = isEdit ? t('financial.invoiceForm.editing') : t('financial.invoiceForm.creating')
 
   return (
     <div className="space-y-6">
@@ -584,11 +589,12 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
         title={title}
         subtitle={subtitle}
         onBack={onSaved}
+        parentLabel={direction === 'debit' ? t('financial.nav.payables') : t('financial.nav.receivables')}
         actions={
           <div className="flex items-center gap-2">
             {onSaved && (
               <button onClick={() => onSaved?.()} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
-                <X className="h-3 w-3" /> Close
+                <X className="h-3 w-3" /> {t('financial.invoiceForm.close')}
               </button>
             )}
             <button
@@ -597,7 +603,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
               className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
               <Save className="h-3 w-3" />
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? t('financial.invoiceForm.saving') : t('financial.invoiceForm.save')}
             </button>
             {isEdit && (
               <div className="relative" ref={menuRef}>
@@ -613,7 +619,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
                       onClick={() => { setConfirmCancel(true); setMenuOpen(false) }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-500/10 transition-colors"
                     >
-                      <Ban className="h-3.5 w-3.5" /> Cancel Invoice
+                      <Ban className="h-3.5 w-3.5" /> {t('financial.invoiceForm.cancelInvoice')}
                     </button>
                   </div>
                 )}
@@ -628,7 +634,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
         <div className={`grid gap-4 ${hasLocations ? 'sm:grid-cols-12' : 'sm:grid-cols-10'}`}>
           <div className={hasLocations ? 'sm:col-span-4' : 'sm:col-span-4'}>
             <SearchSelect
-              label={direction === 'debit' ? 'Pay to' : 'Receive from'}
+              label={direction === 'debit' ? t('financial.invoiceForm.payTo') : t('financial.invoiceForm.receiveFrom')}
               required
               value={contactId ?? ''}
               displayValue={contactName}
@@ -638,7 +644,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
                 const results = await config.contactLookup.search(q)
                 return results.map((r) => ({ id: r.id, label: r.label, subtitle: r.subtitle, group: r.group, data: r }))
               }}
-              placeholder="Type to search..."
+              placeholder={t('financial.invoiceForm.searchType')}
             />
           </div>
           {hasLocations && (
@@ -651,16 +657,16 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
             </div>
           )}
           <div className={hasLocations ? 'sm:col-span-2' : 'sm:col-span-3'}>
-            <label className="text-xs font-medium text-muted-foreground">Date</label>
+            <label className="text-xs font-medium text-muted-foreground">{t('financial.invoiceForm.date')}</label>
             <DatePicker value={invoiceDate} onChange={setInvoiceDate} className="mt-1" />
           </div>
           <div className={hasLocations ? 'sm:col-span-3' : 'sm:col-span-3'}>
-            <label className="text-xs font-medium text-muted-foreground">Fiscal Number (optional)</label>
+            <label className="text-xs font-medium text-muted-foreground">{t('financial.invoiceForm.fiscalNumber')}</label>
             <input
               type="text"
               value={fiscalNumber}
               onChange={(e) => setFiscalNumber(e.target.value)}
-              placeholder="Fiscal number"
+              placeholder={t('financial.invoiceForm.fiscalNumber')}
               className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -674,7 +680,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="flex items-center gap-2">
                 <LayoutList className="h-4 w-4 text-muted-foreground" />
-                <h3 className="text-sm font-semibold">Items</h3>
+                <h3 className="text-sm font-semibold">{t('financial.invoiceForm.items')}</h3>
               </div>
             </div>
             <div className="p-4 space-y-3">
@@ -692,7 +698,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
           </div>
           <div className="rounded-lg border bg-card">
             <div className="px-5 py-3 border-b">
-              <h3 className="text-sm font-semibold">Installments</h3>
+              <h3 className="text-sm font-semibold">{t('financial.invoiceForm.installments')}</h3>
             </div>
             <div className="p-4 space-y-3">
               {[1, 2].map((i) => (
@@ -714,13 +720,13 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
           <div className="flex items-center justify-between px-4 py-3 border-b">
             <div className="flex items-center gap-2">
               <LayoutList className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">Items</h3>
+              <h3 className="text-sm font-semibold">{t('financial.invoiceForm.items')}</h3>
             </div>
             <button
               onClick={() => setAddingItem(true)}
               className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              <Plus className="h-3 w-3" /> Add Item
+              <Plus className="h-3 w-3" /> {t('financial.invoiceForm.addItem')}
             </button>
           </div>
 
@@ -739,9 +745,9 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
             {items.length === 0 && !addingItem ? (
               <div className="py-10 text-center">
                 <LayoutList className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No items added yet</p>
+                <p className="text-sm text-muted-foreground">{t('financial.invoiceForm.noItems')}</p>
                 <button onClick={() => setAddingItem(true)} className="text-xs text-primary hover:underline mt-1">
-                  Add your first item
+                  {t('financial.invoiceForm.addFirstItem')}
                 </button>
               </div>
             ) : (
@@ -765,9 +771,9 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
           {/* Footer total — sticks to bottom */}
           {items.length > 0 && (
             <div className="px-4 py-3 border-t bg-muted/20 flex justify-between items-center mt-auto">
-              <span className="text-xs text-muted-foreground">{items.length} item{items.length !== 1 ? 's' : ''}</span>
+              <span className="text-xs text-muted-foreground">{t('financial.invoiceForm.itemCount', { count: items.length, plural: items.length !== 1 ? 's' : '' })}</span>
               <div className="text-right">
-                <span className="text-xs text-muted-foreground">Total: </span>
+                <span className="text-xs text-muted-foreground">{t('financial.invoiceForm.total')} </span>
                 <span className="text-lg font-bold">{formatCurrency(totalAmount, currency)}</span>
               </div>
             </div>
@@ -800,7 +806,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
 
             {installments.length === 0 ? (
               <p className="text-xs text-muted-foreground py-4 text-center">
-                {totalAmount <= 0 ? 'Add items first' : 'Select installment count above'}
+                {totalAmount <= 0 ? t('financial.invoiceForm.addItemsFirst') : t('financial.invoiceForm.selectInstallments')}
               </p>
             ) : (
               <div className="space-y-2">
@@ -829,11 +835,11 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
 
       {/* Observations */}
       <div>
-        <label className="text-xs font-medium text-muted-foreground">Observations</label>
+        <label className="text-xs font-medium text-muted-foreground">{t('financial.invoiceForm.observations')}</label>
         <textarea
           value={observations}
           onChange={(e) => setObservations(e.target.value)}
-          placeholder="Additional notes..."
+          placeholder={t('financial.invoiceForm.additionalNotes')}
           rows={2}
           className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
         />
@@ -848,23 +854,23 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
                 <Ban className="h-5 w-5 text-red-500" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold">Cancel Invoice</h3>
-                <p className="text-xs text-muted-foreground">This action cannot be undone.</p>
+                <h3 className="text-sm font-semibold">{t('financial.invoiceForm.cancelInvoice')}</h3>
+                <p className="text-xs text-muted-foreground">{t('financial.invoiceForm.cancelConfirm')}</p>
               </div>
             </div>
             <p className="text-xs text-muted-foreground mb-4">
-              The invoice will be marked as cancelled. All pending installments will also be cancelled.
+              {t('financial.invoiceForm.cancelDesc')}
             </p>
             <div className="flex justify-end gap-2">
               <button onClick={() => setConfirmCancel(false)} className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
-                Keep Invoice
+                {t('financial.invoiceForm.keepInvoice')}
               </button>
               <button
                 onClick={handleCancelInvoice}
                 disabled={cancelling}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
               >
-                <Ban className="h-3 w-3" /> {cancelling ? 'Cancelling...' : 'Yes, Cancel'}
+                <Ban className="h-3 w-3" /> {cancelling ? t('financial.invoiceForm.cancelling') : t('financial.invoiceForm.yesCancel')}
               </button>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import type { PluginScope, VerticalId } from '../../types/plugins'
 import type { EntityLookup } from '../../types/entity-lookup'
 import type { AgendaDataProvider } from './data/types'
-import type { StatusConfig } from './types'
+import type { StatusConfig, BookingTypeConfig } from './types'
 
 // ---------------------------------------------------------------------------
 // Public options interface
@@ -52,6 +52,9 @@ export interface AgendaPluginOptions {
 
   /** Schedule kind in saas_core.schedules.kind (default: 'working_hours') */
   scheduleKind?: string
+
+  /** Booking type tabs shown in the appointment modal */
+  bookingTypes?: BookingTypeConfig[]
 
   /** Booking status options */
   statuses?: StatusConfig[]
@@ -135,6 +138,24 @@ const DEFAULT_STATUSES: StatusConfig[] = [
   { value: 'no_show', label: 'No Show', color: '#6b7280', availableWhen: 'today_or_past' },
 ]
 
+const DEFAULT_BOOKING_TYPES: BookingTypeConfig[] = [
+  {
+    id: 'appointment', label: 'Appointment', icon: 'Calendar', color: '#6366f1',
+    fields: { client: true, professional: true, services: true, location: true, status: true },
+    requiresServices: true, requiresClient: true,
+  },
+  {
+    id: 'task', label: 'Task', icon: 'CheckSquare', color: '#f59e0b',
+    fields: { client: false, professional: true, services: false, location: false, status: true },
+    requiresServices: false, requiresClient: false,
+  },
+  {
+    id: 'block', label: 'Block', icon: 'Ban', color: '#6b7280',
+    fields: { client: false, professional: true, services: false, location: false, status: false },
+    requiresServices: false, requiresClient: false,
+  },
+]
+
 // ---------------------------------------------------------------------------
 // Resolved config — fully merged, no optionals
 // ---------------------------------------------------------------------------
@@ -161,6 +182,7 @@ export interface ResolvedAgendaConfig {
   orderKind: string
   scheduleKind: string
   statuses: StatusConfig[]
+  bookingTypes: BookingTypeConfig[]
   businessHours: { startTime: string; endTime: string }
   slotDuration: number
   professionalKind: string
@@ -199,6 +221,7 @@ export function resolveConfig(options?: AgendaPluginOptions): ResolvedAgendaConf
     orderKind: options?.orderKind ?? 'service_order',
     scheduleKind: options?.scheduleKind ?? 'working_hours',
     statuses: options?.statuses ?? DEFAULT_STATUSES,
+    bookingTypes: options?.bookingTypes ?? DEFAULT_BOOKING_TYPES,
     businessHours: options?.businessHours ?? { startTime: '08:00', endTime: '20:00' },
     slotDuration: options?.slotDuration ?? 30,
     professionalKind: options?.professionalKind ?? 'staff',

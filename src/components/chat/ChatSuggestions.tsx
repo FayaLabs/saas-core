@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Sparkles, BookOpen, Pencil } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { ResolvedSuggestion, ResolvedToolGroup } from '../../hooks/useAITools'
 
 interface ChatSuggestionsProps {
@@ -11,26 +12,32 @@ interface ChatSuggestionsProps {
 const MAX_SUGGESTIONS = 5
 
 export function ChatSuggestions({ suggestions, onSelect }: ChatSuggestionsProps) {
+  const { t } = useTranslation()
   const visible = suggestions.slice(0, MAX_SUGGESTIONS)
 
   return (
     <div className="flex flex-col gap-1 px-3 py-3">
       <div className="flex items-center gap-1.5 px-1 pb-1">
         <Sparkles className="h-3 w-3 text-muted-foreground/60" />
-        <span className="text-[11px] font-medium text-muted-foreground/70">Try asking</span>
+        <span className="text-[11px] font-medium text-muted-foreground/70">{t('chat.tryAsking')}</span>
       </div>
-      {visible.map((suggestion, i) => (
-        <button
-          key={`${suggestion.toolId}-${i}`}
-          onClick={() => onSelect(suggestion)}
-          className={cn(
-            'rounded-md px-2.5 py-1.5 text-left text-xs text-muted-foreground',
-            'transition-colors hover:bg-muted hover:text-foreground'
-          )}
-        >
-          &ldquo;{suggestion.label}&rdquo;
-        </button>
-      ))}
+      {visible.map((suggestion, i) => {
+        const labelKey = `chat.suggestion.${suggestion.toolId}.${i}`
+        const translated = t(labelKey)
+        const label = translated === labelKey ? suggestion.label : translated
+        return (
+          <button
+            key={`${suggestion.toolId}-${i}`}
+            onClick={() => onSelect(suggestion)}
+            className={cn(
+              'rounded-md px-2.5 py-1.5 text-left text-xs text-muted-foreground',
+              'transition-colors hover:bg-muted hover:text-foreground'
+            )}
+          >
+            &ldquo;{label}&rdquo;
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -43,19 +50,20 @@ interface ChatToolsPanelProps {
 }
 
 export function ChatToolsPanel({ toolGroups, onClose }: ChatToolsPanelProps) {
+  const { t } = useTranslation()
   const totalTools = toolGroups.reduce((sum, g) => sum + g.tools.length, 0)
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/40 bg-card px-4 py-2">
         <span className="text-[11px] font-semibold text-foreground">
-          {totalTools} tool{totalTools !== 1 ? 's' : ''} available
+          {t('chat.toolsAvailable', { count: totalTools })}
         </span>
         <button
           onClick={onClose}
           className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
         >
-          Done
+          {t('common.done')}
         </button>
       </div>
       <div className="flex flex-col gap-3 px-3 py-3">

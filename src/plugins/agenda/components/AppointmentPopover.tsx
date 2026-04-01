@@ -94,11 +94,11 @@ export function AppointmentPopover({ booking, position, onClose, onEdit }: Props
           {/* Action bar */}
           <div className="flex items-center justify-end gap-0.5 px-3 pt-3 pb-1">
             <button onClick={() => panel.expandThen(() => onEdit(booking.id))}
-              className="p-1.5 rounded-full hover:bg-muted transition-colors" title="Edit">
+              className="p-1.5 rounded-full hover:bg-muted transition-colors" title={t('common.edit')}>
               <Pencil className="h-4 w-4 text-muted-foreground" />
             </button>
             <button onClick={() => handleDelete(panel)}
-              className="p-1.5 rounded-full hover:bg-muted transition-colors" title="Delete">
+              className="p-1.5 rounded-full hover:bg-muted transition-colors" title={t('common.delete')}>
               <Trash2 className="h-4 w-4 text-muted-foreground" />
             </button>
             <button onClick={panel.dismiss} className="p-1.5 rounded-full hover:bg-muted transition-colors">

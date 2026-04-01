@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Save, Plus, Trash2, X, Check, ChevronDown } from 'lucide-react'
 import { useCrmConfig, useCrmStore, useCrmProvider, formatCurrency } from '../CrmContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import type { EntityLookupMap } from '../../../types/entity-lookup'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { SearchSelect, type SearchSelectOption } from '../../../components/ui/search-select'
@@ -12,11 +13,11 @@ import { DatePicker } from '../../../components/ui/date-picker'
 // ---------------------------------------------------------------------------
 
 const STATUSES = [
-  { value: 'draft', label: 'Draft', color: 'bg-primary text-primary-foreground' },
-  { value: 'sent', label: 'Sent', color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30' },
-  { value: 'approved', label: 'Approved', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30' },
-  { value: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 border border-red-200 dark:border-red-500/30' },
-  { value: 'expired', label: 'Expired', color: 'bg-muted text-muted-foreground border' },
+  { value: 'draft', labelKey: 'crm.quoteForm.statusDraft', color: 'bg-primary text-primary-foreground' },
+  { value: 'sent', labelKey: 'crm.quoteForm.statusSent', color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30' },
+  { value: 'approved', labelKey: 'crm.quoteForm.statusApproved', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30' },
+  { value: 'rejected', labelKey: 'crm.quoteForm.statusRejected', color: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 border border-red-200 dark:border-red-500/30' },
+  { value: 'expired', labelKey: 'crm.quoteForm.statusExpired', color: 'bg-muted text-muted-foreground border' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -53,8 +54,9 @@ function QuoteItemRow({ item, index, itemTypes, currency, expanded, onToggle, on
   onHideDiscount: () => void
   entityLookups: EntityLookupMap
 }) {
+  const { t } = useTranslation()
   const total = item.quantity * item.unitPrice - item.discount
-  const kindLabel = itemTypes.find((t) => t.value === item.itemKind)?.label ?? item.itemKind
+  const kindLabel = itemTypes.find((ty) => ty.value === item.itemKind)?.label ?? item.itemKind
 
   return (
     <div className="border-b last:border-0">
@@ -63,7 +65,7 @@ function QuoteItemRow({ item, index, itemTypes, currency, expanded, onToggle, on
         <ChevronDown className={`h-3 w-3 text-muted-foreground shrink-0 transition-transform ${expanded ? 'rotate-0' : '-rotate-90'}`} />
         <span className="text-[10px] font-medium text-muted-foreground w-5 shrink-0">{index + 1}.</span>
         <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium bg-muted text-muted-foreground shrink-0">{kindLabel}</span>
-        <span className="text-sm truncate flex-1 min-w-0">{item.description || <span className="text-muted-foreground italic">No description</span>}</span>
+        <span className="text-sm truncate flex-1 min-w-0">{item.description || <span className="text-muted-foreground italic">{t('crm.quoteForm.noDescription')}</span>}</span>
         <span className="text-xs text-muted-foreground shrink-0">{item.quantity} x {formatCurrency(item.unitPrice, currency)}</span>
         <span className="text-sm font-semibold shrink-0 min-w-[80px] text-right">{formatCurrency(total, currency)}</span>
         <button onClick={(e) => { e.stopPropagation(); onRemove() }} className="p-1 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-all shrink-0">
@@ -112,29 +114,29 @@ function QuoteItemRow({ item, index, itemTypes, currency, expanded, onToggle, on
                 />
               ) : (
                 <>
-                  <label className="text-[10px] font-medium text-muted-foreground">Description</label>
-                  <input type="text" value={item.description} onChange={(e) => onUpdate({ description: e.target.value })} placeholder="Item description" autoFocus className="w-full mt-0.5 rounded-md border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  <label className="text-[10px] font-medium text-muted-foreground">{t('crm.quoteForm.description')}</label>
+                  <input type="text" value={item.description} onChange={(e) => onUpdate({ description: e.target.value })} placeholder={t('crm.quoteForm.itemDescriptionPlaceholder')} autoFocus className="w-full mt-0.5 rounded-md border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </>
               )}
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label className="text-[10px] font-medium text-muted-foreground">Qty</label>
+              <label className="text-[10px] font-medium text-muted-foreground">{t('crm.quoteForm.qty')}</label>
               <input type="number" min={1} value={item.quantity} onChange={(e) => onUpdate({ quantity: Number(e.target.value) || 1 })} className="w-full mt-0.5 rounded-md border bg-background px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
             <div className="col-span-4">
-              <CurrencyInput label="Unit Price" value={item.unitPrice} onChange={(v) => onUpdate({ unitPrice: v })} symbol={currency.symbol} locale={currency.locale} currencyCode={currency.code} />
+              <CurrencyInput label={t('crm.quoteForm.unitPrice')} value={item.unitPrice} onChange={(v) => onUpdate({ unitPrice: v })} symbol={currency.symbol} locale={currency.locale} currencyCode={currency.code} />
             </div>
           </div>
 
           {/* Discount (optional) */}
           {!showDiscount ? (
             <button onClick={onShowDiscount} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              <Plus className="h-3 w-3" /> Discount
+              <Plus className="h-3 w-3" /> {t('crm.quoteForm.discount')}
             </button>
           ) : (
             <div className="grid gap-3 grid-cols-12 items-end">
               <div className="col-span-4">
-                <CurrencyInput label="Discount" value={item.discount} onChange={(v) => onUpdate({ discount: v })} symbol={currency.symbol} locale={currency.locale} currencyCode={currency.code} />
+                <CurrencyInput label={t('crm.quoteForm.discount')} value={item.discount} onChange={(v) => onUpdate({ discount: v })} symbol={currency.symbol} locale={currency.locale} currencyCode={currency.code} />
               </div>
               <div className="col-span-1">
                 <button onClick={() => { onUpdate({ discount: 0 }); onHideDiscount() }} className="mb-2 p-1 text-muted-foreground hover:text-destructive transition-colors">
@@ -147,7 +149,7 @@ function QuoteItemRow({ item, index, itemTypes, currency, expanded, onToggle, on
           {/* Done */}
           <div className="flex justify-end pt-1">
             <button onClick={onToggle} className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
-              <Check className="h-3 w-3" /> Done
+              <Check className="h-3 w-3" /> {t('crm.quoteForm.done')}
             </button>
           </div>
         </div>
@@ -165,16 +167,17 @@ function AddItemStep({ itemTypes, onSelect, onCancel }: {
   onSelect: (kind: string) => void
   onCancel: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="border-b px-4 py-3 bg-primary/5 animate-in fade-in-0 slide-in-from-top-1">
-      <p className="text-xs font-medium text-muted-foreground mb-2">Select item type:</p>
+      <p className="text-xs font-medium text-muted-foreground mb-2">{t('crm.quoteForm.selectItemType')}</p>
       <div className="flex gap-2 flex-wrap">
         {itemTypes.map((t) => (
           <button key={t.value} onClick={() => onSelect(t.value)} className="inline-flex items-center gap-1.5 rounded-lg border-2 border-transparent bg-card px-4 py-2 text-sm font-medium shadow-sm hover:border-primary hover:shadow-md transition-all">
             {t.label}
           </button>
         ))}
-        <button onClick={onCancel} className="inline-flex items-center rounded-lg px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+        <button onClick={onCancel} className="inline-flex items-center rounded-lg px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors">{t('crm.quoteForm.cancel')}</button>
       </div>
     </div>
   )
@@ -185,6 +188,7 @@ function AddItemStep({ itemTypes, onSelect, onCancel }: {
 // ---------------------------------------------------------------------------
 
 export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; leadId?: string; onSaved?: () => void }) {
+  const { t } = useTranslation()
   const config = useCrmConfig()
   const provider = useCrmProvider()
   const { currency, itemTypes } = config
@@ -308,7 +312,7 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
   if (loadingExisting) {
     return (
       <div className="space-y-5">
-        <SubpageHeader title="Edit Quote" subtitle="Loading..." onBack={onSaved} />
+        <SubpageHeader title="" onBack={onSaved} parentLabel={t('crm.quotes.title')} />
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="rounded-lg border bg-card p-5 space-y-4">
             {[1, 2, 3, 4].map((i) => (
@@ -336,18 +340,19 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
   return (
     <div className="space-y-5">
       <SubpageHeader
-        title={isEdit ? 'Edit Quote' : 'New Quote'}
-        subtitle={isEdit ? 'Update this proposal' : 'Create a proposal for your client'}
+        title={isEdit ? t('crm.quoteForm.editTitle') : t('crm.quoteForm.newTitle')}
+        subtitle={isEdit ? t('crm.quoteForm.editSubtitle') : t('crm.quoteForm.newSubtitle')}
         onBack={onSaved}
+        parentLabel={t('crm.quotes.title')}
         actions={
           <div className="flex items-center gap-2">
             {onSaved && (
               <button onClick={onSaved} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
-                <X className="h-3 w-3" /> Cancel
+                <X className="h-3 w-3" /> {t('crm.quoteForm.cancel')}
               </button>
             )}
             <button onClick={handleSave} disabled={items.length === 0 || saving} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
-              <Save className="h-3 w-3" /> {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Quote'}
+              <Save className="h-3 w-3" /> {saving ? t('crm.quoteForm.saving') : isEdit ? t('crm.quoteForm.saveChanges') : t('crm.quoteForm.saveQuote')}
             </button>
           </div>
         }
@@ -357,7 +362,7 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
       <div className="flex gap-2">
         {STATUSES.map((s) => (
           <span key={s.value} className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${s.value === currentStatus ? s.color : 'bg-muted/30 text-muted-foreground/50'}`}>
-            {s.label}
+            {t(s.labelKey)}
           </span>
         ))}
       </div>
@@ -366,7 +371,7 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Left: Quote details */}
         <div className="rounded-lg border bg-card p-5 space-y-4">
-          <h3 className="text-sm font-semibold">Quote Details</h3>
+          <h3 className="text-sm font-semibold">{t('crm.quoteForm.quoteDetails')}</h3>
 
           <SearchSelect
             value={contactId}
@@ -377,38 +382,38 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
               const results = await config.contactLookup.search(q)
               return results.map((r) => ({ id: r.id, label: r.label, subtitle: r.subtitle, group: r.group, data: r }))
             }}
-            label="Client"
+            label={t('crm.quoteForm.client')}
             required
-            placeholder="Search client..."
+            placeholder={t('crm.quoteForm.searchClient')}
           />
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Quote Date</label>
+            <label className="text-xs font-medium text-muted-foreground">{t('crm.quoteForm.quoteDate')}</label>
             <DatePicker value={quoteDate} onChange={setQuoteDate} className="mt-1" />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Valid Until</label>
+            <label className="text-xs font-medium text-muted-foreground">{t('crm.quoteForm.validUntil')}</label>
             <DatePicker value={validUntil} onChange={setValidUntil} className="mt-1" />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Payment Conditions</label>
-            <textarea value={paymentConditions} onChange={(e) => setPaymentConditions(e.target.value)} rows={2} placeholder="e.g. 50% upfront, 50% on delivery" className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+            <label className="text-xs font-medium text-muted-foreground">{t('crm.quoteForm.paymentConditions')}</label>
+            <textarea value={paymentConditions} onChange={(e) => setPaymentConditions(e.target.value)} rows={2} placeholder={t('crm.quoteForm.paymentConditionsPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Notes</label>
-            <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={2} placeholder="Internal observations..." className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+            <label className="text-xs font-medium text-muted-foreground">{t('crm.quoteForm.notes')}</label>
+            <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={2} placeholder={t('crm.quoteForm.notesPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
           </div>
         </div>
 
         {/* Right: Items */}
         <div className="lg:col-span-2 rounded-lg border bg-card overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b">
-            <h3 className="text-sm font-semibold">Quote Items</h3>
+            <h3 className="text-sm font-semibold">{t('crm.quoteForm.quoteItems')}</h3>
             <button onClick={() => setAddingItem(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-              <Plus className="h-3 w-3" /> Add Item
+              <Plus className="h-3 w-3" /> {t('crm.quoteForm.addItem')}
             </button>
           </div>
 
@@ -419,8 +424,8 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
 
             {items.length === 0 && !addingItem ? (
               <div className="py-12 text-center">
-                <p className="text-sm text-muted-foreground">No items added</p>
-                <button onClick={() => setAddingItem(true)} className="text-xs text-primary hover:underline mt-1">Add your first item</button>
+                <p className="text-sm text-muted-foreground">{t('crm.quoteForm.noItems')}</p>
+                <button onClick={() => setAddingItem(true)} className="text-xs text-primary hover:underline mt-1">{t('crm.quoteForm.addFirstItem')}</button>
               </div>
             ) : (
               items.map((item, i) => (
@@ -446,9 +451,9 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
           {/* Total footer */}
           {items.length > 0 && (
             <div className="px-4 py-3 border-t bg-muted/20 flex justify-between items-center mt-auto">
-              <span className="text-xs text-muted-foreground">{items.length} item{items.length !== 1 ? 's' : ''}</span>
+              <span className="text-xs text-muted-foreground">{t('crm.quoteForm.itemCount', { count: String(items.length) })}</span>
               <div className="text-right">
-                <span className="text-xs text-muted-foreground">Total: </span>
+                <span className="text-xs text-muted-foreground">{t('crm.quoteForm.total')}: </span>
                 <span className="text-lg font-bold">{formatCurrency(totalAmount, currency)}</span>
               </div>
             </div>

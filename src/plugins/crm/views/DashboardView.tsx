@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { Users, TrendingUp, Target, Clock, AlertTriangle, Trophy, BarChart3, FileText } from 'lucide-react'
 import { useCrmConfig, useCrmStore, formatCurrency } from '../CrmContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 // ---------------------------------------------------------------------------
 // Stat card
@@ -28,17 +29,18 @@ function StatCard({ label, value, subtitle, icon: Icon, color }: {
 // ---------------------------------------------------------------------------
 
 function SalesFunnel() {
+  const { t } = useTranslation()
   const { currency } = useCrmConfig()
   const funnel = useCrmStore((s) => s.funnel)
 
   if (funnel.length === 0) {
     return (
       <div className="rounded-lg border bg-card p-5">
-        <h3 className="text-sm font-semibold mb-4">Pipeline Overview</h3>
+        <h3 className="text-sm font-semibold mb-4">{t('crm.dashboard.pipelineOverview')}</h3>
         <div className="flex flex-col items-center justify-center py-10">
           <BarChart3 className="h-8 w-8 text-muted-foreground/20 mb-2" />
-          <p className="text-xs text-muted-foreground">No pipeline data yet</p>
-          <p className="text-[10px] text-muted-foreground/60 mt-0.5">Create your first lead to see the funnel</p>
+          <p className="text-xs text-muted-foreground">{t('crm.dashboard.noPipelineData')}</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5">{t('crm.dashboard.createFirstLead')}</p>
         </div>
       </div>
     )
@@ -49,8 +51,8 @@ function SalesFunnel() {
   return (
     <div className="rounded-lg border bg-card p-5">
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-sm font-semibold">Pipeline Overview</h3>
-        <span className="text-[10px] text-muted-foreground">{funnel.reduce((s, f) => s + f.dealCount, 0)} total deals</span>
+        <h3 className="text-sm font-semibold">{t('crm.dashboard.pipelineOverview')}</h3>
+        <span className="text-[10px] text-muted-foreground">{t('crm.dashboard.totalDeals', { count: String(funnel.reduce((s, f) => s + f.dealCount, 0)) })}</span>
       </div>
 
       <div className="space-y-2.5">
@@ -90,21 +92,22 @@ function SalesFunnel() {
 // ---------------------------------------------------------------------------
 
 function PerformanceMetrics() {
+  const { t } = useTranslation()
   const { currency } = useCrmConfig()
   const summary = useCrmStore((s) => s.summary)
 
   const metrics = [
-    { label: 'Deals won this month', value: String(summary?.wonDealsThisMonth ?? 0) },
-    { label: 'Revenue won', value: formatCurrency(summary?.wonDealsValueThisMonth ?? 0, currency), color: 'text-emerald-600 dark:text-emerald-400' },
-    { label: 'Avg deal value', value: formatCurrency(summary?.averageDealValue ?? 0, currency) },
-    { label: 'Conversion rate', value: `${(summary?.conversionRate ?? 0).toFixed(1)}%` },
+    { label: t('crm.dashboard.dealsWon'), value: String(summary?.wonDealsThisMonth ?? 0) },
+    { label: t('crm.dashboard.revenueWon'), value: formatCurrency(summary?.wonDealsValueThisMonth ?? 0, currency), color: 'text-emerald-600 dark:text-emerald-400' },
+    { label: t('crm.dashboard.avgDealValue'), value: formatCurrency(summary?.averageDealValue ?? 0, currency) },
+    { label: t('crm.dashboard.conversionRateLabel'), value: `${(summary?.conversionRate ?? 0).toFixed(1)}%` },
   ]
 
   return (
     <div className="rounded-lg border bg-card p-5">
       <div className="flex items-center gap-2 mb-4">
         <Trophy className="h-4 w-4 text-amber-500" />
-        <h3 className="text-sm font-semibold">Performance</h3>
+        <h3 className="text-sm font-semibold">{t('crm.dashboard.performance')}</h3>
       </div>
       <div className="space-y-3">
         {metrics.map((m) => (
@@ -123,6 +126,7 @@ function PerformanceMetrics() {
 // ---------------------------------------------------------------------------
 
 function PipelineValueBar() {
+  const { t } = useTranslation()
   const { currency } = useCrmConfig()
   const funnel = useCrmStore((s) => s.funnel)
   const totalValue = funnel.reduce((s, f) => s + f.totalValue, 0)
@@ -132,7 +136,7 @@ function PipelineValueBar() {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Target className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">Pipeline Value</h3>
+          <h3 className="text-sm font-semibold">{t('crm.dashboard.pipelineValue')}</h3>
         </div>
         <span className="text-sm font-bold">{formatCurrency(totalValue, currency)}</span>
       </div>
@@ -175,6 +179,7 @@ function PipelineValueBar() {
 // ---------------------------------------------------------------------------
 
 function RecentLeads() {
+  const { t } = useTranslation()
   const leads = useCrmStore((s) => s.leads)
   const fetchLeads = useCrmStore((s) => s.fetchLeads)
 
@@ -191,11 +196,11 @@ function RecentLeads() {
   return (
     <div className="rounded-lg border bg-card p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold">Recent Leads</h3>
-        <span className="text-[10px] text-muted-foreground">{leads.length} leads</span>
+        <h3 className="text-sm font-semibold">{t('crm.dashboard.recentLeads')}</h3>
+        <span className="text-[10px] text-muted-foreground">{t('crm.dashboard.leadsCount', { count: String(leads.length) })}</span>
       </div>
       {leads.length === 0 ? (
-        <p className="text-xs text-muted-foreground text-center py-6">No leads yet. Capture your first lead to get started.</p>
+        <p className="text-xs text-muted-foreground text-center py-6">{t('crm.dashboard.noLeadsYet')}</p>
       ) : (
         <div className="space-y-0.5">
           {leads.slice(0, 5).map((lead) => (
@@ -224,6 +229,7 @@ function RecentLeads() {
 // ---------------------------------------------------------------------------
 
 function RecentQuotes() {
+  const { t } = useTranslation()
   const { currency } = useCrmConfig()
   const quotes = useCrmStore((s) => s.quotes)
   const fetchQuotes = useCrmStore((s) => s.fetchQuotes)
@@ -243,12 +249,12 @@ function RecentQuotes() {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">Recent Quotes</h3>
+          <h3 className="text-sm font-semibold">{t('crm.dashboard.recentQuotes')}</h3>
         </div>
-        <span className="text-[10px] text-muted-foreground">{quotes.length} quotes</span>
+        <span className="text-[10px] text-muted-foreground">{t('crm.dashboard.quotesCount', { count: String(quotes.length) })}</span>
       </div>
       {quotes.length === 0 ? (
-        <p className="text-xs text-muted-foreground text-center py-6">No quotes yet.</p>
+        <p className="text-xs text-muted-foreground text-center py-6">{t('crm.dashboard.noQuotesYet')}</p>
       ) : (
         <div className="space-y-0.5">
           {quotes.slice(0, 5).map((q) => (
@@ -277,6 +283,7 @@ function RecentQuotes() {
 // ---------------------------------------------------------------------------
 
 export function DashboardView() {
+  const { t } = useTranslation()
   const { currency } = useCrmConfig()
   const summary = useCrmStore((s) => s.summary)
   const pipelines = useCrmStore((s) => s.pipelines)
@@ -298,30 +305,30 @@ export function DashboardView() {
       {/* KPI row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Total Leads"
+          label={t('crm.dashboard.totalLeads')}
           value={String(summary?.totalLeads ?? 0)}
-          subtitle={`${summary?.newLeadsThisMonth ?? 0} new this month`}
+          subtitle={t('crm.dashboard.newThisMonth', { count: String(summary?.newLeadsThisMonth ?? 0) })}
           icon={Users}
           color="bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400"
         />
         <StatCard
-          label="Open Pipeline"
+          label={t('crm.dashboard.openPipeline')}
           value={formatCurrency(summary?.openDealsValue ?? 0, currency)}
-          subtitle={`${summary?.totalDeals ?? 0} active deals`}
+          subtitle={t('crm.dashboard.activeDeals', { count: String(summary?.totalDeals ?? 0) })}
           icon={Target}
           color="bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400"
         />
         <StatCard
-          label="Conversion Rate"
+          label={t('crm.dashboard.conversionRate')}
           value={`${(summary?.conversionRate ?? 0).toFixed(1)}%`}
-          subtitle="Lead to deal"
+          subtitle={t('crm.dashboard.leadToDeal')}
           icon={TrendingUp}
           color="bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
         />
         <StatCard
-          label="Pending Tasks"
+          label={t('crm.dashboard.pendingTasks')}
           value={String(summary?.pendingActivities ?? 0)}
-          subtitle={`${summary?.overdueActivities ?? 0} overdue`}
+          subtitle={t('crm.dashboard.overdueCount', { count: String(summary?.overdueActivities ?? 0) })}
           icon={summary?.overdueActivities ? AlertTriangle : Clock}
           color={summary?.overdueActivities
             ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400'

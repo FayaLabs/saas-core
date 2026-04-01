@@ -2,7 +2,7 @@ import React from 'react'
 import type { PluginManifest, PluginScope, VerticalId } from '../../types/plugins'
 import type { EntityLookupMap } from '../../types/entity-lookup'
 import { CrmPage } from './CrmPage'
-import type { ResolvedCrmConfig } from './CrmContext'
+import { CrmContextProvider, type ResolvedCrmConfig } from './CrmContext'
 import type { CrmDataProvider } from './data/types'
 import { createMockCrmProvider } from './data/mock'
 import { createSupabaseCrmProvider } from './data/supabase'
@@ -192,16 +192,18 @@ export function createCrmPlugin(options?: CrmPluginOptions): PluginManifest {
         icon: 'Filter',
         component: (() => {
           const Tab: React.FC = () =>
-            React.createElement(PluginSettingsPanel, {
-              title: 'Sales & CRM Settings',
-              subtitle: 'Pipeline, lead management, and registries',
-              generalSettings: React.createElement(CrmGeneralSettings),
-              customTabs: [
-                { id: 'pipeline', label: 'Pipeline', icon: 'Filter', content: React.createElement(PipelineSettings) },
-              ],
-              registries: crmRegistries,
-              routeBase: '/settings/crm',
-            })
+            React.createElement(CrmContextProvider, { config, provider, store },
+              React.createElement(PluginSettingsPanel, {
+                title: config.labels.pageTitle + ' Settings',
+                subtitle: 'Pipeline, lead management, and registries',
+                generalSettings: React.createElement(CrmGeneralSettings),
+                customTabs: [
+                  { id: 'pipeline', label: 'Pipeline', icon: 'Filter', content: React.createElement(PipelineSettings) },
+                ],
+                registries: crmRegistries,
+                routeBase: '/settings/crm',
+              }),
+            )
           Tab.displayName = 'CrmSettingsTab'
           return Tab
         })(),

@@ -65,6 +65,7 @@ export { Skeleton, TableSkeleton } from './skeleton'
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs'
 export { Separator } from './separator'
 export { DataTable, type DataTableProps } from './data-table'
+export { ListView, type ListViewProps, type TagFilter } from './list-view'
 export {
   Sheet,
   SheetPortal,

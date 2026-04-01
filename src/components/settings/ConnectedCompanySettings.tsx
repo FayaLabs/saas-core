@@ -39,7 +39,7 @@ export function ConnectedCompanySettings() {
       }
     : null
 
-  const handleSave = async (data: { name: string; timezone: string; currency: string; locale: string }) => {
+  const handleSave = async (data: { name: string; timezone: string; currency: string }) => {
     if (!adapter || !currentOrg) return
 
     try {
@@ -50,7 +50,6 @@ export function ConnectedCompanySettings() {
           ...currentSettings,
           timezone: data.timezone,
           currency: data.currency,
-          locale: data.locale,
         },
       })
       setCurrentOrg(updated)

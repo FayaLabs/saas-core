@@ -3,6 +3,7 @@ import { Save, Plus, ArrowUpRight, ArrowDownRight, RefreshCw, ArrowRightLeft, Tr
 import { useInventoryConfig, useInventoryStore, useInventoryProvider, formatCurrency } from '../InventoryContext'
 import { cn } from '../../../lib/cn'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { SearchSelect, type SearchSelectOption } from '../../../components/ui/search-select'
 import { DatePicker } from '../../../components/ui/date-picker'
 import type { MovementType, StockMovement, StockPosition } from '../types'
@@ -11,12 +12,12 @@ import type { MovementType, StockMovement, StockPosition } from '../types'
 // Movement type config
 // ---------------------------------------------------------------------------
 
-const MOVEMENT_TYPES: { value: MovementType; label: string; icon: React.ElementType; color: string; activeColor: string; description: string }[] = [
-  { value: 'entry', label: 'Entry', icon: ArrowDownRight, color: 'text-emerald-600', activeColor: 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400', description: 'Receiving goods' },
-  { value: 'exit', label: 'Exit', icon: ArrowUpRight, color: 'text-red-500', activeColor: 'border-red-500 bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400', description: 'Using or selling' },
-  { value: 'adjustment', label: 'Adjustment', icon: RefreshCw, color: 'text-blue-500', activeColor: 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400', description: 'Count correction' },
-  { value: 'transfer', label: 'Transfer', icon: ArrowRightLeft, color: 'text-violet-500', activeColor: 'border-violet-500 bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400', description: 'Between locations' },
-  { value: 'loss', label: 'Loss', icon: Trash2, color: 'text-amber-500', activeColor: 'border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400', description: 'Waste or damage' },
+const MOVEMENT_TYPES: { value: MovementType; labelKey: string; icon: React.ElementType; color: string; activeColor: string; descKey: string }[] = [
+  { value: 'entry', labelKey: 'inventory.stock.entryLabel', icon: ArrowDownRight, color: 'text-emerald-600', activeColor: 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400', descKey: 'inventory.stock.entryDesc' },
+  { value: 'exit', labelKey: 'inventory.stock.exitLabel', icon: ArrowUpRight, color: 'text-red-500', activeColor: 'border-red-500 bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400', descKey: 'inventory.stock.exitDesc' },
+  { value: 'adjustment', labelKey: 'inventory.stock.adjustmentLabel', icon: RefreshCw, color: 'text-blue-500', activeColor: 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400', descKey: 'inventory.stock.adjustmentDesc' },
+  { value: 'transfer', labelKey: 'inventory.stock.transferLabel', icon: ArrowRightLeft, color: 'text-violet-500', activeColor: 'border-violet-500 bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400', descKey: 'inventory.stock.transferDesc' },
+  { value: 'loss', labelKey: 'inventory.stock.lossLabel', icon: Trash2, color: 'text-amber-500', activeColor: 'border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400', descKey: 'inventory.stock.lossDesc' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -28,12 +29,13 @@ function MovementDetail({ movement, currency, onClose }: {
   currency: { code: string; locale: string; symbol: string }
   onClose: () => void
 }) {
-  const typeConfig = MOVEMENT_TYPES.find((t) => t.value === movement.movementType)
+  const { t } = useTranslation()
+  const typeConfig = MOVEMENT_TYPES.find((mt) => mt.value === movement.movementType)
   const TypeIcon = typeConfig?.icon ?? Package
 
   return (
     <div className="space-y-4">
-      <SubpageHeader title="Movement Details" subtitle={`#${movement.id}`} onBack={onClose} />
+      <SubpageHeader title={movement.productName ?? `#${movement.id.slice(0, 8)}`} onBack={onClose} parentLabel={t('inventory.nav.stock')} />
 
       <div className="rounded-lg border bg-card p-5 space-y-4">
         {/* Type + Product hero */}
@@ -42,7 +44,7 @@ function MovementDetail({ movement, currency, onClose }: {
             <TypeIcon className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-lg font-bold">{movement.productName ?? 'Unknown Product'}</p>
+            <p className="text-lg font-bold">{movement.productName ?? t('inventory.stock.unknownProduct')}</p>
             <p className="text-xs text-muted-foreground capitalize">{movement.movementType} &middot; {movement.movementDate}</p>
           </div>
         </div>
@@ -50,15 +52,15 @@ function MovementDetail({ movement, currency, onClose }: {
         {/* Key details grid */}
         <div className="grid gap-3 sm:grid-cols-3 pt-2 border-t">
           <div>
-            <p className="text-[10px] text-muted-foreground uppercase">Quantity</p>
+            <p className="text-[10px] text-muted-foreground uppercase">{t('inventory.stock.quantityLabel')}</p>
             <p className="text-sm font-semibold">{movement.movementType === 'entry' ? '+' : '-'}{movement.quantity}</p>
           </div>
           <div>
-            <p className="text-[10px] text-muted-foreground uppercase">Unit Cost</p>
+            <p className="text-[10px] text-muted-foreground uppercase">{t('inventory.stock.unitCostLabel')}</p>
             <p className="text-sm font-semibold">{formatCurrency(movement.unitCost, currency)}</p>
           </div>
           <div>
-            <p className="text-[10px] text-muted-foreground uppercase">Total Cost</p>
+            <p className="text-[10px] text-muted-foreground uppercase">{t('inventory.stock.totalCost')}</p>
             <p className="text-sm font-semibold">{formatCurrency(movement.totalCost, currency)}</p>
           </div>
         </div>
@@ -67,31 +69,31 @@ function MovementDetail({ movement, currency, onClose }: {
         <div className="grid gap-3 sm:grid-cols-2 pt-2 border-t">
           {movement.stockLocationName && (
             <div>
-              <p className="text-[10px] text-muted-foreground uppercase">Location</p>
+              <p className="text-[10px] text-muted-foreground uppercase">{t('inventory.stock.locationLabel')}</p>
               <p className="text-sm">{movement.stockLocationName}</p>
             </div>
           )}
           {movement.destinationLocationName && (
             <div>
-              <p className="text-[10px] text-muted-foreground uppercase">Destination</p>
+              <p className="text-[10px] text-muted-foreground uppercase">{t('inventory.stock.destination')}</p>
               <p className="text-sm">{movement.destinationLocationName}</p>
             </div>
           )}
           {movement.supplierName && (
             <div>
-              <p className="text-[10px] text-muted-foreground uppercase">Supplier</p>
+              <p className="text-[10px] text-muted-foreground uppercase">{t('inventory.stock.supplier')}</p>
               <p className="text-sm">{movement.supplierName}</p>
             </div>
           )}
           {movement.documentNumber && (
             <div>
-              <p className="text-[10px] text-muted-foreground uppercase">Document</p>
+              <p className="text-[10px] text-muted-foreground uppercase">{t('inventory.stock.document')}</p>
               <p className="text-sm">{movement.documentNumber}</p>
             </div>
           )}
           {movement.reason && (
             <div>
-              <p className="text-[10px] text-muted-foreground uppercase">Reason</p>
+              <p className="text-[10px] text-muted-foreground uppercase">{t('inventory.stock.reasonLabel')}</p>
               <p className="text-sm">{movement.reason}</p>
             </div>
           )}
@@ -99,13 +101,13 @@ function MovementDetail({ movement, currency, onClose }: {
 
         {movement.notes && (
           <div className="pt-2 border-t">
-            <p className="text-[10px] text-muted-foreground uppercase">Notes</p>
+            <p className="text-[10px] text-muted-foreground uppercase">{t('inventory.stock.notes')}</p>
             <p className="text-sm mt-0.5">{movement.notes}</p>
           </div>
         )}
 
         <div className="pt-2 border-t">
-          <p className="text-[10px] text-muted-foreground">Recorded {new Date(movement.createdAt).toLocaleString()}</p>
+          <p className="text-[10px] text-muted-foreground">{t('inventory.stock.recorded')} {new Date(movement.createdAt).toLocaleString()}</p>
         </div>
       </div>
     </div>
@@ -121,6 +123,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
   onSaved?: () => void
   viewMovement?: StockMovement
 }) {
+  const { t } = useTranslation()
   const { currency, modules } = useInventoryConfig()
   const provider = useInventoryProvider()
   const products = useInventoryStore((s) => s.products)
@@ -173,7 +176,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
       .map((p) => ({
         id: p.id,
         label: p.name,
-        subtitle: [p.sku, `Stock: ${p.currentQuantity}`].filter(Boolean).join(' · '),
+        subtitle: [p.sku, `${t('inventory.stock.currentStock')} ${p.currentQuantity}`].filter(Boolean).join(' · '),
         group: p.productType,
         icon: <Package className="h-4 w-4 text-muted-foreground shrink-0" />,
         data: p,
@@ -213,7 +216,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
 
   const canProceedStep1 = !!productId
   const canProceedStep2 = quantity > 0 && (!needsReason || reason.trim()) && (!needsDest || destLocationId)
-  const title = defaultType === 'entry' ? 'Stock Entry' : defaultType === 'exit' ? 'Stock Exit' : 'Stock Movement'
+  const title = defaultType === 'entry' ? t('inventory.stock.entry') : defaultType === 'exit' ? t('inventory.stock.exit') : t('inventory.stock.movement')
 
   async function handleSave() {
     if (!productId || quantity <= 0) return
@@ -242,8 +245,9 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
     <div className="space-y-6">
       <SubpageHeader
         title={title}
-        subtitle={`Step ${step} of 3`}
+        subtitle={t('inventory.stock.stepOf', { step: String(step) })}
         onBack={step > 1 ? () => setStep(step - 1) : onSaved}
+        parentLabel={t('inventory.nav.stock')}
       />
 
       {/* Progress bar */}
@@ -258,20 +262,20 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
         <div className="space-y-5">
           {/* Movement type selector */}
           <div>
-            <p className="text-xs font-medium text-muted-foreground mb-2">Movement type</p>
+            <p className="text-xs font-medium text-muted-foreground mb-2">{t('inventory.stock.movementType')}</p>
             <div className="grid gap-2 sm:grid-cols-5">
-              {MOVEMENT_TYPES.map((t) => {
-                const Icon = t.icon
-                const active = movementType === t.value
+              {MOVEMENT_TYPES.map((mt) => {
+                const Icon = mt.icon
+                const active = movementType === mt.value
                 return (
                   <button
-                    key={t.value}
-                    onClick={() => setMovementType(t.value)}
-                    className={`rounded-lg border-2 p-3 text-left transition-all ${active ? t.activeColor : 'border-transparent bg-card hover:bg-muted/30'}`}
+                    key={mt.value}
+                    onClick={() => setMovementType(mt.value)}
+                    className={`rounded-lg border-2 p-3 text-left transition-all ${active ? mt.activeColor : 'border-transparent bg-card hover:bg-muted/30'}`}
                   >
                     <Icon className="h-4 w-4 mb-1" />
-                    <p className="text-xs font-medium">{t.label}</p>
-                    <p className="text-[9px] text-muted-foreground mt-0.5 hidden sm:block">{t.description}</p>
+                    <p className="text-xs font-medium">{t(mt.labelKey)}</p>
+                    <p className="text-[9px] text-muted-foreground mt-0.5 hidden sm:block">{t(mt.descKey)}</p>
                   </button>
                 )
               })}
@@ -284,9 +288,9 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
             displayValue={productLabel}
             onChange={handleProductSelect}
             onSearch={searchProducts}
-            label="Product"
+            label={t('inventory.stock.product')}
             required
-            placeholder="Search by name, SKU, or barcode..."
+            placeholder={t('inventory.stock.searchProduct')}
             minChars={1}
             debounce={150}
             renderOption={(opt) => (
@@ -305,7 +309,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
               <div>
                 <p className="text-sm font-medium">{selectedProduct.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  Current stock: <span className="font-medium">{selectedProduct.currentQuantity}</span>
+                  {t('inventory.stock.currentStock')} <span className="font-medium">{selectedProduct.currentQuantity}</span>
                   {selectedProduct.minQuantity > 0 && <> &middot; Min: {selectedProduct.minQuantity}</>}
                   {selectedProduct.costPrice > 0 && <> &middot; Cost: {formatCurrency(selectedProduct.costPrice, currency)}</>}
                 </p>
@@ -320,7 +324,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
               disabled={!canProceedStep1}
               className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              Next
+              {t('inventory.stock.next')}
             </button>
           </div>
         </div>
@@ -332,7 +336,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
           <div className="rounded-lg border bg-card p-5 space-y-4">
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Quantity *</label>
+                <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.quantity')}</label>
                 <input
                   type="number"
                   min={0.01}
@@ -344,14 +348,14 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Unit Cost</label>
+                <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.unitCost')}</label>
                 <div className="flex items-center mt-1 rounded-lg border bg-background focus-within:ring-2 focus-within:ring-primary/20">
                   <span className="pl-2.5 text-xs text-muted-foreground">{currency.symbol}</span>
                   <input type="number" min={0} step={0.01} value={unitCost} onChange={(e) => setUnitCost(Number(e.target.value) || 0)} className="flex-1 bg-transparent px-2 py-2 text-sm outline-none" />
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Total</label>
+                <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.total')}</label>
                 <p className="mt-1 px-3 py-2 text-lg font-bold">{formatCurrency(totalCost, currency)}</p>
               </div>
             </div>
@@ -360,7 +364,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
             {modules.stockLocations && locations.length > 0 && (
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">{needsDest ? 'From Location' : 'Location'}</label>
+                  <label className="text-xs font-medium text-muted-foreground">{needsDest ? t('inventory.stock.fromLocation') : t('inventory.stock.locationLabel')}</label>
                   <div className="flex flex-wrap gap-2 mt-1.5">
                     {sortedLocations.map((l) => {
                       const qty = positionByLocation[l.id] ?? 0
@@ -394,7 +398,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
                 </div>
                 {needsDest && (
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">To Location *</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.toLocation')}</label>
                     <div className="flex flex-wrap gap-2 mt-1.5">
                       {sortedLocations.filter((l) => l.id !== locationId).map((l) => {
                         const qty = positionByLocation[l.id] ?? 0
@@ -433,15 +437,15 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
             {/* Reason (required for adjustment/loss) */}
             {needsReason && (
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Reason *</label>
-                <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={movementType === 'loss' ? 'e.g. Expired, damaged' : 'e.g. Physical count correction'} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.reason')}</label>
+                <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={movementType === 'loss' ? t('inventory.stock.reasonLossPlaceholder') : t('inventory.stock.reasonAdjustPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
             )}
           </div>
 
           <div className="flex justify-between">
-            <button onClick={() => setStep(1)} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors">Back</button>
-            <button onClick={() => setStep(3)} disabled={!canProceedStep2} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">Next</button>
+            <button onClick={() => setStep(1)} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors">{t('inventory.stock.back')}</button>
+            <button onClick={() => setStep(3)} disabled={!canProceedStep2} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">{t('inventory.stock.next')}</button>
           </div>
         </div>
       )}
@@ -462,47 +466,47 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
             </div>
 
             <div className="grid gap-2 sm:grid-cols-3 text-xs border-t pt-3">
-              <div><span className="text-muted-foreground">Quantity:</span> <span className="font-medium">{quantity}</span></div>
-              <div><span className="text-muted-foreground">Unit Cost:</span> <span className="font-medium">{formatCurrency(unitCost, currency)}</span></div>
-              <div><span className="text-muted-foreground">Total:</span> <span className="font-bold">{formatCurrency(totalCost, currency)}</span></div>
+              <div><span className="text-muted-foreground">{t('inventory.stock.quantityLabel')}:</span> <span className="font-medium">{quantity}</span></div>
+              <div><span className="text-muted-foreground">{t('inventory.stock.unitCostLabel')}:</span> <span className="font-medium">{formatCurrency(unitCost, currency)}</span></div>
+              <div><span className="text-muted-foreground">{t('inventory.stock.total')}:</span> <span className="font-bold">{formatCurrency(totalCost, currency)}</span></div>
             </div>
           </div>
 
           {/* Optional details */}
           <div className="rounded-lg border bg-card p-5 space-y-4">
-            <p className="text-xs font-medium text-muted-foreground">Additional details (optional)</p>
+            <p className="text-xs font-medium text-muted-foreground">{t('inventory.stock.additionalDetails')}</p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Document Number</label>
-                <input type="text" value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder="Invoice, receipt, PO..." className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.documentNumber')}</label>
+                <input type="text" value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder={t('inventory.stock.documentPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
               {modules.batchTracking && (
                 <>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Batch Number</label>
-                    <input type="text" value={batchNumber} onChange={(e) => setBatchNumber(e.target.value)} placeholder="e.g. LOT001" className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.batchNumber')}</label>
+                    <input type="text" value={batchNumber} onChange={(e) => setBatchNumber(e.target.value)} placeholder={t('inventory.stock.batchPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Expiration Date</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.expirationDate')}</label>
                     <DatePicker value={expirationDate} onChange={setExpirationDate} className="mt-1" />
                   </div>
                 </>
               )}
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Notes</label>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Additional notes..." className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+              <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.notes')}</label>
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={t('inventory.stock.notesPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
             </div>
           </div>
 
           <div className="flex justify-between">
-            <button onClick={() => setStep(2)} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors">Back</button>
+            <button onClick={() => setStep(2)} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors">{t('inventory.stock.back')}</button>
             <button
               onClick={handleSave}
               disabled={saving}
               className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              <Check className="h-3.5 w-3.5" /> {saving ? 'Recording...' : 'Record Movement'}
+              <Check className="h-3.5 w-3.5" /> {saving ? t('inventory.stock.recording') : t('inventory.stock.recordMovement')}
             </button>
           </div>
         </div>

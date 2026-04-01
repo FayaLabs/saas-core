@@ -23,9 +23,11 @@ import { useTranslation } from '../../hooks/useTranslation'
 interface InviteMemberDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** Pre-fill the first email (e.g. from person detail Access tab) */
+  defaultEmail?: string
 }
 
-export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogProps) {
+export function InviteMemberDialog({ open, onOpenChange, defaultEmail }: InviteMemberDialogProps) {
   const { t } = useTranslation()
   const adapter = useOrgAdapterOptional()
   const currentOrg = useOrganizationStore((s) => s.currentOrg)
@@ -33,7 +35,7 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
   const setInvites = useInviteStore((s) => s.setInvites)
   const user = useAuthStore((s) => s.user)
 
-  const [emails, setEmails] = React.useState<string[]>([''])
+  const [emails, setEmails] = React.useState<string[]>([defaultEmail ?? ''])
   const [profileId, setProfileId] = React.useState(profiles[1]?.id ?? profiles[0]?.id ?? '')
   const [sending, setSending] = React.useState(false)
   const [sent, setSent] = React.useState(false)

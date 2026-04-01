@@ -7,7 +7,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 
 import { cn } from '../../lib/cn'
 import { Skeleton } from './skeleton'
@@ -16,17 +16,26 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   loading?: boolean
+  skeletonRows?: number
   emptyMessage?: string
   onRowClick?: (row: TData) => void
+  /** Visual variant: 'card' (white bg, card wrapper — default) or 'flat' (transparent bg) */
+  variant?: 'card' | 'flat'
 }
 
 function DataTable<TData, TValue>({
   columns,
   data,
   loading = false,
+  skeletonRows = 3,
   emptyMessage = 'No results.',
   onRowClick,
+  variant = 'card',
 }: DataTableProps<TData, TValue>) {
+  const isCard = variant === 'card'
+  const wrapperCls = isCard ? 'rounded-lg border bg-card shadow-sm overflow-hidden' : 'rounded-lg border overflow-hidden'
+  const headerCls = isCard ? 'border-b bg-muted/50' : 'border-b bg-muted/30'
+  const rowHoverCls = isCard ? 'hover:bg-muted/30' : 'hover:bg-muted/20'
   const [sorting, setSorting] = React.useState<SortingState>([])
 
   const table = useReactTable({
@@ -35,120 +44,101 @@ function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
-    state: {
-      sorting,
-    },
+    state: { sorting },
   })
 
   if (loading) {
     return (
-      <div className="w-full">
-        <div className="rounded-md border">
-          <table className="w-full caption-bottom text-sm">
-            <thead className="[&_tr]:border-b">
-              <tr className="border-b transition-colors hover:bg-muted/50">
-                {columns.map((_, i) => (
-                  <th
-                    key={i}
-                    className="h-12 px-4 text-left align-middle font-medium text-muted-foreground"
-                  >
-                    <Skeleton className="h-4 w-24" />
-                  </th>
+      <div className={wrapperCls}>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className={headerCls}>
+              {columns.map((_, i) => (
+                <th key={i} className="px-4 py-2.5 text-left font-medium text-muted-foreground">
+                  <Skeleton className="h-3.5 w-20" />
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: skeletonRows }).map((_, i) => (
+              <tr key={i} className="border-b last:border-0">
+                {columns.map((_, j) => (
+                  <td key={j} className="px-4 py-3">
+                    <Skeleton className="h-3.5 w-full" />
+                  </td>
                 ))}
               </tr>
-            </thead>
-            <tbody className="[&_tr:last-child]:border-0">
-              {Array.from({ length: 2 }).map((_, i) => (
-                <tr key={i} className="border-b transition-colors">
-                  {columns.map((_, j) => (
-                    <td key={j} className="p-4 align-middle">
-                      <Skeleton className="h-4 w-full" />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     )
   }
 
   return (
-    <div className="w-full">
-      <div className="rounded-md border">
-        <table className="w-full caption-bottom text-sm">
-          <thead className="[&_tr]:border-b">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr
-                key={headerGroup.id}
-                className="border-b transition-colors hover:bg-muted/50"
-              >
-                {headerGroup.headers.map((header) => (
+    <div className={wrapperCls}>
+      <table className="w-full text-sm">
+        <thead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id} className={headerCls}>
+              {headerGroup.headers.map((header) => {
+                const sorted = header.column.getIsSorted()
+                return (
                   <th
                     key={header.id}
-                    className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0"
+                    className="px-4 py-2.5 text-left font-medium text-muted-foreground"
                   >
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <button
-                        className="flex items-center gap-1 hover:text-foreground"
+                        className="flex items-center gap-1 hover:text-foreground transition-colors"
                         onClick={header.column.getToggleSortingHandler()}
                       >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {sorted === 'asc' ? (
+                          <ArrowUp className="h-3 w-3" />
+                        ) : sorted === 'desc' ? (
+                          <ArrowDown className="h-3 w-3" />
+                        ) : (
+                          <ArrowUpDown className="h-3 w-3 opacity-40" />
                         )}
-                        <ArrowUpDown className="h-4 w-4" />
                       </button>
                     ) : (
-                      flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )
+                      flexRender(header.column.columnDef.header, header.getContext())
                     )}
                   </th>
+                )
+              })}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => (
+              <tr
+                key={row.id}
+                className={cn(
+                  `border-b last:border-0 transition-colors ${rowHoverCls}`,
+                  onRowClick && 'cursor-pointer'
+                )}
+                onClick={() => onRowClick?.(row.original)}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className="px-4 py-3 align-middle">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
                 ))}
               </tr>
-            ))}
-          </thead>
-          <tbody className="[&_tr:last-child]:border-0">
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                  className={cn(
-                    'border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted',
-                    onRowClick && 'cursor-pointer'
-                  )}
-                  onClick={() => onRowClick?.(row.original)}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className="p-4 align-middle [&:has([role=checkbox])]:pr-0"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  {emptyMessage}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                {emptyMessage}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   )
 }

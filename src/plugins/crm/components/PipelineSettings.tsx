@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react'
 import { useCrmStore } from '../CrmContext'
 import { SettingsGroup } from '../../../components/plugins/SettingsGroup'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 export function PipelineSettings() {
+  const { t } = useTranslation()
   const stages = useCrmStore((s) => s.stages)
   const pipelines = useCrmStore((s) => s.pipelines)
   const fetchPipelines = useCrmStore((s) => s.fetchPipelines)
@@ -11,9 +13,9 @@ export function PipelineSettings() {
 
   return (
     <div className="space-y-4">
-      <SettingsGroup title="Pipeline Stages" description="Define stages that deals move through. Drag to reorder.">
+      <SettingsGroup title={t('crm.pipelineSettings.title')} description={t('crm.pipelineSettings.description')}>
         {stages.length === 0 ? (
-          <div className="py-6 text-center text-sm text-muted-foreground">Loading stages...</div>
+          <div className="py-6 text-center text-sm text-muted-foreground">{t('common.loading')}</div>
         ) : (
           <div className="space-y-0">
             {stages.map((stage, i) => (
@@ -23,9 +25,9 @@ export function PipelineSettings() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{stage.name}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    Probability: {stage.probability}%
-                    {stage.isWon && ' — Win stage'}
-                    {stage.isLost && ' — Loss stage'}
+                    {t('crm.pipelineSettings.probability')}: {stage.probability}%
+                    {stage.isWon && ` — ${t('crm.pipelineSettings.winStage')}`}
+                    {stage.isLost && ` — ${t('crm.pipelineSettings.lossStage')}`}
                   </p>
                 </div>
                 <span className="text-xs text-muted-foreground">{stage.probability}%</span>
@@ -36,7 +38,7 @@ export function PipelineSettings() {
       </SettingsGroup>
 
       <p className="text-[10px] text-muted-foreground px-1">
-        Pipeline stage customization (add, remove, reorder, edit colors and probabilities) will be available when connected to the database.
+        {t('crm.pipelineSettings.customizationNote')}
       </p>
     </div>
   )

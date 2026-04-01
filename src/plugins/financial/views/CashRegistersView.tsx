@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { Landmark, Play, Square, Clock, ChevronDown, ChevronUp, Calculator, X, Check, StickyNote } from 'lucide-react'
 import { useFinancialConfig, useFinancialStore, formatCurrency } from '../FinancialContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { CurrencyInput } from '../../../components/ui/currency-input'
 
@@ -44,6 +45,7 @@ function DenominationCounter({
   onChange: (counts: Record<number, number>) => void
   currency: { code: string; locale: string; symbol: string }
 }) {
+  const { t } = useTranslation()
   const bills = denominations.filter((d) => d.type === 'bill')
   const coins = denominations.filter((d) => d.type === 'coin')
 
@@ -78,13 +80,13 @@ function DenominationCounter({
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {bills.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">Bills</p>
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">{t('financial.cash.bills')}</p>
           {bills.map(renderRow)}
         </div>
       )}
       {coins.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">Coins</p>
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">{t('financial.cash.coins')}</p>
           {coins.map(renderRow)}
         </div>
       )}
@@ -115,6 +117,7 @@ function CashOpeningPanel({
   const [showNotes, setShowNotes] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const { t } = useTranslation()
 
   const countedTotal = useMemo(() => {
     return BRL_DENOMINATIONS.reduce((sum, d) => sum + (counts[d.value] ?? 0) * d.value, 0)
@@ -143,7 +146,7 @@ function CashOpeningPanel({
   if (cashAccounts.length === 0) {
     return (
       <p className="text-sm text-muted-foreground p-4">
-        No cash register accounts found. Create a bank account with type "Cash Register" first.
+        {t('financial.cash.noAccounts')}
       </p>
     )
   }
@@ -153,21 +156,21 @@ function CashOpeningPanel({
     return (
       <div className="p-4 space-y-4">
         <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
-          <p className="text-sm font-semibold">Confirm Cash Opening</p>
+          <p className="text-sm font-semibold">{t('financial.cash.confirmOpening')}</p>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <span className="text-muted-foreground">Register</span>
+            <span className="text-muted-foreground">{t('financial.cash.register')}</span>
             <span className="font-medium">{cashAccounts.find((a) => a.id === selectedAccountId)?.name}</span>
-            <span className="text-muted-foreground">Opening Balance</span>
+            <span className="text-muted-foreground">{t('financial.cash.openingBalance')}</span>
             <span className="font-bold text-base">{formatCurrency(effectiveBalance, currency)}</span>
             {mode === 'count' && (
               <>
-                <span className="text-muted-foreground">Method</span>
-                <span className="font-medium">Denomination count</span>
+                <span className="text-muted-foreground">{t('financial.cash.method')}</span>
+                <span className="font-medium">{t('financial.cash.denominationCount')}</span>
               </>
             )}
             {notes && (
               <>
-                <span className="text-muted-foreground">Notes</span>
+                <span className="text-muted-foreground">{t('financial.cash.notes')}</span>
                 <span className="font-medium">{notes}</span>
               </>
             )}
@@ -178,14 +181,14 @@ function CashOpeningPanel({
             onClick={() => setConfirming(false)}
             className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors"
           >
-            <X className="h-3 w-3" /> Back
+            <X className="h-3 w-3" /> {t('common.back')}
           </button>
           <button
             onClick={handleConfirm}
             disabled={submitting}
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
-            <Check className="h-3 w-3" /> {submitting ? 'Opening…' : 'Confirm & Open'}
+            <Check className="h-3 w-3" /> {submitting ? t('financial.cash.opening') : t('financial.cash.confirmAndOpen')}
           </button>
         </div>
       </div>
@@ -197,7 +200,7 @@ function CashOpeningPanel({
       {/* Account selector */}
       {cashAccounts.length > 1 && (
         <div>
-          <label className="text-[10px] font-medium text-muted-foreground uppercase">Register</label>
+          <label className="text-[10px] font-medium text-muted-foreground uppercase">{t('financial.cash.register')}</label>
           <select
             value={selectedAccountId}
             onChange={(e) => setSelectedAccountId(e.target.value)}
@@ -218,7 +221,7 @@ function CashOpeningPanel({
             mode === 'quick' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
           }`}
         >
-          Quick Amount
+          {t('financial.cash.quickAmount')}
         </button>
         <button
           onClick={() => setMode('count')}
@@ -226,7 +229,7 @@ function CashOpeningPanel({
             mode === 'count' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
           }`}
         >
-          <Calculator className="h-3 w-3" /> Count Bills & Coins
+          <Calculator className="h-3 w-3" /> {t('financial.cash.countBillsCoins')}
         </button>
       </div>
 
@@ -238,7 +241,7 @@ function CashOpeningPanel({
           symbol={currency.symbol}
           locale={currency.locale}
           currencyCode={currency.code}
-          label="Opening Balance"
+          label={t('financial.cash.openingBalance')}
         />
       )}
 
@@ -252,7 +255,7 @@ function CashOpeningPanel({
             currency={currency}
           />
           <div className="flex items-center justify-between pt-2 border-t">
-            <span className="text-xs font-medium text-muted-foreground uppercase">Counted Total</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase">{t('financial.cash.countedTotal')}</span>
             <span className="text-lg font-bold">{formatCurrency(countedTotal, currency)}</span>
           </div>
         </div>
@@ -265,16 +268,16 @@ function CashOpeningPanel({
             onClick={() => setShowNotes(true)}
             className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            <StickyNote className="h-3 w-3" /> Add notes
+            <StickyNote className="h-3 w-3" /> {t('financial.cash.addNotes')}
           </button>
         ) : (
           <div>
-            <label className="text-[10px] font-medium text-muted-foreground uppercase">Notes</label>
+            <label className="text-[10px] font-medium text-muted-foreground uppercase">{t('financial.cash.notes')}</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              placeholder="Opening observations…"
+              placeholder={t('financial.cash.openingObservations')}
               className="w-full mt-0.5 rounded-lg border bg-background px-2 py-1.5 text-xs resize-none"
             />
           </div>
@@ -287,7 +290,7 @@ function CashOpeningPanel({
         disabled={effectiveBalance <= 0}
         className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
       >
-        <Play className="h-3 w-3" /> Open Session
+        <Play className="h-3 w-3" /> {t('financial.cash.openSession')}
       </button>
     </div>
   )
@@ -311,6 +314,7 @@ function CashClosingPanel({
   const [counts, setCounts] = useState<Record<number, number>>({})
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const { t } = useTranslation()
 
   const countedTotal = useMemo(() => {
     return BRL_DENOMINATIONS.reduce((sum, d) => sum + (counts[d.value] ?? 0) * d.value, 0)
@@ -338,7 +342,7 @@ function CashClosingPanel({
             mode === 'quick' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
           }`}
         >
-          Quick Amount
+          {t('financial.cash.quickAmount')}
         </button>
         <button
           onClick={() => setMode('count')}
@@ -346,7 +350,7 @@ function CashClosingPanel({
             mode === 'count' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
           }`}
         >
-          <Calculator className="h-3 w-3" /> Count
+          <Calculator className="h-3 w-3" /> {t('financial.cash.count')}
         </button>
       </div>
 
@@ -357,7 +361,7 @@ function CashClosingPanel({
           symbol={currency.symbol}
           locale={currency.locale}
           currencyCode={currency.code}
-          label="Closing Balance"
+          label={t('financial.cash.closingBalance')}
         />
       ) : (
         <div className="space-y-3">
@@ -368,7 +372,7 @@ function CashClosingPanel({
             currency={currency}
           />
           <div className="flex items-center justify-between pt-2 border-t">
-            <span className="text-xs font-medium text-muted-foreground uppercase">Counted Total</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase">{t('financial.cash.countedTotal')}</span>
             <span className="text-lg font-bold">{formatCurrency(countedTotal, currency)}</span>
           </div>
         </div>
@@ -377,7 +381,7 @@ function CashClosingPanel({
       {/* Difference indicator */}
       {effectiveBalance > 0 && (
         <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-          <span className="text-xs text-muted-foreground">Difference from opening</span>
+          <span className="text-xs text-muted-foreground">{t('financial.cash.differenceFromOpening')}</span>
           <span className={`text-sm font-bold tabular-nums ${
             difference > 0 ? 'text-emerald-600' : difference < 0 ? 'text-red-500' : 'text-muted-foreground'
           }`}>
@@ -388,12 +392,12 @@ function CashClosingPanel({
 
       {/* Notes */}
       <div>
-        <label className="text-[10px] font-medium text-muted-foreground uppercase">Closing Notes</label>
+        <label className="text-[10px] font-medium text-muted-foreground uppercase">{t('financial.cash.closingNotes')}</label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
-          placeholder="Closing observations…"
+          placeholder={t('financial.cash.closingObservations')}
           className="w-full mt-0.5 rounded-lg border bg-background px-2 py-1.5 text-xs resize-none"
         />
       </div>
@@ -403,7 +407,7 @@ function CashClosingPanel({
         disabled={submitting || effectiveBalance <= 0}
         className="inline-flex items-center gap-1.5 rounded-lg bg-red-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
       >
-        <Square className="h-3 w-3" /> {submitting ? 'Closing…' : 'Close Session'}
+        <Square className="h-3 w-3" /> {submitting ? t('financial.cash.closing') : t('financial.cash.closeSession')}
       </button>
     </div>
   )
@@ -414,6 +418,7 @@ function CashClosingPanel({
 // ---------------------------------------------------------------------------
 
 export function CashRegistersView() {
+  const { t } = useTranslation()
   const { currency, labels } = useFinancialConfig()
   const bankAccounts = useFinancialStore((s) => s.bankAccounts)
   const cashSessions = useFinancialStore((s) => s.cashSessions)
@@ -444,14 +449,14 @@ export function CashRegistersView() {
 
   return (
     <div className="space-y-6">
-      <SubpageHeader title={labels.cashRegisters ?? 'Cash Registers'} subtitle="Open, count and close cash sessions" />
+      <SubpageHeader title={labels.cashRegisters ?? t('financial.cash.title')} subtitle={t('financial.cash.subtitle')} />
 
       {/* Open sessions */}
       <div className="rounded-lg border bg-card">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <div className="flex items-center gap-2">
             <Landmark className="h-4 w-4 text-blue-500" />
-            <h3 className="text-sm font-semibold">Open Sessions</h3>
+            <h3 className="text-sm font-semibold">{t('financial.cash.openSessions')}</h3>
             {openSessions.length > 0 && (
               <span className="rounded-full bg-blue-500/10 text-blue-600 px-2 py-0.5 text-[10px] font-semibold">
                 {openSessions.length}
@@ -468,14 +473,14 @@ export function CashRegistersView() {
               <div key={session.id} className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">{session.bankAccountName ?? 'Cash Register'}</p>
+                    <p className="text-sm font-medium">{session.bankAccountName ?? t('financial.cash.title')}</p>
                     <p className="text-xs text-muted-foreground">
-                      Opened {new Date(session.openedAt).toLocaleString()}
-                      {session.openedByName ? ` by ${session.openedByName}` : ''}
+                      {t('financial.cash.opened')} {new Date(session.openedAt).toLocaleString()}
+                      {session.openedByName ? ` ${t('financial.cash.by')} ${session.openedByName}` : ''}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] text-muted-foreground uppercase">Opening</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">{t('financial.cash.openingBalance')}</p>
                     <p className="text-lg font-bold tabular-nums">{formatCurrency(session.openingBalance, currency)}</p>
                   </div>
                 </div>
@@ -488,7 +493,7 @@ export function CashRegistersView() {
                     onClick={() => setExpandedClosing(session.id)}
                     className="inline-flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
                   >
-                    <ChevronDown className="h-3 w-3" /> Close this session
+                    <ChevronDown className="h-3 w-3" /> {t('financial.cash.closeThisSession')}
                   </button>
                 )}
               </div>
@@ -506,32 +511,32 @@ export function CashRegistersView() {
       <div className="rounded-lg border bg-card">
         <div className="flex items-center gap-2 px-4 py-3 border-b">
           <Clock className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">Session History</h3>
+          <h3 className="text-sm font-semibold">{t('financial.cash.sessionHistory')}</h3>
         </div>
         {closedSessions.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-muted-foreground">No closed sessions yet</div>
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">{t('financial.cash.noClosedSessions')}</div>
         ) : (
           <div className="divide-y">
             {closedSessions.map((session) => (
               <div key={session.id} className="px-4 py-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">{session.bankAccountName ?? 'Cash Register'}</p>
+                    <p className="text-sm font-medium">{session.bankAccountName ?? t('financial.cash.title')}</p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(session.openedAt).toLocaleDateString()} — {session.closedAt ? new Date(session.closedAt).toLocaleDateString() : ''}
                     </p>
                     {session.openedByName && (
-                      <p className="text-[10px] text-muted-foreground">by {session.openedByName}</p>
+                      <p className="text-[10px] text-muted-foreground">{t('financial.cash.by')} {session.openedByName}</p>
                     )}
                   </div>
                   <div className="text-right">
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>Open: {formatCurrency(session.openingBalance, currency)}</span>
-                      <span>Close: {formatCurrency(session.closingBalance ?? 0, currency)}</span>
+                      <span>{t('financial.cash.openLabel')}: {formatCurrency(session.openingBalance, currency)}</span>
+                      <span>{t('financial.cash.closeLabel')}: {formatCurrency(session.closingBalance ?? 0, currency)}</span>
                     </div>
                     {session.difference !== undefined && session.difference !== 0 && (
                       <p className={`text-xs font-semibold tabular-nums mt-0.5 ${session.difference > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                        Diff: {session.difference >= 0 ? '+' : ''}{formatCurrency(session.difference, currency)}
+                        {t('financial.cash.diff')}: {session.difference >= 0 ? '+' : ''}{formatCurrency(session.difference, currency)}
                       </p>
                     )}
                     {session.notes && (
@@ -565,6 +570,7 @@ function OpenAnotherCollapsible({
   currency: { code: string; locale: string; symbol: string }
   onOpen: (accountId: string, balance: number, notes?: string) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const availableAccounts = cashAccounts.filter((a) => !openSessions.some((s) => s.bankAccountId === a.id))
 
@@ -578,7 +584,7 @@ function OpenAnotherCollapsible({
       >
         <span className="flex items-center gap-2">
           <Play className="h-3 w-3 text-primary" />
-          Open another register
+          {t('financial.cash.openAnother')}
         </span>
         {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
       </button>

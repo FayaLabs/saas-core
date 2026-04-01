@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { X, ChevronDown } from 'lucide-react'
 import type { BlockSettings } from '../../../lib/schedule-service'
 import type { ScheduleBlockConfig } from '../../../lib/schedule-config'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 // ---------------------------------------------------------------------------
 // Props
@@ -30,6 +31,7 @@ export function BlockSettingsPopover({
   open,
   onClose,
 }: BlockSettingsPopoverProps) {
+  const { t } = useTranslation()
   const popoverRef = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState({ top: 0, left: 0 })
 
@@ -73,7 +75,7 @@ export function BlockSettingsPopover({
     >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2.5 border-b">
-        <span className="text-xs font-semibold">Block Settings</span>
+        <span className="text-xs font-semibold">{t('schedule.blockSettings.title')}</span>
         <button type="button" onClick={onClose} className="p-0.5 rounded text-muted-foreground hover:text-foreground">
           <X className="h-3.5 w-3.5" />
         </button>
@@ -101,7 +103,7 @@ export function BlockSettingsPopover({
         {/* Max concurrent */}
         {showConcurrent && (
           <div>
-            <label className="text-[11px] font-medium text-muted-foreground">Max concurrent</label>
+            <label className="text-[11px] font-medium text-muted-foreground">{t('schedule.blockSettings.maxConcurrent')}</label>
             <div className="flex items-center gap-2 mt-1">
               <button
                 type="button"
@@ -128,7 +130,7 @@ export function BlockSettingsPopover({
         {showBookingWindow && (
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-[11px] font-medium text-muted-foreground">Min advance</label>
+              <label className="text-[11px] font-medium text-muted-foreground">{t('schedule.blockSettings.minAdvance')}</label>
               <div className="flex items-center gap-1 mt-1">
                 <input
                   type="number"
@@ -137,11 +139,11 @@ export function BlockSettingsPopover({
                   onChange={(e) => update({ minAdvanceHours: Number(e.target.value) || 0 })}
                   className="w-full rounded-md border bg-background px-2 py-1 text-xs tabular-nums"
                 />
-                <span className="text-[10px] text-muted-foreground shrink-0">hrs</span>
+                <span className="text-[10px] text-muted-foreground shrink-0">{t('schedule.blockSettings.hrs')}</span>
               </div>
             </div>
             <div>
-              <label className="text-[11px] font-medium text-muted-foreground">Max advance</label>
+              <label className="text-[11px] font-medium text-muted-foreground">{t('schedule.blockSettings.maxAdvance')}</label>
               <div className="flex items-center gap-1 mt-1">
                 <input
                   type="number"
@@ -150,7 +152,7 @@ export function BlockSettingsPopover({
                   onChange={(e) => update({ maxAdvanceDays: Number(e.target.value) || 30 })}
                   className="w-full rounded-md border bg-background px-2 py-1 text-xs tabular-nums"
                 />
-                <span className="text-[10px] text-muted-foreground shrink-0">days</span>
+                <span className="text-[10px] text-muted-foreground shrink-0">{t('schedule.blockSettings.days')}</span>
               </div>
             </div>
           </div>
@@ -158,12 +160,12 @@ export function BlockSettingsPopover({
 
         {/* Label */}
         <div>
-          <label className="text-[11px] font-medium text-muted-foreground">Label</label>
+          <label className="text-[11px] font-medium text-muted-foreground">{t('schedule.blockSettings.label')}</label>
           <input
             type="text"
             value={settings.label ?? ''}
             onChange={(e) => update({ label: e.target.value || undefined })}
-            placeholder="e.g. Morning - Cuts only"
+            placeholder={t('schedule.blockSettings.labelPlaceholder')}
             className="mt-1 w-full rounded-md border bg-background px-2 py-1 text-xs placeholder:text-muted-foreground/40"
           />
         </div>
@@ -190,6 +192,7 @@ function LocationSelect({
   value: string | undefined
   onChange: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -201,11 +204,11 @@ function LocationSelect({
   }, [open])
 
   const current = value ? locations.find((l) => l.id === value) : null
-  const label = current ? current.name : 'No location'
+  const label = current ? current.name : t('schedule.blockSettings.noLocation')
 
   return (
     <div ref={ref} className="relative">
-      <label className="text-[11px] font-medium text-muted-foreground">Location</label>
+      <label className="text-[11px] font-medium text-muted-foreground">{t('schedule.blockSettings.location')}</label>
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
@@ -221,7 +224,7 @@ function LocationSelect({
             onClick={() => { onChange(''); setOpen(false) }}
             className={`block w-full px-2.5 py-1.5 text-xs text-left transition-colors ${!value ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted/50'}`}
           >
-            No location
+            {t('schedule.blockSettings.noLocation')}
           </button>
           {locations.map((l) => (
             <button
@@ -252,6 +255,7 @@ function ServiceSelect({
   selected: string[]
   onChange: (ids: string[]) => void
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -264,10 +268,10 @@ function ServiceSelect({
 
   const allSelected = selected.length === 0
   const label = allSelected
-    ? 'All services'
+    ? t('schedule.blockSettings.allServices')
     : selected.length === 1
-      ? services.find((s) => s.id === selected[0])?.name ?? '1 service'
-      : `${selected.length} services`
+      ? services.find((s) => s.id === selected[0])?.name ?? t('schedule.blockSettings.oneService')
+      : t('schedule.blockSettings.nServices', { count: selected.length })
 
   function toggle(id: string) {
     onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id])
@@ -275,7 +279,7 @@ function ServiceSelect({
 
   return (
     <div ref={ref} className="relative">
-      <label className="text-[11px] font-medium text-muted-foreground">Allowed services</label>
+      <label className="text-[11px] font-medium text-muted-foreground">{t('schedule.blockSettings.allowedServices')}</label>
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
@@ -291,7 +295,7 @@ function ServiceSelect({
             onClick={() => onChange([])}
             className={`block w-full px-2.5 py-1.5 text-xs text-left transition-colors ${allSelected ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted/50'}`}
           >
-            All services
+            {t('schedule.blockSettings.allServices')}
           </button>
           {services.map((s) => {
             const checked = selected.includes(s.id)

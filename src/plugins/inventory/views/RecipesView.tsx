@@ -71,7 +71,7 @@ export function RecipesView({ onNew, onView }: { onNew?: () => void; onView?: (i
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-sm font-semibold truncate">{r.name}</h3>
-                  {r.productName && <p className="text-[10px] text-muted-foreground truncate">Produces: {r.productName}</p>}
+                  {r.productName && <p className="text-[10px] text-muted-foreground truncate">{t('inventory.recipes.produces')} {r.productName}</p>}
                 </div>
               </div>
               {r.description && (
@@ -80,7 +80,7 @@ export function RecipesView({ onNew, onView }: { onNew?: () => void; onView?: (i
               <div className="flex items-center gap-4 mt-3 pt-2.5 border-t">
                 {r.ingredientCount != null && (
                   <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <Layers className="h-3 w-3" /> {r.ingredientCount} ingredients
+                    <Layers className="h-3 w-3" /> {t('inventory.recipes.ingredients', { count: String(r.ingredientCount) })}
                   </span>
                 )}
                 {r.preparationTimeMinutes != null && (
@@ -90,7 +90,7 @@ export function RecipesView({ onNew, onView }: { onNew?: () => void; onView?: (i
                 )}
                 {r.yieldQuantity > 0 && (
                   <span className="text-[10px] text-muted-foreground ml-auto">
-                    Yield: {r.yieldQuantity}{r.yieldUnitName ? ` ${r.yieldUnitName}` : ''}
+                    {t('inventory.recipes.yield')} {r.yieldQuantity}{r.yieldUnitName ? ` ${r.yieldUnitName}` : ''}
                   </span>
                 )}
               </div>

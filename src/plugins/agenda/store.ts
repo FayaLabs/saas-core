@@ -45,7 +45,7 @@ export interface AgendaUIState {
     open: boolean
     mode: 'create' | 'edit'
     bookingId?: string
-    prefill?: Partial<CreateBookingInput>
+    prefill?: Partial<CreateBookingInput> & { endsAt?: string }
   }
 
   // Actions
@@ -62,7 +62,7 @@ export interface AgendaUIState {
   setFilters(filters: Partial<{ professionalIds: string[]; locationId: string | null; statuses: string[] }>): void
   setView(view: string): void
   setSelectedDate(date: string): void
-  openAppointmentModal(mode: 'create' | 'edit', options?: { bookingId?: string; prefill?: Partial<CreateBookingInput> }): void
+  openAppointmentModal(mode: 'create' | 'edit', options?: { bookingId?: string; prefill?: Partial<CreateBookingInput> & { endsAt?: string } }): void
   closeAppointmentModal(): void
 }
 

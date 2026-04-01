@@ -1,10 +1,13 @@
 import React from 'react'
-import { Shield, Clock, FileText, CalendarDays } from 'lucide-react'
+import { Clock, FileText, CalendarDays } from 'lucide-react'
 import { Card, CardContent } from '../../ui/card'
 import { Badge } from '../../ui/badge'
 import { ScheduleEditor } from './ScheduleEditor'
+import { AccessTab } from './AccessTab'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 function ComingSoon({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
+  const { t } = useTranslation()
   return (
     <Card>
       <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -13,49 +16,44 @@ function ComingSoon({ icon: Icon, title, description }: { icon: React.ElementTyp
         </div>
         <p className="text-sm font-medium">{title}</p>
         <p className="text-xs text-muted-foreground mt-1 max-w-xs">{description}</p>
-        <Badge variant="secondary" className="mt-3 text-[10px]">Coming Soon</Badge>
+        <Badge variant="secondary" className="mt-3 text-[10px]">{t('crud.archetype.comingSoon')}</Badge>
       </CardContent>
     </Card>
   )
 }
 
-export function AccessTab() {
-  return (
-    <ComingSoon
-      icon={Shield}
-      title="Access & Permissions"
-      description="Manage login credentials, assign permission roles, and control what this person can access in the system."
-    />
-  )
-}
+// AccessTab is imported from ./AccessTab
 
 export function ActivityTab() {
+  const { t } = useTranslation()
   return (
     <ComingSoon
       icon={Clock}
-      title="Activity Timeline"
-      description="View a chronological log of all actions, changes, and events related to this person."
+      title={t('crud.archetype.activity.title')}
+      description={t('crud.archetype.activity.description')}
     />
   )
 }
 
 export function DocumentsTab() {
+  const { t } = useTranslation()
   return (
     <ComingSoon
       icon={FileText}
-      title="Documents"
-      description="Attach and manage files, contracts, certifications, and other documents for this person."
+      title={t('crud.archetype.documents.title')}
+      description={t('crud.archetype.documents.description')}
     />
   )
 }
 
 export function ScheduleTab({ item }: { item: any }) {
+  const { t } = useTranslation()
   if (!item?.id) {
     return (
       <ComingSoon
         icon={CalendarDays}
-        title="Schedule"
-        description="View and manage appointments, shifts, and availability for this person."
+        title={t('crud.archetype.schedule.title')}
+        description={t('crud.archetype.schedule.description')}
       />
     )
   }
@@ -63,8 +61,8 @@ export function ScheduleTab({ item }: { item: any }) {
 }
 
 export const PERSON_DETAIL_TABS = [
-  { id: 'access', label: 'Access', component: AccessTab, visibleFor: ['staff'] },
-  { id: 'schedule', label: 'Schedule', component: ScheduleTab, visibleFor: ['staff'] },
-  { id: 'documents', label: 'Documents', component: DocumentsTab },
-  { id: 'activity', label: 'Activity', component: ActivityTab },
+  { id: 'access', label: 'Access', icon: 'Shield', component: AccessTab, visibleFor: ['staff'] },
+  { id: 'schedule', label: 'Schedule', icon: 'CalendarDays', component: ScheduleTab, visibleFor: ['staff'] },
+  { id: 'documents', label: 'Documents', icon: 'FileText', component: DocumentsTab },
+  { id: 'activity', label: 'Activity', icon: 'Clock', component: ActivityTab },
 ]

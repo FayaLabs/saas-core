@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Phone, Mail, Users, FileText, CheckSquare, MessageCircle, Check, Calendar, DollarSign, User, Target, Clock, ArrowRight } from 'lucide-react'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { Sheet, SheetContent, SheetHeader, SheetBody, SheetFooter, SheetTitle, SheetDescription } from '../../../components/ui/sheet'
 import { PersonLink } from '../../../components/shared/PersonLink'
 import { useCrmProvider, useCrmConfig, formatCurrency } from '../CrmContext'
@@ -22,10 +23,11 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
 type TabId = 'overview' | 'activity' | 'quotes'
 
 function TabBar({ active, counts, onChange }: { active: TabId; counts: { activity: number; quotes: number }; onChange: (id: TabId) => void }) {
+  const { t } = useTranslation()
   const tabs: { id: TabId; label: string; count?: number }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'activity', label: 'Activity', count: counts.activity },
-    { id: 'quotes', label: 'Quotes', count: counts.quotes },
+    { id: 'overview', label: t('crm.dealSidebar.overview') },
+    { id: 'activity', label: t('crm.dealSidebar.activity'), count: counts.activity },
+    { id: 'quotes', label: t('crm.dealSidebar.quotes'), count: counts.quotes },
   ]
 
   return (
@@ -59,6 +61,7 @@ function TabBar({ active, counts, onChange }: { active: TabId; counts: { activit
 // ---------------------------------------------------------------------------
 
 function OverviewTab({ deal, lead, currency }: { deal: Deal; lead: Lead | null; currency: { code: string; locale: string; symbol: string } }) {
+  const { t } = useTranslation()
   const initial = (lead?.name ?? deal.contactName ?? deal.title).charAt(0).toUpperCase()
 
   return (
@@ -88,12 +91,12 @@ function OverviewTab({ deal, lead, currency }: { deal: Deal; lead: Lead | null; 
       <div className="rounded-xl border divide-y">
         <div className="flex items-center gap-3 px-4 py-3">
           <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
-          <span className="text-xs text-muted-foreground flex-1">Value</span>
+          <span className="text-xs text-muted-foreground flex-1">{t('crm.dealSidebar.value')}</span>
           <span className="text-sm font-bold">{formatCurrency(deal.value, currency)}</span>
         </div>
         <div className="flex items-center gap-3 px-4 py-3">
           <Target className="h-4 w-4 text-muted-foreground shrink-0" />
-          <span className="text-xs text-muted-foreground flex-1">Probability</span>
+          <span className="text-xs text-muted-foreground flex-1">{t('crm.dealSidebar.probability')}</span>
           <span className="text-sm font-semibold">{deal.probability}%</span>
         </div>
         {deal.stageName && (
@@ -101,21 +104,21 @@ function OverviewTab({ deal, lead, currency }: { deal: Deal; lead: Lead | null; 
             <div className="h-4 w-4 flex items-center justify-center shrink-0">
               <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: deal.stageColor }} />
             </div>
-            <span className="text-xs text-muted-foreground flex-1">Stage</span>
+            <span className="text-xs text-muted-foreground flex-1">{t('crm.dealSidebar.stage')}</span>
             <span className="text-sm font-medium">{deal.stageName}</span>
           </div>
         )}
         {deal.expectedCloseDate && (
           <div className="flex items-center gap-3 px-4 py-3">
             <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="text-xs text-muted-foreground flex-1">Expected close</span>
+            <span className="text-xs text-muted-foreground flex-1">{t('crm.dealSidebar.expectedClose')}</span>
             <span className="text-xs font-medium">{deal.expectedCloseDate}</span>
           </div>
         )}
         {deal.assignedToName && (
           <div className="flex items-center gap-3 px-4 py-3">
             <User className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="text-xs text-muted-foreground flex-1">Assigned to</span>
+            <span className="text-xs text-muted-foreground flex-1">{t('crm.dealSidebar.assignedTo')}</span>
             <span className="text-xs font-medium">{deal.assignedToName}</span>
           </div>
         )}
@@ -124,7 +127,7 @@ function OverviewTab({ deal, lead, currency }: { deal: Deal; lead: Lead | null; 
       {/* Contact links */}
       {lead && (lead.email || lead.phone) && (
         <div className="space-y-2">
-          <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Contact</h4>
+          <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t('crm.dealSidebar.contact')}</h4>
           <div className="rounded-xl border divide-y">
             {lead.email && (
               <a href={`mailto:${lead.email}`} className="flex items-center gap-3 px-4 py-2.5 text-xs text-primary hover:bg-muted/30 transition-colors">
@@ -143,7 +146,7 @@ function OverviewTab({ deal, lead, currency }: { deal: Deal; lead: Lead | null; 
       {/* Tags */}
       {deal.tags && deal.tags.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Tags</h4>
+          <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t('crm.dealSidebar.tags')}</h4>
           <div className="flex gap-1.5 flex-wrap">
             {deal.tags.map((tag) => (
               <span key={tag} className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground">{tag}</span>
@@ -155,15 +158,15 @@ function OverviewTab({ deal, lead, currency }: { deal: Deal; lead: Lead | null; 
       {/* Notes */}
       {deal.notes && deal.notes !== deal.title && (
         <div className="space-y-2">
-          <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Notes</h4>
+          <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t('crm.dealSidebar.notes')}</h4>
           <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">{deal.notes}</p>
         </div>
       )}
 
       {/* Dates */}
       <div className="flex items-center gap-4 pt-3 border-t text-[10px] text-muted-foreground">
-        <span>Created {deal.createdAt?.slice(0, 10)}</span>
-        {deal.updatedAt && <span>Updated {deal.updatedAt?.slice(0, 10)}</span>}
+        <span>{t('crm.dealSidebar.created')} {deal.createdAt?.slice(0, 10)}</span>
+        {deal.updatedAt && <span>{t('crm.dealSidebar.updated')} {deal.updatedAt?.slice(0, 10)}</span>}
       </div>
     </div>
   )
@@ -174,6 +177,7 @@ function OverviewTab({ deal, lead, currency }: { deal: Deal; lead: Lead | null; 
 // ---------------------------------------------------------------------------
 
 function ActivityTab({ activities, loading }: { activities: Activity[]; loading: boolean }) {
+  const { t } = useTranslation()
   if (loading) {
     return (
       <div className="space-y-3">
@@ -196,8 +200,8 @@ function ActivityTab({ activities, loading }: { activities: Activity[]; loading:
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/30 mb-3">
           <Clock className="h-5 w-5 text-muted-foreground/40" />
         </div>
-        <p className="text-sm text-muted-foreground">No activities yet</p>
-        <p className="text-[10px] text-muted-foreground/60 mt-0.5">Activities will appear here as they are logged</p>
+        <p className="text-sm text-muted-foreground">{t('crm.dealSidebar.noActivities')}</p>
+        <p className="text-[10px] text-muted-foreground/60 mt-0.5">{t('crm.dealSidebar.activitiesAppear')}</p>
       </div>
     )
   }
@@ -231,6 +235,7 @@ function ActivityTab({ activities, loading }: { activities: Activity[]; loading:
 // ---------------------------------------------------------------------------
 
 function QuotesTab({ quotes, loading, currency, onViewQuote, onQuoteUpdated }: { quotes: Quote[]; loading: boolean; currency: { code: string; locale: string; symbol: string }; onViewQuote?: (id: string) => void; onQuoteUpdated?: (q: Quote) => void }) {
+  const { t } = useTranslation()
   if (loading) {
     return (
       <div className="space-y-2">
@@ -250,8 +255,8 @@ function QuotesTab({ quotes, loading, currency, onViewQuote, onQuoteUpdated }: {
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/30 mb-3">
           <FileText className="h-5 w-5 text-muted-foreground/40" />
         </div>
-        <p className="text-sm text-muted-foreground">No quotes linked</p>
-        <p className="text-[10px] text-muted-foreground/60 mt-0.5">Quotes created for this lead will appear here</p>
+        <p className="text-sm text-muted-foreground">{t('crm.dealSidebar.noQuotes')}</p>
+        <p className="text-[10px] text-muted-foreground/60 mt-0.5">{t('crm.dealSidebar.quotesAppear')}</p>
       </div>
     )
   }
@@ -292,6 +297,7 @@ export function DealSidebar({ dealId, open, onClose, onViewLead, onViewQuote }: 
   onViewLead?: (id: string) => void
   onViewQuote?: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const provider = useCrmProvider()
   const { currency } = useCrmConfig()
   const [deal, setDeal] = useState<Deal | null>(null)
@@ -345,7 +351,7 @@ export function DealSidebar({ dealId, open, onClose, onViewLead, onViewQuote }: 
             </div>
           ) : (
             <div className="pr-8">
-              <SheetTitle>{deal?.title ?? 'Deal'}</SheetTitle>
+              <SheetTitle>{deal?.title ?? t('crm.dealSidebar.deal')}</SheetTitle>
               {deal?.contactName && <SheetDescription>{deal.contactName}</SheetDescription>}
             </div>
           )}
@@ -386,7 +392,7 @@ export function DealSidebar({ dealId, open, onClose, onViewLead, onViewQuote }: 
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-sm text-muted-foreground">Deal not found</p>
+              <p className="text-sm text-muted-foreground">{t('crm.dealSidebar.dealNotFound')}</p>
             </div>
           )}
         </SheetBody>
@@ -398,7 +404,7 @@ export function DealSidebar({ dealId, open, onClose, onViewLead, onViewQuote }: 
               onClick={() => { onViewLead(lead.id); onClose() }}
               className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium hover:bg-muted/50 transition-colors"
             >
-              View Full Lead Profile <ArrowRight className="h-3 w-3" />
+              {t('crm.dealSidebar.viewLeadProfile')} <ArrowRight className="h-3 w-3" />
             </button>
           </SheetFooter>
         )}

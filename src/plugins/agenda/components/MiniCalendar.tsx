@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useLocaleStore } from '../../../stores/locale.store'
 
 interface MiniCalendarProps {
   selectedDate: Date
@@ -7,7 +8,10 @@ interface MiniCalendarProps {
   onMonthChange?: (date: Date) => void
 }
 
-const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const DAY_LABELS: Record<string, string[]> = {
+  en: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+  'pt-BR': ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+}
 
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -17,10 +21,17 @@ function isToday(d: Date) {
   return isSameDay(d, new Date())
 }
 
+function toDateLocale(locale: string): string {
+  if (locale === 'pt-BR') return 'pt-BR'
+  return 'en-US'
+}
+
 export function MiniCalendar({ selectedDate, onDateSelect, onMonthChange }: MiniCalendarProps) {
+  const locale = useLocaleStore((s) => s.locale)
   const [viewMonth, setViewMonth] = React.useState(() => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1))
 
-  const monthLabel = viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const monthLabel = viewMonth.toLocaleDateString(toDateLocale(locale), { month: 'long', year: 'numeric' })
+  const dayLabels = DAY_LABELS[locale] ?? DAY_LABELS.en
 
   const weeks = useMemo(() => {
     const year = viewMonth.getFullYear()
@@ -59,7 +70,7 @@ export function MiniCalendar({ selectedDate, onDateSelect, onMonthChange }: Mini
     <div className="select-none">
       {/* Month header */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium">{monthLabel}</span>
+        <span className="text-sm font-medium capitalize">{monthLabel}</span>
         <div className="flex items-center gap-0.5">
           <button onClick={prevMonth} className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-muted transition-colors">
             <ChevronLeft className="h-3.5 w-3.5" />
@@ -72,7 +83,7 @@ export function MiniCalendar({ selectedDate, onDateSelect, onMonthChange }: Mini
 
       {/* Day labels */}
       <div className="grid grid-cols-7 mb-0.5">
-        {DAY_LABELS.map((label, i) => (
+        {dayLabels.map((label, i) => (
           <div key={i} className="flex h-6 w-6 items-center justify-center text-[10px] font-medium text-muted-foreground mx-auto">
             {label}
           </div>

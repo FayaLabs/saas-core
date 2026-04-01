@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Save } from 'lucide-react'
+import { Save, Check } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import {
@@ -11,6 +11,8 @@ import {
 } from '../ui/select'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card'
 import { useTranslation } from '../../hooks/useTranslation'
+import { useLocaleStore } from '../../stores/locale.store'
+import { SUPPORTED_LOCALES } from '../../lib/locale-config'
 import type { Tenant } from '../../types'
 
 interface CompanySettingsProps {
@@ -19,7 +21,6 @@ interface CompanySettingsProps {
     name: string
     timezone: string
     currency: string
-    locale: string
   }) => void
 }
 
@@ -54,22 +55,12 @@ const CURRENCIES = [
   { value: 'ARS', label: 'ARS - Argentine Peso' },
 ]
 
-const LOCALES = [
-  { value: 'en-US', label: 'English (US)' },
-  { value: 'en-GB', label: 'English (UK)' },
-  { value: 'fr-FR', label: 'French' },
-  { value: 'de-DE', label: 'German' },
-  { value: 'es-ES', label: 'Spanish' },
-  { value: 'ja-JP', label: 'Japanese' },
-  { value: 'pt-BR', label: 'Portuguese (Brazil)' },
-]
-
 export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
   const { t } = useTranslation()
+  const { locale: uiLocale, setLocale: setUiLocale } = useLocaleStore()
   const [name, setName] = React.useState(tenant?.name ?? '')
   const [timezone, setTimezone] = React.useState(tenant?.settings?.timezone ?? 'UTC')
   const [currency, setCurrency] = React.useState(tenant?.settings?.currency ?? 'USD')
-  const [locale, setLocale] = React.useState(tenant?.settings?.locale ?? 'en-US')
   const [saving, setSaving] = React.useState(false)
 
   React.useEffect(() => {
@@ -77,7 +68,6 @@ export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
       setName(tenant.name)
       setTimezone(tenant.settings?.timezone ?? 'UTC')
       setCurrency(tenant.settings?.currency ?? 'USD')
-      setLocale(tenant.settings?.locale ?? 'en-US')
     }
   }, [tenant])
 
@@ -87,13 +77,14 @@ export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
 
     setSaving(true)
     try {
-      await onSave({ name, timezone, currency, locale })
+      await onSave({ name, timezone, currency })
     } finally {
       setSaving(false)
     }
   }
 
   return (
+    <div className="space-y-6">
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
@@ -149,21 +140,6 @@ export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">{t('settings.company.locale')}</label>
-              <Select value={locale} onValueChange={setLocale}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('settings.company.localePlaceholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {LOCALES.map((l) => (
-                    <SelectItem key={l.value} value={l.value}>
-                      {l.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </CardContent>
 
@@ -175,5 +151,38 @@ export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
         </CardFooter>
       </Card>
     </form>
+
+      {/* UI Language */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t('settings.uiLanguage')}</CardTitle>
+          <CardDescription>{t('settings.uiLanguageDescription')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {SUPPORTED_LOCALES.map((loc) => (
+              <button
+                key={loc.code}
+                onClick={() => {
+                  setUiLocale(loc.code)
+                  window.location.reload()
+                }}
+                className={`flex items-center justify-between rounded-lg border-2 px-4 py-3 text-sm transition-all ${
+                  uiLocale === loc.code
+                    ? 'border-primary bg-primary/5'
+                    : 'border-transparent bg-muted/30 hover:bg-muted/50'
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <span className="text-xl">{loc.flag}</span>
+                  <span className="font-medium">{loc.label}</span>
+                </span>
+                {uiLocale === loc.code && <Check className="h-4 w-4 text-primary" />}
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

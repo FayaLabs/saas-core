@@ -3,17 +3,18 @@ import { Save, ImagePlus, X } from 'lucide-react'
 import { useInventoryConfig, useInventoryStore, useInventoryProvider, formatCurrency } from '../InventoryContext'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { CurrencyInput } from '../../../components/ui/currency-input'
+import { useTranslation } from '../../../hooks/useTranslation'
 import type { ProductType } from '../types'
 
 // ---------------------------------------------------------------------------
 // Product type descriptions — parametrizable via config
 // ---------------------------------------------------------------------------
 
-const TYPE_DESCRIPTIONS: Record<string, string> = {
-  ingredient: 'Raw material used in production or services',
-  sale: 'Sold directly to customers',
-  intermediate: 'Produced internally from other items',
-  asset: 'Fixed asset for patrimony tracking',
+const TYPE_DESCRIPTION_KEYS: Record<string, string> = {
+  ingredient: 'inventory.productForm.typeIngredient',
+  sale: 'inventory.productForm.typeSale',
+  intermediate: 'inventory.productForm.typeIntermediate',
+  asset: 'inventory.productForm.typeAsset',
 }
 
 // ---------------------------------------------------------------------------
@@ -41,6 +42,7 @@ function FormSection({ title, subtitle, children }: {
 // ---------------------------------------------------------------------------
 
 export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?: () => void }) {
+  const { t } = useTranslation()
   const { productTypes, currency } = useInventoryConfig()
   const provider = useInventoryProvider()
   const createProduct = useInventoryStore((s) => s.createProduct)
@@ -102,8 +104,8 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
     }
   }
 
-  const title = isEdit ? 'Edit Product' : 'New Product'
-  const subtitle = isEdit ? 'Update product details' : 'Add a product to your catalog'
+  const title = isEdit ? (name || t('inventory.productForm.editProduct')) : t('inventory.productForm.newProduct')
+  const subtitle = isEdit ? undefined : t('inventory.productForm.addToCatalog')
   const margin = salePrice > 0 && costPrice > 0 ? ((salePrice - costPrice) / costPrice * 100).toFixed(1) : null
 
   return (
@@ -112,11 +114,12 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
         title={title}
         subtitle={subtitle}
         onBack={onSaved}
+        parentLabel={t('inventory.nav.products')}
         actions={
           <div className="flex items-center gap-2">
             {onSaved && (
               <button onClick={onSaved} className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
-                Cancel
+                {t('inventory.productForm.cancel')}
               </button>
             )}
             <button
@@ -124,14 +127,14 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
               disabled={!name.trim() || saving}
               className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              <Save className="h-3 w-3" /> {saving ? 'Saving...' : 'Save'}
+              <Save className="h-3 w-3" /> {saving ? t('inventory.productForm.saving') : t('inventory.productForm.save')}
             </button>
           </div>
         }
       />
 
       {/* Section 1: General Info */}
-      <FormSection title="General Information">
+      <FormSection title={t('inventory.productForm.generalInfo')}>
         <div className="flex gap-4">
           {/* Image placeholder */}
           <div className="shrink-0">
@@ -142,23 +145,23 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
 
           <div className="flex-1 grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-1">
-              <label className="text-xs font-medium text-muted-foreground">Name *</label>
+              <label className="text-xs font-medium text-muted-foreground">{t('inventory.productForm.name')} *</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Product name"
+                placeholder={t('inventory.productForm.namePlaceholder')}
                 autoFocus
                 className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Brand</label>
+              <label className="text-xs font-medium text-muted-foreground">{t('inventory.productForm.brand')}</label>
               <input
                 type="text"
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
-                placeholder="Brand name"
+                placeholder={t('inventory.productForm.brandPlaceholder')}
                 className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
@@ -167,44 +170,45 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="text-xs font-medium text-muted-foreground">SKU</label>
-            <input type="text" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Internal code" className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            <label className="text-xs font-medium text-muted-foreground">{t('inventory.productForm.sku')}</label>
+            <input type="text" value={sku} onChange={(e) => setSku(e.target.value)} placeholder={t('inventory.productForm.skuPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Barcode</label>
-            <input type="text" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="EAN / UPC" className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            <label className="text-xs font-medium text-muted-foreground">{t('inventory.productForm.barcode')}</label>
+            <input type="text" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder={t('inventory.productForm.barcodePlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
           </div>
         </div>
 
         <div>
-          <label className="text-xs font-medium text-muted-foreground">Description</label>
+          <label className="text-xs font-medium text-muted-foreground">{t('inventory.productForm.description')}</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            placeholder="Additional information about the product"
+            placeholder={t('inventory.productForm.descriptionPlaceholder')}
             className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
           />
         </div>
       </FormSection>
 
       {/* Section 2: Classification */}
-      <FormSection title="Classification" subtitle="How this product is used in your business">
+      <FormSection title={t('inventory.productForm.classification')} subtitle={t('inventory.productForm.classificationDesc')}>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {productTypes.map((t) => {
-            const active = productType === t.value
-            const desc = TYPE_DESCRIPTIONS[t.value] ?? ''
+          {productTypes.map((pt) => {
+            const active = productType === pt.value
+            const descKey = TYPE_DESCRIPTION_KEYS[pt.value]
+            const desc = descKey ? t(descKey) : ''
             return (
               <button
-                key={t.value}
-                onClick={() => setProductType(t.value as ProductType)}
+                key={pt.value}
+                onClick={() => setProductType(pt.value as ProductType)}
                 className={`rounded-lg border-2 p-3 text-left transition-all ${
                   active
                     ? 'border-primary bg-primary/5'
                     : 'border-transparent bg-muted/20 hover:bg-muted/40'
                 }`}
               >
-                <p className={`text-sm font-medium ${active ? 'text-primary' : ''}`}>{t.label}</p>
+                <p className={`text-sm font-medium ${active ? 'text-primary' : ''}`}>{pt.label}</p>
                 {desc && <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{desc}</p>}
               </button>
             )
@@ -213,10 +217,10 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
       </FormSection>
 
       {/* Section 3: Pricing */}
-      <FormSection title="Pricing">
+      <FormSection title={t('inventory.productForm.pricing')}>
         <div className="grid gap-4 sm:grid-cols-3">
           <CurrencyInput
-            label="Cost Price"
+            label={t('inventory.productForm.costPrice')}
             value={costPrice}
             onChange={setCostPrice}
             symbol={currency.symbol}
@@ -224,7 +228,7 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
             currencyCode={currency.code}
           />
           <CurrencyInput
-            label="Sale Price"
+            label={t('inventory.productForm.salePrice')}
             value={salePrice}
             onChange={setSalePrice}
             symbol={currency.symbol}
@@ -232,7 +236,7 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
             currencyCode={currency.code}
           />
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Margin</label>
+            <label className="text-xs font-medium text-muted-foreground">{t('inventory.productForm.margin')}</label>
             <div className="mt-1 rounded-lg border bg-muted/20 px-3 py-2 text-sm tabular-nums text-right">
               {margin !== null ? (
                 <span className={Number(margin) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}>
@@ -247,10 +251,10 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
       </FormSection>
 
       {/* Section 4: Stock Levels */}
-      <FormSection title="Stock Levels" subtitle="Minimum and maximum thresholds for alerts">
+      <FormSection title={t('inventory.productForm.stockLevels')} subtitle={t('inventory.productForm.stockLevelsDesc')}>
         <div className="grid gap-4 sm:grid-cols-2 max-w-md">
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Minimum Quantity</label>
+            <label className="text-xs font-medium text-muted-foreground">{t('inventory.productForm.minQuantity')}</label>
             <input
               type="number"
               min={0}
@@ -259,19 +263,19 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
               placeholder="0"
               className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
-            <p className="text-[10px] text-muted-foreground mt-1">Alert when stock falls below this</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{t('inventory.productForm.minQuantityHint')}</p>
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Maximum Quantity</label>
+            <label className="text-xs font-medium text-muted-foreground">{t('inventory.productForm.maxQuantity')}</label>
             <input
               type="number"
               min={0}
               value={maxQuantity}
               onChange={(e) => setMaxQuantity(Number(e.target.value) || 0)}
-              placeholder="Optional"
+              placeholder={t('inventory.productForm.optional')}
               className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
-            <p className="text-[10px] text-muted-foreground mt-1">Max capacity for this product</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{t('inventory.productForm.maxQuantityHint')}</p>
           </div>
         </div>
       </FormSection>

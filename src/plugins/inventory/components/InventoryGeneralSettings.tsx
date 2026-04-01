@@ -1,23 +1,25 @@
 import React from 'react'
 import { SettingsGroup, ToggleRow } from '../../../components/plugins/SettingsGroup'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 export function InventoryGeneralSettings() {
+  const { t } = useTranslation()
   return (
     <div className="space-y-4">
-      <SettingsGroup title="Stock Management" description="How stock levels are tracked">
-        <ToggleRow label="Low stock alerts" description="Show warnings when products fall below minimum quantity" checked={true} onChange={() => {}} />
-        <ToggleRow label="Require reason for adjustments" description="Make reason mandatory for stock adjustments and losses" checked={true} onChange={() => {}} />
-        <ToggleRow label="Auto-deduct on service" description="Automatically deduct products when a service is executed" checked={false} onChange={() => {}} />
+      <SettingsGroup title={t('inventory.settings.stockManagement')} description={t('inventory.settings.stockManagementDesc')}>
+        <ToggleRow label={t('inventory.settings.lowStockAlerts')} description={t('inventory.settings.lowStockAlertsDesc')} checked={true} onChange={() => {}} />
+        <ToggleRow label={t('inventory.settings.requireReason')} description={t('inventory.settings.requireReasonDesc')} checked={true} onChange={() => {}} />
+        <ToggleRow label={t('inventory.settings.autoDeduct')} description={t('inventory.settings.autoDeductDesc')} checked={false} onChange={() => {}} />
       </SettingsGroup>
 
-      <SettingsGroup title="Products" description="Product catalog behavior">
-        <ToggleRow label="Require SKU" description="Make SKU mandatory when creating products" checked={false} onChange={() => {}} />
-        <ToggleRow label="Allow negative stock" description="Allow stock quantities to go below zero" checked={false} onChange={() => {}} />
+      <SettingsGroup title={t('inventory.settings.products')} description={t('inventory.settings.productsDesc')}>
+        <ToggleRow label={t('inventory.settings.requireSku')} description={t('inventory.settings.requireSkuDesc')} checked={false} onChange={() => {}} />
+        <ToggleRow label={t('inventory.settings.allowNegative')} description={t('inventory.settings.allowNegativeDesc')} checked={false} onChange={() => {}} />
       </SettingsGroup>
 
-      <SettingsGroup title="Notifications" description="Alerts and reminders">
-        <ToggleRow label="Low stock email alerts" description="Send email when products reach minimum quantity" checked={false} onChange={() => {}} />
-        <ToggleRow label="Expiry date warnings" description="Alert before products expire (batch tracking)" checked={true} onChange={() => {}} />
+      <SettingsGroup title={t('inventory.settings.notifications')} description={t('inventory.settings.notificationsDesc')}>
+        <ToggleRow label={t('inventory.settings.lowStockEmail')} description={t('inventory.settings.lowStockEmailDesc')} checked={false} onChange={() => {}} />
+        <ToggleRow label={t('inventory.settings.expiryWarnings')} description={t('inventory.settings.expiryWarningsDesc')} checked={true} onChange={() => {}} />
       </SettingsGroup>
     </div>
   )

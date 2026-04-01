@@ -28,16 +28,26 @@ interface SearchComboboxProps {
   /** Label for the create option (default: 'Create') */
   createLabel?: string
   className?: string
+  /** Minimal style — no border/bg, just underline on focus. For inline use. */
+  minimal?: boolean
+  /** Inline label shown when collapsed. Click reveals the search input. */
+  inlineLabel?: string
+  /** Icon for the inline label: 'search' (default) or 'plus' (for "add" actions) */
+  inlineIcon?: 'search' | 'plus'
 }
 
 export function SearchCombobox({
   value, onChange, onSelect, options, placeholder, autoFocus, onBlurEmpty,
-  renderRight, allowCreate, onCreateNew, createLabel = 'Create', className,
+  renderRight, allowCreate, onCreateNew, createLabel = 'Create', className, minimal, inlineLabel, inlineIcon = 'search',
 }: SearchComboboxProps) {
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
+  const [expanded, setExpanded] = useState(!inlineLabel)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+
+  // When value is set externally (e.g. edit mode), auto-expand
+  useEffect(() => { if (value && inlineLabel) setExpanded(true) }, [value])
 
   // Show create option only when dropdown is open, has text, and no exact match
   const showCreate = open && allowCreate && onCreateNew && value.trim().length > 0 &&
@@ -98,14 +108,31 @@ export function SearchCombobox({
       setOpen(false)
       setActiveIndex(-1)
       if (!value && onBlurEmpty) onBlurEmpty()
+      if (!value && inlineLabel) setExpanded(false)
     }, 200)
   }
 
   const hasDropdown = open && (options.length > 0 || showCreate)
 
+  // Collapsed inline label — click to expand
+  if (!expanded && inlineLabel) {
+    const isPlus = inlineIcon === 'plus'
+    return (
+      <button type="button" onClick={() => { setExpanded(true); setTimeout(() => inputRef.current?.focus(), 50) }}
+        className={`flex items-center gap-1.5 w-full text-left text-sm py-1.5 pl-2 transition-colors ${
+          isPlus ? 'text-primary hover:text-primary/80' : 'text-muted-foreground hover:text-foreground'
+        } ${className ?? ''}`}>
+        {isPlus && <Plus className="h-3.5 w-3.5 shrink-0" />}
+        {inlineLabel}
+      </button>
+    )
+  }
+
   return (
     <div className={`relative ${className ?? ''}`}>
-      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+      {!minimal && (
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+      )}
       <input
         ref={inputRef}
         type="text"
@@ -116,7 +143,10 @@ export function SearchCombobox({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         autoFocus={autoFocus}
-        className="w-full rounded-lg border bg-background pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        className={minimal
+          ? 'w-full bg-transparent pl-2 pr-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none border-b border-transparent hover:border-border focus:border-foreground transition-colors'
+          : 'w-full rounded-lg border bg-background pl-8 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring'
+        }
         role="combobox"
         aria-expanded={hasDropdown}
         aria-autocomplete="list"

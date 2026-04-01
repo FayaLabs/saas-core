@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { ChevronLeft, Settings } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { useTranslation } from '../../hooks/useTranslation'
 import { ICON_MAP } from '../layout/Topbar'
 import type { PluginRegistryDef } from '../../types/plugins'
 import type { EntityDef } from '../../types/crud'
@@ -59,12 +60,21 @@ export function PluginSettingsPanel({ title, subtitle, generalSettings, registri
   /** Called when back button is clicked. If not provided, back button is hidden. */
   onClose?: () => void
 }) {
+  const { t } = useTranslation()
+
+  // Translate registry entity name: try t('registry.{id}'), fallback to raw name
+  const regLabel = (id: string, fallback: string) => {
+    const key = `registry.${id}`
+    const translated = t(key)
+    return translated === key ? fallback : translated
+  }
+
   // Build unified tab list: General → custom tabs → registry tabs
   const tabs = useMemo(() => {
     const list: { id: string; label: string; icon?: string; type: 'general' | 'custom' | 'registry'; registryDef?: PluginRegistryDef }[] = []
 
     if (generalSettings) {
-      list.push({ id: '_general', label: 'General', icon: 'Settings', type: 'general' })
+      list.push({ id: '_general', label: t('settings.general'), icon: 'Settings', type: 'general' })
     }
 
     if (customTabs) {
@@ -75,12 +85,12 @@ export function PluginSettingsPanel({ title, subtitle, generalSettings, registri
 
     if (registries) {
       for (const reg of registries) {
-        list.push({ id: reg.id, label: reg.entity.name, icon: reg.icon, type: 'registry', registryDef: reg })
+        list.push({ id: reg.id, label: regLabel(reg.id, reg.entity.name), icon: reg.icon, type: 'registry', registryDef: reg })
       }
     }
 
     return list
-  }, [generalSettings, customTabs, registries])
+  }, [generalSettings, customTabs, registries, t])
 
   // Always use hash routing — the app router now prefix-matches /settings/*
   const useHashRouting = true
@@ -131,7 +141,7 @@ export function PluginSettingsPanel({ title, subtitle, generalSettings, registri
       </div>
 
       {/* Unified tabs — underline style */}
-      <div className="flex gap-0.5 overflow-x-auto border-b">
+      <div className="flex gap-0.5 overflow-x-auto border-b scrollbar-none" style={{ scrollbarWidth: 'none' }}>
         {tabs.map((tab) => {
           const Icon = tab.icon ? (ICON_MAP[tab.icon] ?? null) : null
           const active = tab.id === activeTab
@@ -155,7 +165,7 @@ export function PluginSettingsPanel({ title, subtitle, generalSettings, registri
 
       {/* Description for registry tabs */}
       {activeTabDef?.type === 'registry' && activeTabDef.registryDef?.description && (
-        <p className="text-xs text-muted-foreground">{activeTabDef.registryDef.description}</p>
+        <p className="text-xs text-muted-foreground">{regLabel(activeTabDef.id + '.description', activeTabDef.registryDef.description)}</p>
       )}
 
       {/* Content */}

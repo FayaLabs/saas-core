@@ -19,6 +19,26 @@ export type BookingStatus =
 /** Confirmation outreach status */
 export type ConfirmationStatus = 'pending' | 'sent' | 'confirmed' | 'declined'
 
+/** Booking type identifier — extensible via string literal union */
+export type BookingTypeId = 'appointment' | 'task' | 'out_of_office' | 'block' | (string & {})
+
+/** Configuration for a booking type (event type) */
+export interface BookingTypeConfig {
+  id: BookingTypeId
+  label: string
+  icon: string
+  color: string
+  fields: {
+    client: boolean
+    professional: boolean
+    services: boolean
+    location: boolean
+    status: boolean
+  }
+  requiresServices: boolean
+  requiresClient: boolean
+}
+
 // ============================================================
 // CORE ENTITIES
 // ============================================================
@@ -148,6 +168,7 @@ export function isStatusAvailable(status: StatusConfig, bookingStartsAt: string)
 // ============================================================
 
 export interface CreateBookingInput {
+  kind?: BookingTypeId
   clientId: string
   professionalId: string
   locationId?: string

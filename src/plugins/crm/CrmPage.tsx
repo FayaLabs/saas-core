@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
 import { Settings } from 'lucide-react'
+import { useTranslation } from '../../hooks/useTranslation'
 import { ModulePage, type ModuleNavItem } from '../../components/layout/ModulePage'
 import { CrmContextProvider, type ResolvedCrmConfig } from './CrmContext'
 import type { CrmDataProvider } from './data/types'
@@ -77,11 +78,13 @@ export function CrmPage({ config, provider, store, registries }: {
   const isSummary = view === 'dashboard'
   const nav = buildNav(config, view, navigate)
 
+  const { t } = useTranslation()
+
   const quickActions = useMemo<PluginQuickAction[]>(() => [
-    { id: 'new-lead', label: 'New Lead', icon: 'UserPlus', description: 'Capture a new lead', action: () => navigate('leads-new') },
-    { id: 'new-deal', label: 'New Deal', icon: 'Target', description: 'Create a deal from pipeline', action: () => navigate('pipeline') },
-    ...(config.modules.quotes ? [{ id: 'new-quote', label: 'New Quote', icon: 'FileText', description: 'Send a proposal', action: () => navigate('quotes-new') }] : []),
-    ...(config.modules.activities ? [{ id: 'log-activity', label: 'Log Activity', icon: 'MessageCircle', description: 'Record a call, email, or note', action: () => navigate('activities') }] : []),
+    { id: 'new-lead', label: t('crm.quickActions.newLead'), icon: 'UserPlus', description: t('crm.quickActions.newLeadDesc'), action: () => navigate('leads-new') },
+    { id: 'new-deal', label: t('crm.quickActions.newDeal'), icon: 'Target', description: t('crm.quickActions.newDealDesc'), action: () => navigate('pipeline') },
+    ...(config.modules.quotes ? [{ id: 'new-quote', label: t('crm.quickActions.newQuote'), icon: 'FileText', description: t('crm.quickActions.newQuoteDesc'), action: () => navigate('quotes-new') }] : []),
+    ...(config.modules.activities ? [{ id: 'log-activity', label: t('crm.quickActions.logActivity'), icon: 'MessageCircle', description: t('crm.quickActions.logActivityDesc'), action: () => navigate('activities') }] : []),
   ], [config.modules])
 
   if (!onboardingComplete) {
@@ -97,11 +100,11 @@ export function CrmPage({ config, provider, store, registries }: {
       <CrmContextProvider config={config} provider={provider} store={store}>
         <div key="settings" className={animationClass}>
           <PluginSettingsPanel
-            title="Sales & CRM Settings"
-            subtitle="Configure pipeline, lead management, and registries"
+            title={t('crm.settingsPage.title')}
+            subtitle={t('crm.settingsPage.subtitle')}
             generalSettings={<CrmGeneralSettings />}
             customTabs={[
-              { id: 'pipeline', label: 'Pipeline', icon: 'Filter', content: <PipelineSettings /> },
+              { id: 'pipeline', label: t('crm.settingsPage.pipeline'), icon: 'Filter', content: <PipelineSettings /> },
             ]}
             registries={registries}
             routeBase="/sales/settings"

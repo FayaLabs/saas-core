@@ -102,19 +102,28 @@ const css = /* css */ `
 
 /* ── Events ── */
 .agenda-calendar .fc-event {
-  border-radius: 4px;
+  border-radius: 6px;
   border-width: 0;
   border-left: 4px solid;
   cursor: pointer;
-  transition: opacity 0.15s, box-shadow 0.15s;
+  transition: opacity 0.15s, box-shadow 0.15s, backdrop-filter 0.15s;
   font-size: 0.7rem;
   line-height: 1.3;
   margin: 0 2px;
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+}
+
+.agenda-calendar .fc-event .fc-event-main {
+  background: inherit;
+  border-radius: inherit;
 }
 
 .agenda-calendar .fc-event:not(.fc-bg-event):hover {
-  opacity: 0.85;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  opacity: 0.92;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
 }
 
 .agenda-calendar .fc-bg-event {

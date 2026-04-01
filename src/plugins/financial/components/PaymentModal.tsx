@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Check, Banknote, QrCode, CreditCard, Building2, ArrowRightLeft, FileCheck, Pencil } from 'lucide-react'
 import { useFinancialConfig, useFinancialStore, formatCurrency } from '../FinancialContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { CurrencyInput } from '../../../components/ui/currency-input'
 import { DatePicker } from '../../../components/ui/date-picker'
 import type { FinancialMovement, PaymentMethodType } from '../types'
@@ -38,6 +39,7 @@ export function PaymentModal({ movement, onClose, onPaid }: {
   onClose: () => void
   onPaid: () => void
 }) {
+  const { t } = useTranslation()
   const { currency } = useFinancialConfig()
   const payMovement = useFinancialStore((s) => s.payMovement)
   const bankAccounts = useFinancialStore((s) => s.bankAccounts)
@@ -66,7 +68,7 @@ export function PaymentModal({ movement, onClose, onPaid }: {
   }, [])
 
   const selectedType = useMemo(() =>
-    paymentMethodTypes.find((t) => t.id === selectedTypeId),
+    paymentMethodTypes.find((tp) => tp.id === selectedTypeId),
     [paymentMethodTypes, selectedTypeId]
   )
 
@@ -137,9 +139,9 @@ export function PaymentModal({ movement, onClose, onPaid }: {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b sticky top-0 bg-card z-10">
           <div>
-            <h3 className="text-base font-semibold">Record Payment</h3>
+            <h3 className="text-base font-semibold">{t('financial.payment.title')}</h3>
             <p className="text-xs text-muted-foreground">
-              Installment #{movement.installmentNumber} &middot; {formatCurrency(remaining, currency)} remaining
+              {t('financial.payment.installment', { number: String(movement.installmentNumber ?? 1) })} &middot; {t('financial.payment.remaining', { amount: formatCurrency(remaining, currency) })}
             </p>
           </div>
           <button onClick={handleClose} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
@@ -150,7 +152,7 @@ export function PaymentModal({ movement, onClose, onPaid }: {
         <div className="px-5 py-4 space-y-4">
           {/* Payment method type selector */}
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Payment Method</label>
+            <label className="text-xs font-medium text-muted-foreground">{t('financial.payment.method')}</label>
 
             {/* Collapsed: show selected as inline chip */}
             <div
@@ -206,7 +208,7 @@ export function PaymentModal({ movement, onClose, onPaid }: {
               {/* Amount + Date side by side */}
               <div className="grid grid-cols-2 gap-3 stagger-field" style={{ animationDelay: '0ms' }}>
                 <CurrencyInput
-                  label="Amount"
+                  label={t('financial.payment.amount')}
                   value={amount}
                   onChange={setAmount}
                   symbol={currency.symbol}
@@ -214,7 +216,7 @@ export function PaymentModal({ movement, onClose, onPaid }: {
                   currencyCode={currency.code}
                 />
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">Date</label>
+                  <label className="text-xs font-medium text-muted-foreground">{t('financial.payment.date')}</label>
                   <DatePicker value={paymentDate} onChange={setPaymentDate} className="mt-1" />
                 </div>
               </div>
@@ -223,10 +225,10 @@ export function PaymentModal({ movement, onClose, onPaid }: {
               {filteredMethods.length > 0 && (
                 <div className="stagger-field" style={{ animationDelay: '50ms' }}>
                   <label className="text-xs font-medium text-muted-foreground">
-                    {needsCard ? 'Card' : 'Account'}
+                    {needsCard ? t('financial.payment.card') : t('financial.payment.account')}
                   </label>
                   <select value={paymentMethodId} onChange={(e) => setPaymentMethodId(e.target.value)} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm">
-                    <option value="">Select...</option>
+                    <option value="">{t('financial.payment.select')}</option>
                     {filteredMethods.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                   </select>
                 </div>
@@ -236,9 +238,9 @@ export function PaymentModal({ movement, onClose, onPaid }: {
               {needsCard && (
                 <div className={`grid gap-3 stagger-field ${needsCardInstallments ? 'grid-cols-2' : 'grid-cols-1'}`} style={{ animationDelay: '100ms' }}>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Card Brand</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t('financial.payment.cardBrand')}</label>
                     <select value={cardBrand} onChange={(e) => setCardBrand(e.target.value)} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm">
-                      <option value="">Select brand...</option>
+                      <option value="">{t('financial.payment.selectBrand')}</option>
                       {['Visa', 'Mastercard', 'American Express', 'Elo', 'Hipercard', 'Diners Club'].map((b) => (
                         <option key={b} value={b}>{b}</option>
                       ))}
@@ -246,7 +248,7 @@ export function PaymentModal({ movement, onClose, onPaid }: {
                   </div>
                   {needsCardInstallments && (
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">Installments</label>
+                      <label className="text-xs font-medium text-muted-foreground">{t('financial.payment.cardInstallments')}</label>
                       <select value={cardInstallments} onChange={(e) => setCardInstallments(Number(e.target.value))} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm">
                         {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
                           <option key={n} value={n}>{n}x {n > 1 ? formatCurrency(amount / n, currency) : ''}</option>
@@ -260,9 +262,9 @@ export function PaymentModal({ movement, onClose, onPaid }: {
               {/* Bank account */}
               {needsBankAccount && bankAccounts.length > 0 && (
                 <div className="stagger-field" style={{ animationDelay: '100ms' }}>
-                  <label className="text-xs font-medium text-muted-foreground">Bank Account</label>
+                  <label className="text-xs font-medium text-muted-foreground">{t('financial.payment.bankAccount')}</label>
                   <select value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm">
-                    <option value="">Select account...</option>
+                    <option value="">{t('financial.payment.selectAccount')}</option>
                     {bankAccounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                   </select>
                 </div>
@@ -270,8 +272,8 @@ export function PaymentModal({ movement, onClose, onPaid }: {
 
               {/* Notes */}
               <div className="stagger-field" style={{ animationDelay: '150ms' }}>
-                <label className="text-xs font-medium text-muted-foreground">Notes</label>
-                <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes..." className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                <label className="text-xs font-medium text-muted-foreground">{t('financial.payment.notes')}</label>
+                <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('financial.payment.optionalNotes')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
             </div>
           )}
@@ -290,13 +292,13 @@ export function PaymentModal({ movement, onClose, onPaid }: {
 
         {/* Actions */}
         <div className="flex justify-end gap-2 px-5 py-4 border-t sticky bottom-0 bg-card">
-          <button onClick={handleClose} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors">Cancel</button>
+          <button onClick={handleClose} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors">{t('financial.payment.cancel')}</button>
           <button
             onClick={handlePay}
             disabled={amount <= 0 || !selectedTypeId || saving}
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
-            <Check className="h-3.5 w-3.5" /> {saving ? 'Processing...' : `Pay ${formatCurrency(amount, currency)}`}
+            <Check className="h-3.5 w-3.5" /> {saving ? t('financial.payment.processing') : t('financial.payment.payAmount', { amount: formatCurrency(amount, currency) })}
           </button>
         </div>
       </div>

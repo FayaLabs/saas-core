@@ -66,11 +66,32 @@ const ModalContent = React.forwardRef<
     hideClose?: boolean
     noPadding?: boolean
   }
->(({ className, children, size = 'lg', hideClose, noPadding, ...props }, ref) => (
+>(({ className, children, size = 'lg', hideClose, noPadding, onPointerDownOutside, onInteractOutside, onCloseAutoFocus, ...props }, ref) => (
   <ModalPortal>
     <ModalOverlay>
       <DialogPrimitive.Content
         ref={ref}
+        onCloseAutoFocus={(e) => {
+          // Prevent Radix from stealing focus back to the trigger element on close.
+          // This interferes with FullCalendar's selection and other interactive components.
+          e.preventDefault()
+          onCloseAutoFocus?.(e)
+        }}
+        onPointerDownOutside={(e) => {
+          // Prevent Radix from intercepting clicks on portaled dropdowns (DatePicker, TimePicker, etc.)
+          const target = e.target as HTMLElement
+          if (target.closest('[data-modal-passthrough]') || target.closest('[data-radix-popper-content-wrapper]')) {
+            e.preventDefault()
+          }
+          onPointerDownOutside?.(e)
+        }}
+        onInteractOutside={(e) => {
+          const target = e.target as HTMLElement
+          if (target.closest('[data-modal-passthrough]') || target.closest('[data-radix-popper-content-wrapper]')) {
+            e.preventDefault()
+          }
+          onInteractOutside?.(e)
+        }}
         className={cn(
           'saas-mdl-ct relative z-50 flex flex-col w-full bg-card shadow-2xl outline-none',
           // Mobile fullscreen

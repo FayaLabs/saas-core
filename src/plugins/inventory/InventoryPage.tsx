@@ -7,6 +7,7 @@ import type { InventoryDataProvider } from './data/types'
 import type { InventoryUIState } from './store'
 import type { PluginRegistryDef, PluginQuickAction } from '../../types/plugins'
 import { useModuleNavigation } from '../../hooks/useModuleNavigation'
+import { useTranslation } from '../../hooks/useTranslation'
 import { QuickActionsButton } from '../../components/plugins/QuickActionsButton'
 import { DashboardView } from './views/DashboardView'
 import { ProductListView } from './views/ProductListView'
@@ -20,22 +21,22 @@ import { PluginSettingsPanel } from '../../components/plugins/PluginSettingsPane
 import { InventoryGeneralSettings } from './components/InventoryGeneralSettings'
 import { InventoryOnboarding } from './components/InventoryOnboarding'
 
-function buildNav(config: ResolvedInventoryConfig, view: string, navigate: (v: string) => void): ModuleNavItem[] {
+function buildNav(config: ResolvedInventoryConfig, view: string, navigate: (v: string) => void, t: (key: string) => string): ModuleNavItem[] {
   const items: ModuleNavItem[] = [
-    { id: 'dashboard', label: config.labels.dashboard, icon: 'BarChart3', active: view === 'dashboard', onClick: () => navigate('dashboard') },
+    { id: 'dashboard', label: t('inventory.nav.dashboard'), icon: 'BarChart3', active: view === 'dashboard', onClick: () => navigate('dashboard') },
     {
-      id: 'products', label: config.labels.products, icon: 'Package', active: view.startsWith('products'),
+      id: 'products', label: t('inventory.nav.products'), icon: 'Package', active: view.startsWith('products'),
       children: [
-        { id: 'products-new', label: config.labels.productsNew, active: view === 'products-new', onClick: () => navigate('products-new') },
-        { id: 'products-list', label: config.labels.productsList, active: view === 'products-list', onClick: () => navigate('products-list') },
+        { id: 'products-new', label: t('inventory.nav.new'), active: view === 'products-new', onClick: () => navigate('products-new') },
+        { id: 'products-list', label: t('inventory.nav.list'), active: view === 'products-list', onClick: () => navigate('products-list') },
       ],
     },
     {
-      id: 'stock', label: config.labels.stock, icon: 'ArrowUpCircle',
+      id: 'stock', label: t('inventory.nav.stock'), icon: 'ArrowUpCircle',
       children: [
-        { id: 'stock-entry', label: config.labels.stockEntry, active: view === 'stock-entry', onClick: () => navigate('stock-entry') },
-        { id: 'stock-exit', label: config.labels.stockExit, active: view === 'stock-exit', onClick: () => navigate('stock-exit') },
-        { id: 'stock-history', label: config.labels.stockHistory, active: view === 'stock-history', onClick: () => navigate('stock-history') },
+        { id: 'stock-entry', label: t('inventory.nav.entry'), active: view === 'stock-entry', onClick: () => navigate('stock-entry') },
+        { id: 'stock-exit', label: t('inventory.nav.exit'), active: view === 'stock-exit', onClick: () => navigate('stock-exit') },
+        { id: 'stock-history', label: t('inventory.nav.history'), active: view === 'stock-history', onClick: () => navigate('stock-history') },
       ],
     },
   ]
@@ -59,6 +60,7 @@ export function InventoryPage({ config, provider, store, registries }: {
   store: StoreApi<InventoryUIState>
   registries?: PluginRegistryDef[]
 }) {
+  const { t } = useTranslation()
   const { view, animationClass, navigate } = useModuleNavigation('/inventory', {
     dashboard: 0,
     'products-list': 0, 'products-new': 1,
@@ -73,29 +75,29 @@ export function InventoryPage({ config, provider, store, registries }: {
 
   const isSettings = view === 'settings'
   const isSummary = view === 'dashboard' || view === ''
-  const nav = buildNav(config, view, navigate)
+  const nav = buildNav(config, view, navigate, t)
 
   const quickActions = useMemo<PluginQuickAction[]>(() => {
     const actions: PluginQuickAction[] = [
       {
         id: 'new-product',
-        label: 'New Product',
+        label: t('inventory.quickActions.newProduct'),
         icon: 'Package',
-        description: 'Add a product to your catalog',
+        description: t('inventory.quickActions.newProductDesc'),
         action: () => navigate('products-new'),
       },
       {
         id: 'stock-entry',
-        label: 'Stock Entry',
+        label: t('inventory.quickActions.stockEntry'),
         icon: 'ArrowUpRight',
-        description: 'Record goods received',
+        description: t('inventory.quickActions.stockEntryDesc'),
         action: () => navigate('stock-entry'),
       },
       {
         id: 'stock-exit',
-        label: 'Stock Exit',
+        label: t('inventory.quickActions.stockExit'),
         icon: 'ArrowDownRight',
-        description: 'Record goods used or sold',
+        description: t('inventory.quickActions.stockExitDesc'),
         action: () => navigate('stock-exit'),
       },
     ]
@@ -115,8 +117,8 @@ export function InventoryPage({ config, provider, store, registries }: {
       <InventoryContextProvider config={config} provider={provider} store={store}>
         <div key="settings" className={animationClass}>
           <PluginSettingsPanel
-            title="Inventory Settings"
-            subtitle="Preferences, suppliers, categories, and units"
+            title={t('inventory.settingsPage.title')}
+            subtitle={t('inventory.settingsPage.subtitle')}
             generalSettings={<InventoryGeneralSettings />}
             registries={registries}
             routeBase="/inventory/settings"

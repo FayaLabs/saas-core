@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
+import { Breadcrumb } from '../ui/breadcrumb'
 import { cn } from '../../lib/cn'
 import { ICON_MAP } from './Topbar'
 
@@ -169,34 +170,50 @@ interface SubpageHeaderProps {
   icon?: string
   /** Back button handler */
   onBack?: () => void
+  /** Parent label for breadcrumb (e.g. "Invoices"). When set, renders ← Parent / Title breadcrumb instead of bare chevron */
+  parentLabel?: string
   /** Actions rendered on the right */
   actions?: React.ReactNode
 }
 
-export function SubpageHeader({ title, subtitle, icon, onBack, actions }: SubpageHeaderProps) {
+export function SubpageHeader({ title, subtitle, icon, onBack, parentLabel, actions }: SubpageHeaderProps) {
   const Icon = icon ? (ICON_MAP[icon] ?? null) : null
   return (
-    <div className="flex items-center justify-between gap-4 mb-6">
-      <div className="flex items-center gap-3">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors"
-          >
-            <ChevronRight className="h-4 w-4 rotate-180" />
-          </button>
-        )}
-        {Icon && (
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
-            <Icon className="h-5 w-5 text-muted-foreground" />
+    <div className="space-y-4 mb-6">
+      {onBack && parentLabel ? (
+        /* Breadcrumb mode — breadcrumb + actions on one row, subtitle below */
+        <>
+          <div className="flex items-center justify-between gap-4">
+            <Breadcrumb parent={parentLabel} current={title} onBack={onBack} />
+            {actions}
           </div>
-        )}
-        <div>
-          <h2 className="text-xl font-bold">{title}</h2>
-          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="text-sm text-muted-foreground -mt-2">{subtitle}</p>}
+        </>
+      ) : (
+        /* Standard mode — chevron back + title h2 */
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors"
+              >
+                <ChevronRight className="h-4 w-4 rotate-180" />
+              </button>
+            )}
+            {Icon && (
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
+                <Icon className="h-5 w-5 text-muted-foreground" />
+              </div>
+            )}
+            <div>
+              <h2 className="text-xl font-bold">{title}</h2>
+              {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+            </div>
+          </div>
+          {actions}
         </div>
-      </div>
-      {actions}
+      )}
     </div>
   )
 }

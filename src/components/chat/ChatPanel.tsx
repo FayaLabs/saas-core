@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { ArrowUp, Settings2 } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { useTranslation } from '../../hooks/useTranslation'
 import { useChatStore, type ChatMessage } from '../../stores/chat.store'
 import { useChat } from '../../hooks/useChat'
 import { useAITools } from '../../hooks/useAITools'
@@ -21,6 +22,7 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const { isOpen, messages, isStreaming } = useChatStore()
   const { sendMessage } = useChat({ apiEndpoint, systemPrompt })
+  const { t } = useTranslation()
   const { suggestions, toolGroups } = useAITools()
   const [input, setInput] = React.useState('')
   const [showTools, setShowTools] = React.useState(false)
@@ -128,7 +130,7 @@ export function ChatPanel({
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Message..."
+            placeholder={t('chat.messagePlaceholder')}
             className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
             disabled={isStreaming}
           />

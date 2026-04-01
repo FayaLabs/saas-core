@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { FileText, Calendar, User, Hash, Ban, Pencil, CircleCheckBig, ArrowRight } from 'lucide-react'
 import { useCrmConfig, useCrmProvider, formatCurrency } from '../CrmContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { QuoteStatusDropdown } from '../components/QuoteStatusDropdown'
 import { PersonLink } from '../../../components/shared/PersonLink'
 import type { Quote } from '../types'
 export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; onBack: () => void; onEdit?: () => void }) {
+  const { t } = useTranslation()
   const { currency } = useCrmConfig()
   const provider = useCrmProvider()
   const [quote, setQuote] = useState<Quote | null>(null)
@@ -22,7 +24,7 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
   if (loading) {
     return (
       <div className="space-y-5">
-        <SubpageHeader title="Quotes" subtitle="Loading..." onBack={onBack} />
+        <SubpageHeader title="" onBack={onBack} parentLabel={t('crm.quotes.title')} />
         <div className="rounded-xl border bg-card overflow-hidden">
           <div className="h-1 bg-muted animate-pulse" />
           <div className="p-5 pb-4">
@@ -56,11 +58,11 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
   if (!quote) {
     return (
       <div className="space-y-5">
-        <SubpageHeader title="Quotes" onBack={onBack} />
+        <SubpageHeader title={t('crm.quoteDetail.title')} onBack={onBack} parentLabel={t('crm.quotes.title')} />
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed border-muted">
           <FileText className="h-8 w-8 text-muted-foreground/30 mb-2" />
-          <p className="text-sm text-muted-foreground">Quote not found</p>
-          <button onClick={onBack} className="text-xs text-primary hover:underline mt-1">Back to list</button>
+          <p className="text-sm text-muted-foreground">{t('crm.quoteDetail.notFound')}</p>
+          <button onClick={onBack} className="text-xs text-primary hover:underline mt-1">{t('crm.quoteDetail.backToList')}</button>
         </div>
       </div>
     )
@@ -72,12 +74,12 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
   return (
     <div className="space-y-5">
       <SubpageHeader
-        title="Quotes"
-        subtitle={`#${quote.quoteNumber}`}
+        title={`#${quote.quoteNumber}`}
         onBack={onBack}
+        parentLabel={t('crm.quotes.title')}
         actions={onEdit && quote.status !== 'approved' && quote.status !== 'rejected' && (
           <button onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
-            <Pencil className="h-3 w-3" /> Edit
+            <Pencil className="h-3 w-3" /> {t('crm.quoteDetail.edit')}
           </button>
         )}
       />
@@ -96,7 +98,7 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
               </div>
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Quote {quote.quoteNumber}
+                  {t('crm.quoteDetail.quoteNumber', { number: quote.quoteNumber })}
                 </p>
                 <p className="text-xl font-bold mt-0.5">{formatCurrency(quote.totalAmount, currency)}</p>
               </div>
@@ -109,7 +111,7 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
             <div className="flex items-center gap-2">
               <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <div className="min-w-0">
-                <p className="text-[10px] text-muted-foreground">Client</p>
+                <p className="text-[10px] text-muted-foreground">{t('crm.quoteDetail.client')}</p>
                 {quote.contactName ? (
                   <PersonLink personId={quote.contactId ?? quote.leadId} name={quote.contactName} size="sm" />
                 ) : (
@@ -120,21 +122,21 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
             <div className="flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-[10px] text-muted-foreground">Date</p>
+                <p className="text-[10px] text-muted-foreground">{t('crm.quoteDetail.date')}</p>
                 <p className="text-xs font-medium">{quote.quoteDate}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-[10px] text-muted-foreground">Valid Until</p>
+                <p className="text-[10px] text-muted-foreground">{t('crm.quoteDetail.validUntil')}</p>
                 <p className="text-xs font-medium">{quote.validUntil}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Hash className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-[10px] text-muted-foreground">Items</p>
+                <p className="text-[10px] text-muted-foreground">{t('crm.quoteDetail.items')}</p>
                 <p className="text-xs font-medium">{quote.items.length}</p>
               </div>
             </div>
@@ -145,17 +147,17 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
         {quote.items.length > 0 && (
           <>
             <div className="px-5 pt-3 pb-1.5">
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Items</h3>
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t('crm.quoteDetail.items')}</h3>
             </div>
             <div className="px-5">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-[10px] text-muted-foreground uppercase tracking-wider">
                     <th className="text-left py-2 font-medium">#</th>
-                    <th className="text-left py-2 font-medium">Description</th>
-                    <th className="text-right py-2 font-medium">Qty</th>
-                    <th className="text-right py-2 font-medium">Unit Price</th>
-                    <th className="text-right py-2 font-medium">Total</th>
+                    <th className="text-left py-2 font-medium">{t('crm.quoteDetail.description')}</th>
+                    <th className="text-right py-2 font-medium">{t('crm.quoteDetail.qty')}</th>
+                    <th className="text-right py-2 font-medium">{t('crm.quoteDetail.unitPrice')}</th>
+                    <th className="text-right py-2 font-medium">{t('crm.quoteDetail.total')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -183,17 +185,17 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
                 {totalDiscount > 0 && (
                   <>
                     <div className="flex items-center gap-6 text-xs">
-                      <span className="text-muted-foreground">Subtotal</span>
+                      <span className="text-muted-foreground">{t('crm.quoteDetail.subtotal')}</span>
                       <span className="tabular-nums w-24 text-right">{formatCurrency(subtotal, currency)}</span>
                     </div>
                     <div className="flex items-center gap-6 text-xs text-emerald-600">
-                      <span>Discount</span>
+                      <span>{t('crm.quoteDetail.discount')}</span>
                       <span className="tabular-nums w-24 text-right">-{formatCurrency(totalDiscount, currency)}</span>
                     </div>
                   </>
                 )}
                 <div className="flex items-center gap-6 text-sm font-bold pt-1">
-                  <span>Total</span>
+                  <span>{t('crm.quoteDetail.total')}</span>
                   <span className="tabular-nums w-24 text-right">{formatCurrency(quote.totalAmount, currency)}</span>
                 </div>
               </div>
@@ -204,7 +206,7 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
         {/* Payment conditions inside card */}
         {quote.paymentConditions && (
           <div className="px-5 py-3 border-t">
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Payment Conditions</p>
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">{t('crm.quoteDetail.paymentConditions')}</p>
             <p className="text-xs text-muted-foreground">{quote.paymentConditions}</p>
           </div>
         )}
@@ -212,7 +214,7 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
         {/* Notes inside card */}
         {quote.observations && (
           <div className="px-5 py-3 border-t">
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Notes</p>
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">{t('crm.quoteDetail.notes')}</p>
             <p className="text-xs text-muted-foreground whitespace-pre-wrap">{quote.observations}</p>
           </div>
         )}
@@ -223,13 +225,13 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
         <div className="flex items-center justify-between rounded-lg border bg-emerald-500/5 px-4 py-2.5">
           <div className="flex items-center gap-2 text-xs">
             <CircleCheckBig className="h-3.5 w-3.5 text-emerald-500" />
-            <span className="text-muted-foreground">Invoice created from this quote</span>
+            <span className="text-muted-foreground">{t('crm.quoteDetail.invoiceCreated')}</span>
           </div>
           <a
             href={`#/financial/receivables/detail/${quote.convertedInvoiceId}`}
             className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
           >
-            View Invoice <ArrowRight className="h-3 w-3" />
+            {t('crm.quoteDetail.viewInvoice')} <ArrowRight className="h-3 w-3" />
           </a>
         </div>
       )}
@@ -239,7 +241,7 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
         <div className="flex items-center justify-between rounded-lg border bg-red-500/5 px-4 py-2.5">
           <div className="flex items-center gap-2 text-xs">
             <Ban className="h-3.5 w-3.5 text-red-500" />
-            <span className="text-muted-foreground">Rejection reason: <span className="font-medium text-foreground">{quote.rejectionReason}</span></span>
+            <span className="text-muted-foreground">{t('crm.quoteDetail.rejectionReason')}: <span className="font-medium text-foreground">{quote.rejectionReason}</span></span>
           </div>
         </div>
       )}

@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react'
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
+import type { ColumnDef as TanStackColumnDef } from '@tanstack/react-table'
 import { useOrganizationStore } from '../../stores/organization.store'
 import { useTranslation } from '../../hooks/useTranslation'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
-import { Input } from '../ui/input'
+import { DataTable } from '../ui/data-table'
 import { CrudFormPage } from './CrudFormPage'
 import { CrudDetailPage } from './CrudDetailPage'
 import { CrudCardGrid } from './CrudCardGrid'
@@ -58,103 +59,71 @@ function useSubRoute(basePath: string) {
   return { sub, direction }
 }
 
-function CrudTableView<T extends { id: string }>({
-  entityDef,
-  store,
-  basePath,
-  onDelete,
-  feature,
-}: {
-  entityDef: EntityDef<T>
-  store: CrudStore<T>
-  basePath: string
-  onDelete: (item: T) => void
-  feature?: string
-}) {
-  const { t } = useTranslation()
-  const columns = fieldToColumns(entityDef.fields)
+/** Convert our FieldDef-based columns to TanStack ColumnDef for DataTable */
+function useCrudColumns<T extends { id: string }>(
+  entityDef: EntityDef<T>,
+  options?: {
+    basePath?: string
+    onDelete?: (item: T) => void
+    feature?: string
+    readOnly?: boolean
+  },
+): TanStackColumnDef<T, any>[] {
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
+  const cols = fieldToColumns(entityDef.fields)
 
-  const handleSort = (key: string) => {
-    const currentSort = store.query.sortBy
-    const currentDir = store.query.sortDir ?? 'asc'
-    if (currentSort === key) {
-      store.setQuery({ sortDir: currentDir === 'asc' ? 'desc' : 'asc' })
-    } else {
-      store.setQuery({ sortBy: key, sortDir: 'asc' })
+  return useMemo(() => {
+    const tanCols: TanStackColumnDef<T, any>[] = cols.map((col) => ({
+      accessorKey: col.key,
+      header: col.label,
+      enableSorting: col.sortable,
+      cell: ({ row }: any) => {
+        const value = row.original[col.key]
+        const rendered = col.render(value, row.original)
+        return col.key === displayField
+          ? <span className="font-medium text-foreground">{rendered}</span>
+          : rendered
+      },
+    }))
+
+    // Actions column
+    if (!options?.readOnly && options?.basePath) {
+      tanCols.push({
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }: any) => {
+          const id = row.original.id
+          const editBtn = (
+            <Button variant="ghost" size="icon" className="h-8 w-8"
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); window.location.hash = `${options.basePath}/${id}/edit` }}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )
+          const deleteBtn = options.onDelete ? (
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); options.onDelete!(row.original) }}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : null
+          return (
+            <div className="flex items-center justify-end gap-1">
+              {options.feature ? (
+                <>
+                  <PermissionGate feature={options.feature} action="edit">{editBtn}</PermissionGate>
+                  {deleteBtn && <PermissionGate feature={options.feature} action="delete">{deleteBtn}</PermissionGate>}
+                </>
+              ) : (
+                <>{editBtn}{deleteBtn}</>
+              )}
+            </div>
+          )
+        },
+      })
     }
-  }
 
-  return (
-    <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b bg-muted/50">
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  className={`text-left p-4 text-sm font-medium text-muted-foreground ${col.sortable ? 'cursor-pointer hover:text-foreground select-none' : ''}`}
-                  onClick={() => col.sortable && handleSort(col.key)}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    {col.label}
-                    {store.query.sortBy === col.key && (
-                      <span className="text-xs">{store.query.sortDir === 'desc' ? '↓' : '↑'}</span>
-                    )}
-                  </span>
-                </th>
-              ))}
-              <th className="text-right p-4 text-sm font-medium text-muted-foreground">{t('common.actions')}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {(store.items ?? []).map((item) => {
-              const id = (item as any).id
-              return (
-                <tr
-                  key={id}
-                  className="hover:bg-muted/30 transition-colors cursor-pointer"
-                  onClick={() => { window.location.hash = `${basePath}/${id}` }}
-                >
-                  {columns.map((col) => (
-                    <td key={col.key} className="p-4 text-sm">
-                      {col.key === displayField ? (
-                        <span className="font-medium text-foreground">
-                          {col.render((item as any)[col.key], item)}
-                        </span>
-                      ) : (
-                        col.render((item as any)[col.key], item)
-                      )}
-                    </td>
-                  ))}
-                  <td className="p-4 text-sm text-right" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-1">
-                      {feature ? (
-                        <>
-                          <PermissionGate feature={feature} action="edit">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { window.location.hash = `${basePath}/${id}/edit` }}><Pencil className="h-4 w-4" /></Button>
-                          </PermissionGate>
-                          <PermissionGate feature={feature} action="delete">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(item)}><Trash2 className="h-4 w-4" /></Button>
-                          </PermissionGate>
-                        </>
-                      ) : (
-                        <>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { window.location.hash = `${basePath}/${id}/edit` }}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(item)}><Trash2 className="h-4 w-4" /></Button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  )
+    return tanCols
+  }, [cols, displayField, options?.basePath, options?.onDelete, options?.feature, options?.readOnly])
 }
 
 export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePath, display, feature, readOnly }: CrudPageProps<T>) {
@@ -168,6 +137,7 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
 
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const tanColumns = useCrudColumns(entityDef, { basePath, onDelete: readOnly ? undefined : (item) => setDeleteItem(item), feature, readOnly })
   const currentOrgId = useOrganizationStore((s) => s.currentOrg?.id)
 
   useEffect(() => {
@@ -369,7 +339,9 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
 
     const isInitialLoad = store.items === null
     const isEmpty = store.items !== null && store.items.length === 0
-    const columns = fieldToColumns(entityDef.fields)
+
+    const hasSearch = entityDef.fields.some((f) => f.searchable)
+    const navigateToNew = () => { window.location.hash = `${basePath}/new` }
 
     content = (
       <div className="space-y-6">
@@ -384,21 +356,24 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
           </div>
           {!readOnly && (feature ? (
             <PermissionGate feature={feature} action="create">
-              <Button onClick={() => { window.location.hash = `${basePath}/new` }}>{t('crud.list.addEntity', { entity: entityDef.name })}</Button>
+              <Button onClick={navigateToNew}>{t('crud.list.addEntity', { entity: entityDef.name })}</Button>
             </PermissionGate>
           ) : (
-            <Button onClick={() => { window.location.hash = `${basePath}/new` }}>+ Add {entityDef.name}</Button>
+            <Button onClick={navigateToNew}>+ Add {entityDef.name}</Button>
           ))}
         </div>
 
-        {entityDef.fields.some((f) => f.searchable) && (
-          <Input
-            type="text"
-            placeholder={t('crud.list.search', { entities: namePlural.toLowerCase() })}
-            value={searchInput}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="max-w-sm"
-          />
+        {hasSearch && (
+          <div className="relative max-w-sm">
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input
+              type="text"
+              placeholder={t('crud.list.search', { entities: namePlural.toLowerCase() })}
+              value={searchInput}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full rounded-lg border bg-background pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
         )}
 
         {isInitialLoad ? (
@@ -411,82 +386,20 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
                     <div className="space-y-2">
                       <div className="flex justify-between"><div className="h-4 w-20 animate-pulse rounded bg-muted" /><div className="h-4 w-16 animate-pulse rounded bg-muted" /></div>
                       <div className="flex justify-between"><div className="h-4 w-24 animate-pulse rounded bg-muted" /><div className="h-4 w-12 animate-pulse rounded bg-muted" /></div>
-                      <div className="flex justify-between"><div className="h-4 w-16 animate-pulse rounded bg-muted" /><div className="h-4 w-20 animate-pulse rounded bg-muted" /></div>
                     </div>
-                  </div>
-                  <div className="border-t px-5 py-3">
-                    <div className="h-4 w-24 animate-pulse rounded bg-muted" />
                   </div>
                 </Card>
               ))}
             </div>
           ) : (
-            <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      {columns.map((col) => (
-                        <th key={col.key} className="text-left p-4 text-sm font-medium text-muted-foreground">{col.label}</th>
-                      ))}
-                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">{t('common.actions')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {Array.from({ length: 2 }).map((_, i) => (
-                      <tr key={i}>
-                        {columns.map((col, ci) => (
-                          <td key={col.key} className="p-4">
-                            <div className={`h-4 animate-pulse rounded bg-muted ${ci === 0 ? 'w-32' : 'w-20'}`} />
-                          </td>
-                        ))}
-                        <td className="p-4 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <div className="h-8 w-8 animate-pulse rounded bg-muted" />
-                            <div className="h-8 w-8 animate-pulse rounded bg-muted" />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
+            <DataTable columns={tanColumns} data={[]} loading skeletonRows={3} />
           )
         ) : isEmpty ? (
-          display === 'cards' ? (
-            <Card>
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-muted-foreground mb-4">{t('crud.list.empty', { entities: namePlural.toLowerCase() })}</p>
-                {!readOnly && <button type="button" onClick={() => { window.location.hash = `${basePath}/new` }} className="text-sm font-medium text-primary hover:underline">{t('crud.list.addFirst', { entity: entityDef.name.toLowerCase() })}</button>}
-              </div>
-            </Card>
-          ) : (
-            <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      {columns.map((col) => (
-                        <th key={col.key} className="text-left p-4 text-sm font-medium text-muted-foreground">{col.label}</th>
-                      ))}
-                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">{t('common.actions')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colSpan={columns.length + 1}>
-                        <div className="flex flex-col items-center justify-center py-12 text-center">
-                          <p className="text-muted-foreground mb-4">{t('crud.list.empty', { entities: namePlural.toLowerCase() })}</p>
-                          {!readOnly && <button type="button" onClick={() => { window.location.hash = `${basePath}/new` }} className="text-sm font-medium text-primary hover:underline">{t('crud.list.addFirst', { entity: entityDef.name.toLowerCase() })}</button>}
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          )
+          <DataTable
+            columns={tanColumns}
+            data={[]}
+            emptyMessage={t('crud.list.empty', { entities: namePlural.toLowerCase() })}
+          />
         ) : display === 'cards' ? (
           <CrudCardGrid
             items={store.items ?? []}
@@ -495,12 +408,10 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
             onDelete={(item) => setDeleteItem(item)}
           />
         ) : (
-          <CrudTableView
-            entityDef={entityDef}
-            store={store}
-            basePath={basePath}
-            onDelete={(item) => setDeleteItem(item)}
-            feature={feature}
+          <DataTable
+            columns={tanColumns}
+            data={store.items ?? []}
+            onRowClick={(row) => { window.location.hash = `${basePath}/${(row as any).id}` }}
           />
         )}
       </div>

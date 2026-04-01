@@ -5,7 +5,7 @@ import { darkTheme } from '../config/theme/dark'
 import { applyTheme } from '../config/theme/utils'
 import type { CreateThemeOptions } from '../config/theme/utils'
 
-type ThemeMode = 'light' | 'dark'
+type ThemeMode = 'light' | 'dark' | 'system'
 
 const STORAGE_KEY = 'saas-core:theme-mode'
 
@@ -21,11 +21,20 @@ interface ThemeState {
   setCustomTheme: (theme: ThemeTokens | null) => void
 }
 
+function getSystemPreference(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'light'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
 function getSavedMode(): ThemeMode {
   if (typeof window === 'undefined') return 'light'
   const saved = localStorage.getItem(STORAGE_KEY)
-  if (saved === 'light' || saved === 'dark') return saved
+  if (saved === 'light' || saved === 'dark' || saved === 'system') return saved
   return 'light'
+}
+
+function resolveMode(mode: ThemeMode): 'light' | 'dark' {
+  return mode === 'system' ? getSystemPreference() : mode
 }
 
 /** Merge base theme (light or dark) with user's partial overrides */
@@ -86,7 +95,8 @@ function createThemeStore(): UseBoundStore<StoreApi<ThemeState>> {
     overrides: null,
 
     setMode: (mode) => {
-      set({ mode, resolvedMode: mode })
+      const resolved = resolveMode(mode)
+      set({ mode, resolvedMode: resolved })
 
       // Persist to localStorage
       if (typeof window !== 'undefined') {
@@ -94,13 +104,22 @@ function createThemeStore(): UseBoundStore<StoreApi<ThemeState>> {
       }
 
       const { overrides } = get()
-      const baseTheme = mode === 'dark' ? darkTheme : lightTheme
+      const baseTheme = resolved === 'dark' ? darkTheme : lightTheme
       const theme = buildTheme(baseTheme, overrides)
 
-      applyTheme(theme)
-
       if (typeof document !== 'undefined') {
-        document.documentElement.classList.toggle('dark', mode === 'dark')
+        // Enable color transition before applying changes
+        document.documentElement.classList.add('theme-transitioning')
+
+        applyTheme(theme)
+        document.documentElement.classList.toggle('dark', resolved === 'dark')
+
+        // Remove transition class after animation completes
+        setTimeout(() => {
+          document.documentElement.classList.remove('theme-transitioning')
+        }, 450)
+      } else {
+        applyTheme(theme)
       }
     },
 
@@ -120,6 +139,16 @@ function createThemeStore(): UseBoundStore<StoreApi<ThemeState>> {
     initialize: () => {
       const { mode, setMode } = get()
       setMode(mode)
+
+      // Listen for OS theme changes when in 'system' mode
+      if (typeof window !== 'undefined') {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+          const current = get()
+          if (current.mode === 'system') {
+            current.setMode('system')
+          }
+        })
+      }
     },
   }))
 

@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { Receipt } from 'lucide-react'
+import type { ColumnDef } from '@tanstack/react-table'
+import { DataTable } from '../../../components/ui/data-table'
 import { useFinancialConfig, useFinancialStore, formatCurrency } from '../FinancialContext'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { DatePicker } from '../../../components/ui/date-picker'
 import { useTranslation } from '../../../hooks/useTranslation'
+import type { StatementEntry } from '../types'
 
 export function StatementsView() {
   const { t } = useTranslation()
-  const { currency, labels } = useFinancialConfig()
+  const { currency } = useFinancialConfig()
   const bankAccounts = useFinancialStore((s) => s.bankAccounts)
   const statementEntries = useFinancialStore((s) => s.statementEntries)
   const statementLoading = useFinancialStore((s) => s.statementLoading)
@@ -29,16 +32,54 @@ export function StatementsView() {
     }
   }, [accountId, dateFrom, dateTo])
 
-  // Auto-select first account
   useEffect(() => {
-    if (!accountId && bankAccounts.length > 0) {
-      setAccountId(bankAccounts[0].id)
-    }
+    if (!accountId && bankAccounts.length > 0) setAccountId(bankAccounts[0].id)
   }, [bankAccounts])
+
+  const columns: ColumnDef<StatementEntry, any>[] = useMemo(() => [
+    {
+      id: 'date', header: t('financial.statements.columnDate'),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground text-xs">{row.original.movement.paymentDate ?? row.original.movement.dueDate}</span>
+      ),
+    },
+    {
+      id: 'description', header: t('financial.statements.columnDescription'),
+      cell: ({ row }) => (
+        <div>
+          <p className="text-xs font-medium">{row.original.invoice?.contactName || row.original.movement.notes || 'Transaction'}</p>
+          <p className="text-[10px] text-muted-foreground capitalize">{row.original.movement.movementKind}</p>
+        </div>
+      ),
+    },
+    {
+      id: 'debit', header: t('financial.statements.columnDebit'),
+      cell: ({ row }) => (
+        <span className="text-right block text-red-500 text-xs">
+          {row.original.movement.direction === 'debit' ? formatCurrency(row.original.movement.paidAmount, currency) : ''}
+        </span>
+      ),
+    },
+    {
+      id: 'credit', header: t('financial.statements.columnCredit'),
+      cell: ({ row }) => (
+        <span className="text-right block text-emerald-600 text-xs">
+          {row.original.movement.direction === 'credit' ? formatCurrency(row.original.movement.paidAmount, currency) : ''}
+        </span>
+      ),
+    },
+    {
+      id: 'balance', header: t('financial.statements.columnBalance'),
+      cell: ({ row }) => (
+        <span className="text-right block font-medium text-xs">{formatCurrency(row.original.runningBalance, currency)}</span>
+      ),
+    },
+  ], [currency, t])
 
   return (
     <div className="space-y-4">
       <SubpageHeader title={t('financial.statements.title')} subtitle={t('financial.statements.subtitle')} />
+
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
         <div className="flex-1 max-w-xs">
@@ -71,44 +112,11 @@ export function StatementsView() {
           <p className="text-sm text-muted-foreground">{t('financial.statements.selectToView')}</p>
         </div>
       ) : statementLoading ? (
-        <div className="text-center py-12 text-sm text-muted-foreground">Loading...</div>
+        <DataTable columns={columns} data={[]} loading skeletonRows={5} />
       ) : statementEntries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed border-muted">
-          <Receipt className="h-8 w-8 text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">{t('financial.statements.noTransactions')}</p>
-        </div>
+        <DataTable columns={columns} data={[]} emptyMessage={t('financial.statements.noTransactions')} />
       ) : (
-        <div className="rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/30">
-                <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Date</th>
-                <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Description</th>
-                <th className="text-right font-medium text-muted-foreground px-4 py-2.5">Debit</th>
-                <th className="text-right font-medium text-muted-foreground px-4 py-2.5">Credit</th>
-                <th className="text-right font-medium text-muted-foreground px-4 py-2.5">Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {statementEntries.map((entry, i) => (
-                <tr key={i} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
-                  <td className="px-4 py-2.5 text-muted-foreground text-xs">{entry.movement.paymentDate ?? entry.movement.dueDate}</td>
-                  <td className="px-4 py-2.5">
-                    <p className="text-xs font-medium">{entry.invoice?.contactName || entry.movement.notes || 'Transaction'}</p>
-                    <p className="text-[10px] text-muted-foreground capitalize">{entry.movement.movementKind}</p>
-                  </td>
-                  <td className="px-4 py-2.5 text-right text-red-500 text-xs">
-                    {entry.movement.direction === 'debit' ? formatCurrency(entry.movement.paidAmount, currency) : ''}
-                  </td>
-                  <td className="px-4 py-2.5 text-right text-emerald-600 text-xs">
-                    {entry.movement.direction === 'credit' ? formatCurrency(entry.movement.paidAmount, currency) : ''}
-                  </td>
-                  <td className="px-4 py-2.5 text-right font-medium text-xs">{formatCurrency(entry.runningBalance, currency)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable columns={columns} data={statementEntries} />
       )}
     </div>
   )

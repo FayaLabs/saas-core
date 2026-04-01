@@ -3,30 +3,10 @@ import { DollarSign, Landmark, CreditCard, BookOpen, ChevronRight, Check } from 
 import { useTranslation } from '../../../hooks/useTranslation'
 
 const STEPS = [
-  {
-    id: 'welcome',
-    icon: DollarSign,
-    title: 'Welcome to Financial',
-    description: 'Let\'s set up your financial module. This quick wizard will help you configure the essentials.',
-  },
-  {
-    id: 'accounts',
-    icon: Landmark,
-    title: 'Bank Accounts',
-    description: 'Add your bank accounts, cash registers, and credit cards. You can always add more later from Settings.',
-  },
-  {
-    id: 'payments',
-    icon: CreditCard,
-    title: 'Payment Methods',
-    description: 'Review which payment types you accept. Default types (Cash, PIX, Credit Card, etc.) are already set up.',
-  },
-  {
-    id: 'chart',
-    icon: BookOpen,
-    title: 'Chart of Accounts',
-    description: 'A default chart of accounts template has been created. You can customize it anytime from Settings.',
-  },
+  { id: 'welcome', icon: DollarSign, titleKey: 'financial.onboarding.welcome', descKey: 'financial.onboarding.description' },
+  { id: 'accounts', icon: Landmark, titleKey: 'financial.onboarding.accounts.title', descKey: 'financial.onboarding.accounts.description' },
+  { id: 'payments', icon: CreditCard, titleKey: 'financial.onboarding.payments.title', descKey: 'financial.onboarding.payments.description' },
+  { id: 'chart', icon: BookOpen, titleKey: 'financial.onboarding.chart.title', descKey: 'financial.onboarding.chart.description' },
 ]
 
 export function FinancialOnboarding({ onComplete }: { onComplete: () => void }) {
@@ -60,8 +40,8 @@ export function FinancialOnboarding({ onComplete }: { onComplete: () => void }) 
           </div>
 
           <div>
-            <h2 className="text-xl font-bold">{current.title}</h2>
-            <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">{current.description}</p>
+            <h2 className="text-xl font-bold">{t(current.titleKey)}</h2>
+            <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">{t(current.descKey)}</p>
           </div>
 
           {/* Step-specific hint */}

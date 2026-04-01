@@ -235,7 +235,7 @@ export function WorkingHoursView() {
                         <button
                           onClick={() => removePeriod(dayOfWeek, idx)}
                           className="p-1 text-muted-foreground hover:text-destructive"
-                          title="Remove period"
+                          title={t('agenda.workingHours.removePeriod')}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>

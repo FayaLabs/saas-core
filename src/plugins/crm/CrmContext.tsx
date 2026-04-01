@@ -34,7 +34,7 @@ export function CrmContextProvider({ config, provider, store, children }: {
   config: ResolvedCrmConfig
   provider: CrmDataProvider
   store: StoreApi<CrmUIState>
-  children: React.ReactNode
+  children?: React.ReactNode
 }) {
   return (
     <CrmConfigContext.Provider value={config}>

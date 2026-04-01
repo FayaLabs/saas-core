@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { BookOpen, Clock, Layers, Package, ArrowLeft } from 'lucide-react'
+import { BookOpen, Clock, Layers, Package } from 'lucide-react'
 import { useInventoryProvider } from '../InventoryContext'
+import { useTranslation } from '../../../hooks/useTranslation'
+import { Breadcrumb } from '../../../components/ui/breadcrumb'
 import type { Recipe, RecipeIngredient } from '../types'
 
 function DetailSkeleton() {
@@ -36,6 +38,7 @@ function DetailSkeleton() {
 }
 
 export function RecipeDetailView({ recipeId, onBack }: { recipeId: string; onBack: () => void }) {
+  const { t } = useTranslation()
   const provider = useInventoryProvider()
   const [recipe, setRecipe] = useState<Recipe | null>(null)
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>([])
@@ -56,13 +59,7 @@ export function RecipeDetailView({ recipeId, onBack }: { recipeId: string; onBac
   if (loading) {
     return (
       <div className="space-y-6">
-        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <button onClick={onBack} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-            <ArrowLeft className="h-3.5 w-3.5" /> Recipes
-          </button>
-          <span>/</span>
-          <span className="text-muted-foreground">Loading...</span>
-        </nav>
+        <Breadcrumb parent={t('inventory.nav.recipes')} current={t('inventory.recipeDetail.loading')} onBack={onBack} />
         <DetailSkeleton />
       </div>
     )
@@ -71,15 +68,11 @@ export function RecipeDetailView({ recipeId, onBack }: { recipeId: string; onBac
   if (!recipe) {
     return (
       <div className="space-y-6">
-        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <button onClick={onBack} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-            <ArrowLeft className="h-3.5 w-3.5" /> Recipes
-          </button>
-        </nav>
+        <Breadcrumb parent={t('inventory.nav.recipes')} onBack={onBack} />
         <div className="flex flex-col items-center justify-center py-16 text-center rounded-lg border-2 border-dashed border-muted">
           <BookOpen className="h-8 w-8 text-muted-foreground/30 mb-2" />
-          <p className="text-sm text-muted-foreground">Recipe not found</p>
-          <button onClick={onBack} className="text-xs text-primary hover:underline mt-1">Back to list</button>
+          <p className="text-sm text-muted-foreground">{t('inventory.recipeDetail.notFound')}</p>
+          <button onClick={onBack} className="text-xs text-primary hover:underline mt-1">{t('inventory.recipeDetail.backToList')}</button>
         </div>
       </div>
     )
@@ -88,13 +81,7 @@ export function RecipeDetailView({ recipeId, onBack }: { recipeId: string; onBac
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <button onClick={onBack} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-          <ArrowLeft className="h-3.5 w-3.5" /> Recipes
-        </button>
-        <span>/</span>
-        <span className="text-foreground font-medium truncate max-w-[200px]">{recipe.name}</span>
-      </nav>
+      <Breadcrumb parent={t('inventory.nav.recipes')} current={recipe.name} onBack={onBack} />
 
       {/* Hero */}
       <div className="flex items-start gap-4">
@@ -106,9 +93,9 @@ export function RecipeDetailView({ recipeId, onBack }: { recipeId: string; onBac
           {recipe.description && <p className="text-muted-foreground mt-0.5 text-sm">{recipe.description}</p>}
           <div className="flex items-center gap-3 mt-2">
             {recipe.isActive ? (
-              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Active</span>
+              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> {t('inventory.recipeDetail.active')}</span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/50"><span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" /> Inactive</span>
+              <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/50"><span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" /> {t('inventory.recipeDetail.inactive')}</span>
             )}
           </div>
         </div>
@@ -124,25 +111,25 @@ export function RecipeDetailView({ recipeId, onBack }: { recipeId: string; onBac
             {recipe.productName && (
               <div className="flex items-center gap-3 px-4 py-3">
                 <Package className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-xs text-muted-foreground flex-1">Produces</span>
+                <span className="text-xs text-muted-foreground flex-1">{t('inventory.recipeDetail.produces')}</span>
                 <span className="text-sm font-medium">{recipe.productName}</span>
               </div>
             )}
             <div className="flex items-center gap-3 px-4 py-3">
               <Layers className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="text-xs text-muted-foreground flex-1">Yield</span>
+              <span className="text-xs text-muted-foreground flex-1">{t('inventory.recipeDetail.yield')}</span>
               <span className="text-sm font-medium">{recipe.yieldQuantity}{recipe.yieldUnitName ? ` ${recipe.yieldUnitName}` : ''}</span>
             </div>
             {recipe.preparationTimeMinutes != null && (
               <div className="flex items-center gap-3 px-4 py-3">
                 <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-xs text-muted-foreground flex-1">Prep time</span>
+                <span className="text-xs text-muted-foreground flex-1">{t('inventory.recipeDetail.prepTime')}</span>
                 <span className="text-sm font-medium">{recipe.preparationTimeMinutes} min</span>
               </div>
             )}
             <div className="flex items-center gap-3 px-4 py-3">
               <Layers className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="text-xs text-muted-foreground flex-1">Ingredients</span>
+              <span className="text-xs text-muted-foreground flex-1">{t('inventory.recipeDetail.ingredientCount')}</span>
               <span className="text-sm font-medium">{ingredients.length}</span>
             </div>
           </div>
@@ -150,7 +137,7 @@ export function RecipeDetailView({ recipeId, onBack }: { recipeId: string; onBac
           {/* Instructions */}
           {recipe.instructions && (
             <div>
-              <h3 className="text-sm font-semibold text-foreground mb-1">Instructions</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-1">{t('inventory.recipeDetail.instructions')}</h3>
               <div className="rounded-xl border bg-card px-4 py-3">
                 <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">{recipe.instructions}</p>
               </div>
@@ -159,17 +146,17 @@ export function RecipeDetailView({ recipeId, onBack }: { recipeId: string; onBac
 
           {/* Dates */}
           <div className="flex items-center gap-4 text-[10px] text-muted-foreground/50">
-            <span>Created {recipe.createdAt?.slice(0, 10)}</span>
-            <span>Updated {recipe.updatedAt?.slice(0, 10)}</span>
+            <span>{t('inventory.recipeDetail.created')} {recipe.createdAt?.slice(0, 10)}</span>
+            <span>{t('inventory.recipeDetail.updated')} {recipe.updatedAt?.slice(0, 10)}</span>
           </div>
         </div>
 
         {/* Right: Ingredients table */}
         <div className="lg:col-span-2">
-          <h3 className="text-sm font-semibold text-foreground mb-2">Ingredients</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-2">{t('inventory.recipeDetail.ingredientsTitle')}</h3>
           {ingredients.length === 0 ? (
             <div className="rounded-xl border p-8 text-center">
-              <p className="text-xs text-muted-foreground">No ingredients defined</p>
+              <p className="text-xs text-muted-foreground">{t('inventory.recipeDetail.noIngredients')}</p>
             </div>
           ) : (
             <div className="rounded-xl border overflow-hidden">
@@ -177,10 +164,10 @@ export function RecipeDetailView({ recipeId, onBack }: { recipeId: string; onBac
                 <thead>
                   <tr className="border-b text-[10px] text-muted-foreground uppercase tracking-wider bg-muted/20">
                     <th className="text-left py-2.5 px-4 font-medium w-8">#</th>
-                    <th className="text-left py-2.5 px-4 font-medium">Ingredient</th>
-                    <th className="text-right py-2.5 px-4 font-medium">Quantity</th>
-                    <th className="text-left py-2.5 px-4 font-medium">Unit</th>
-                    <th className="text-left py-2.5 px-4 font-medium">Notes</th>
+                    <th className="text-left py-2.5 px-4 font-medium">{t('inventory.recipeDetail.ingredient')}</th>
+                    <th className="text-right py-2.5 px-4 font-medium">{t('inventory.recipeDetail.quantity')}</th>
+                    <th className="text-left py-2.5 px-4 font-medium">{t('inventory.recipeDetail.unit')}</th>
+                    <th className="text-left py-2.5 px-4 font-medium">{t('inventory.recipeDetail.notes')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">

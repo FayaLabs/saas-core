@@ -2,12 +2,14 @@ import React from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { PluginRegistryManager } from '../../../components/plugins/PluginRegistryManager'
 import type { PluginRegistryDef } from '../../../types/plugins'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 export function InventorySettings({ registries, routeBase, onClose }: {
   registries: PluginRegistryDef[]
   routeBase: string
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -15,8 +17,8 @@ export function InventorySettings({ registries, routeBase, onClose }: {
           <ChevronLeft className="h-4 w-4" />
         </button>
         <div>
-          <h2 className="text-lg font-bold">Inventory Settings</h2>
-          <p className="text-xs text-muted-foreground">Manage units, categories, and stock locations</p>
+          <h2 className="text-lg font-bold">{t('inventory.settingsPage.title')}</h2>
+          <p className="text-xs text-muted-foreground">{t('inventory.settingsPage.subtitle')}</p>
         </div>
       </div>
       <PluginRegistryManager registries={registries} routeBase={routeBase} />

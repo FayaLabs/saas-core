@@ -100,6 +100,19 @@
   }
 }
 
+/* Hide scrollbar — for horizontal tab strips and similar */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Theme transition — applied briefly during light/dark switch */
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition: background-color 400ms ease, color 400ms ease, border-color 400ms ease,
+    box-shadow 400ms ease, fill 400ms ease, stroke 400ms ease !important;
+}
+
 /* Animation keyframes for Radix UI components */
 @keyframes enter {
   from {

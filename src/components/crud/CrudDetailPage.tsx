@@ -1,8 +1,10 @@
 import React, { useCallback } from 'react'
-import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
+import { Edit, Trash2, Eye, Shield, CalendarDays, FileText, Clock, Package, Users, DollarSign, MapPin, BarChart3, Briefcase } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
+import { Breadcrumb } from '../ui/breadcrumb'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { Separator } from '../ui/separator'
 import { WidgetSlot } from '../plugins/WidgetSlot'
@@ -26,7 +28,7 @@ interface CrudDetailPageProps {
   feature?: string
 }
 
-function formatValue(field: FieldDef, value: any): React.ReactNode {
+function formatValue(field: FieldDef, value: any, t?: (key: string) => string): React.ReactNode {
   if (value == null || value === '') return <span className="text-muted-foreground/50">—</span>
 
   if (field.renderCell) return field.renderCell(value, {})
@@ -35,7 +37,7 @@ function formatValue(field: FieldDef, value: any): React.ReactNode {
     case 'boolean':
       return (
         <Badge variant={value ? 'default' : 'secondary'}>
-          {value ? 'Yes' : 'No'}
+          {value ? (t?.('common.yes') ?? 'Yes') : (t?.('common.no') ?? 'No')}
         </Badge>
       )
     case 'currency': {
@@ -68,11 +70,11 @@ function formatValue(field: FieldDef, value: any): React.ReactNode {
   }
 }
 
-function FieldRow({ field, value }: { field: FieldDef; value: any }) {
+function FieldRow({ field, value, t }: { field: FieldDef; value: any; t?: (key: string) => string }) {
   return (
     <div className="grid grid-cols-3 gap-4 py-3">
       <dt className="text-sm font-medium text-muted-foreground">{field.label}</dt>
-      <dd className="col-span-2 text-sm text-foreground">{formatValue(field, value)}</dd>
+      <dd className="col-span-2 text-sm text-foreground">{formatValue(field, value, t)}</dd>
     </div>
   )
 }
@@ -86,6 +88,7 @@ function FieldGroupSection({
   fields: FieldDef[]
   item: Record<string, any>
 }) {
+  const { t: tFn } = useTranslation()
   const cols = group.columns ?? 2
 
   return (
@@ -99,7 +102,7 @@ function FieldGroupSection({
           <dl className={`grid divide-y ${cols >= 2 ? 'md:grid-cols-2 md:divide-y-0' : ''}`}>
             {fields.map((field) => (
               <div key={field.key} className={`px-5 ${cols >= 2 ? 'md:border-b md:last:border-b-0' : ''}`}>
-                <FieldRow field={field} value={item[field.key]} />
+                <FieldRow field={field} value={item[field.key]} t={tFn} />
               </div>
             ))}
           </dl>
@@ -116,6 +119,7 @@ function OverviewTab({
   entityDef: EntityDef
   item: Record<string, any>
 }) {
+  const { t: tFn } = useTranslation()
   const detailFields = entityDef.fields.filter(
     (f) => f.showInDetail !== false && f.key !== 'id' && f.key !== entityDef.displayField && f.key !== entityDef.imageField
   )
@@ -146,7 +150,7 @@ function OverviewTab({
             <dl className="divide-y">
               {ungroupedFields.map((field) => (
                 <div key={field.key} className="px-5">
-                  <FieldRow field={field} value={item[field.key]} />
+                  <FieldRow field={field} value={item[field.key]} t={tFn} />
                 </div>
               ))}
             </dl>
@@ -206,6 +210,10 @@ function getArchetypeTabs(layout?: FormLayout, archetypeKind?: string): DetailTa
   return tabs
 }
 
+const TAB_ICONS: Record<string, LucideIcon> = {
+  Shield, CalendarDays, FileText, Clock, Package, Users, DollarSign, MapPin, BarChart3, Briefcase,
+}
+
 export function CrudDetailPage({
   entityDef,
   item,
@@ -243,14 +251,7 @@ export function CrudDetailPage({
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <button type="button" onClick={onBack} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-          <ArrowLeft className="h-3.5 w-3.5" />
-          {namePlural}
-        </button>
-        <span>/</span>
-        <span className="text-foreground font-medium truncate max-w-[200px]">{displayValue}</span>
-      </nav>
+      <Breadcrumb parent={namePlural} current={displayValue} onBack={onBack} />
 
       {/* Hero */}
       <div className="flex items-start gap-5">
@@ -310,10 +311,21 @@ export function CrudDetailPage({
       {/* Tabs */}
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
         <TabsList>
-          <TabsTrigger value="overview">{t('common.overview')}</TabsTrigger>
-          {customTabs.map((tab) => (
-            <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
-          ))}
+          <TabsTrigger value="overview" className="gap-1.5">
+            <Eye className="h-3.5 w-3.5" />
+            {t('common.overview')}
+          </TabsTrigger>
+          {customTabs.map((tab) => {
+            const translated = t(`crud.tabs.${tab.id}`)
+            const label = translated.startsWith('crud.tabs.') ? tab.label : translated
+            const TabIcon = tab.icon ? (TAB_ICONS[tab.icon] ?? null) : null
+            return (
+              <TabsTrigger key={tab.id} value={tab.id} className="gap-1.5">
+                {TabIcon && <TabIcon className="h-3.5 w-3.5" />}
+                {label}
+              </TabsTrigger>
+            )
+          })}
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">

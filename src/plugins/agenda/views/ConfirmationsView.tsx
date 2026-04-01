@@ -119,28 +119,28 @@ export function ConfirmationsView() {
                   {config.confirmationChannels.some((c) => c.id === 'whatsapp') && (
                     <button
                       className="p-1.5 rounded hover:bg-muted"
-                      title="Send WhatsApp"
+                      title={t('agenda.confirmations.sendWhatsApp')}
                     >
                       <MessageCircle className="h-4 w-4 text-green-600" />
                     </button>
                   )}
                   <button
                     className="p-1.5 rounded hover:bg-muted"
-                    title="Call"
+                    title={t('agenda.confirmations.call')}
                   >
                     <Phone className="h-4 w-4 text-blue-600" />
                   </button>
                   <button
                     onClick={() => updateStatus(booking.id, 'confirmed')}
                     className="p-1.5 rounded hover:bg-muted"
-                    title="Mark Confirmed"
+                    title={t('agenda.confirmations.markConfirmed')}
                   >
                     <CheckCircle className="h-4 w-4 text-green-600" />
                   </button>
                   <button
                     onClick={() => updateStatus(booking.id, 'cancelled')}
                     className="p-1.5 rounded hover:bg-muted"
-                    title="Mark Cancelled"
+                    title={t('agenda.confirmations.markCancelled')}
                   >
                     <XCircle className="h-4 w-4 text-red-500" />
                   </button>
