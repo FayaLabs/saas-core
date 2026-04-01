@@ -7,6 +7,17 @@ import type { FinancialDataProvider } from './data/types'
 import { createMockFinancialProvider } from './data/mock'
 import { createSupabaseFinancialProvider } from './data/supabase'
 import { getSupabaseClientOptional } from '../../lib/supabase'
+
+function createSafeFinancialProvider(): FinancialDataProvider {
+  let resolved: FinancialDataProvider | null = null
+  function get(): FinancialDataProvider {
+    if (!resolved) resolved = getSupabaseClientOptional() ? createSupabaseFinancialProvider() : createMockFinancialProvider()
+    return resolved
+  }
+  return new Proxy({} as FinancialDataProvider, {
+    get: (_, prop) => (...args: any[]) => (get() as any)[prop](...args),
+  })
+}
 import { createFinancialStore } from './store'
 import { financialRegistries } from './registries'
 import { financialLocales } from './locales'
@@ -162,7 +173,7 @@ function resolveConfig(options?: FinancialPluginOptions): ResolvedFinancialConfi
 export function createFinancialPlugin(options?: FinancialPluginOptions): PluginManifest {
   const config = resolveConfig(options)
 
-  const provider = options?.dataProvider ?? (getSupabaseClientOptional() ? createSupabaseFinancialProvider() : createMockFinancialProvider())
+  const provider = options?.dataProvider ?? createSafeFinancialProvider()
   const store = createFinancialStore(provider)
 
   const PageComponent: React.FC<any> = () =>

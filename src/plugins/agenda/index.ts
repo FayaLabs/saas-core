@@ -6,6 +6,20 @@ import { AgendaPage } from './AgendaPage'
 import { createSupabaseAgendaProvider } from './data/supabase'
 import { createMockAgendaProvider } from './data/mock'
 import { getSupabaseClientOptional } from '../../lib/supabase'
+import type { AgendaDataProvider } from './data/types'
+
+function createSafeAgendaProvider(): AgendaDataProvider {
+  let resolved: AgendaDataProvider | null = null
+  function get(): AgendaDataProvider {
+    if (!resolved) {
+      resolved = getSupabaseClientOptional() ? createSupabaseAgendaProvider() : createMockAgendaProvider()
+    }
+    return resolved
+  }
+  return new Proxy({} as AgendaDataProvider, {
+    get: (_, prop) => (...args: any[]) => (get() as any)[prop](...args),
+  })
+}
 import { createAgendaStore } from './store'
 import { agendaRegistries } from './registries'
 import { PluginSettingsPanel } from '../../components/plugins/PluginSettingsPanel'
@@ -20,7 +34,7 @@ import { setScheduleBlockConfig, getScheduleBlockConfig } from '../../lib/schedu
 
 export function createAgendaPlugin(options?: AgendaPluginOptions): PluginManifest {
   const config = resolveConfig(options)
-  const provider = options?.dataProvider ?? (getSupabaseClientOptional() ? createSupabaseAgendaProvider() : createMockAgendaProvider())
+  const provider = options?.dataProvider ?? createSafeAgendaProvider()
   const store = createAgendaStore(provider)
 
   // Register schedule block config globally so ScheduleEditor can read it

@@ -6,6 +6,17 @@ import { CrmContextProvider, type ResolvedCrmConfig } from './CrmContext'
 import type { CrmDataProvider } from './data/types'
 import { createMockCrmProvider } from './data/mock'
 import { getSupabaseClientOptional } from '../../lib/supabase'
+
+function createSafeCrmProvider(): CrmDataProvider {
+  let resolved: CrmDataProvider | null = null
+  function get(): CrmDataProvider {
+    if (!resolved) resolved = getSupabaseClientOptional() ? createSupabaseCrmProvider() : createMockCrmProvider()
+    return resolved
+  }
+  return new Proxy({} as CrmDataProvider, {
+    get: (_, prop) => (...args: any[]) => (get() as any)[prop](...args),
+  })
+}
 import { createSupabaseCrmProvider } from './data/supabase'
 import { createCrmStore } from './store'
 import { crmRegistries } from './registries'
@@ -108,7 +119,7 @@ function resolveConfig(options?: CrmPluginOptions): ResolvedCrmConfig {
 
 export function createCrmPlugin(options?: CrmPluginOptions): PluginManifest {
   const config = resolveConfig(options)
-  const provider = options?.dataProvider ?? (getSupabaseClientOptional() ? createSupabaseCrmProvider() : createMockCrmProvider())
+  const provider = options?.dataProvider ?? createSafeCrmProvider()
   const store = createCrmStore(provider)
 
   const PageComponent: React.FC<any> = () =>

@@ -6,6 +6,21 @@ import { createSupabaseReportProvider } from './data/supabase'
 import { createMockReportProvider } from './data/mock'
 import { getSupabaseClientOptional } from '../../lib/supabase'
 import { useOrganizationStore } from '../../stores/organization.store'
+
+function createSafeReportProvider(): ReportDataProvider {
+  let resolved: ReportDataProvider | null = null
+  function get(): ReportDataProvider {
+    if (!resolved) {
+      resolved = getSupabaseClientOptional()
+        ? createSupabaseReportProvider({ tenantId: () => useOrganizationStore.getState().currentOrg?.id })
+        : createMockReportProvider()
+    }
+    return resolved
+  }
+  return new Proxy({} as ReportDataProvider, {
+    get: (_, prop) => (...args: any[]) => (get() as any)[prop](...args),
+  })
+}
 import { reportsLocales } from './locales'
 import type {
   ReportsPluginOptions,
@@ -67,10 +82,7 @@ function resolveConfig(options: ReportsPluginOptions): ResolvedReportsConfig {
 
 export function createReportsPlugin(options: ReportsPluginOptions): PluginManifest {
   const config = resolveConfig(options)
-  const provider: ReportDataProvider = options.dataProvider
-    ?? (getSupabaseClientOptional()
-      ? createSupabaseReportProvider({ tenantId: () => useOrganizationStore.getState().currentOrg?.id })
-      : createMockReportProvider())
+  const provider: ReportDataProvider = options.dataProvider ?? createSafeReportProvider()
 
   const PageComponent: React.FC<any> = () =>
     React.createElement(ReportsPage, { config, provider })
