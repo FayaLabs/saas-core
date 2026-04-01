@@ -10,6 +10,7 @@ import { ProductFormLayout } from './archetypes/ProductFormLayout'
 import { ServiceFormLayout } from './archetypes/ServiceFormLayout'
 import { LocationFormLayout } from './archetypes/LocationFormLayout'
 import { SubjectFormLayout } from './archetypes/SubjectFormLayout'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { FieldDef, FieldGroup, EntityDef } from '../../types/crud'
 import type { FormLayout } from '../../types/crud'
 
@@ -173,6 +174,7 @@ function FormGroup({
 }
 
 export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel, namePlural }: CrudFormPageProps) {
+  const { t } = useTranslation()
   const formFields = entityDef.fields.filter((f) => f.showInForm !== false)
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
   const [values, setValues] = useState<Record<string, any>>(() =>
@@ -198,7 +200,7 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
       await onSubmit(sanitized)
     } catch (err: any) {
       const message = err?.message || 'Something went wrong'
-      toast.error(`Failed to save ${entityDef.name.toLowerCase()}`, { description: message })
+      toast.error(t('crud.form.failedToSave', { entity: entityDef.name.toLowerCase() }), { description: message })
     } finally {
       setSaving(false)
     }
@@ -208,8 +210,8 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
     setValues((prev) => ({ ...prev, [key]: val }))
   }
 
-  const title = mode === 'create' ? `Add ${entityDef.name}` : `Edit ${entityDef.name}`
-  const breadcrumbLabel = mode === 'create' ? `New ${entityDef.name}` : (initialData?.[displayField] ?? 'Edit')
+  const title = mode === 'create' ? t('crud.form.addTitle', { entity: entityDef.name }) : t('crud.form.editTitle', { entity: entityDef.name })
+  const breadcrumbLabel = mode === 'create' ? t('crud.form.newBreadcrumb', { entity: entityDef.name }) : (initialData?.[displayField] ?? t('common.edit'))
 
   // Organize fields by groups
   const groups = entityDef.fieldGroups ?? []
@@ -305,7 +307,7 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
         <div>
           <h1 className="text-2xl font-bold">{title}</h1>
           <p className="text-muted-foreground">
-            {mode === 'create' ? `Create a new ${entityDef.name.toLowerCase()}.` : `Update ${entityDef.name.toLowerCase()} details.`}
+            {mode === 'create' ? t('crud.form.createDescription', { entity: entityDef.name.toLowerCase() }) : t('crud.form.editDescription', { entity: entityDef.name.toLowerCase() })}
           </p>
         </div>
 
@@ -315,10 +317,10 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
 
           {/* Submit */}
           <div className="flex items-center justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>{t('common.cancel')}</Button>
             <Button type="submit" disabled={saving}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {saving ? 'Saving...' : mode === 'create' ? `Add ${entityDef.name}` : 'Save Changes'}
+              {saving ? t('common.saving') : mode === 'create' ? t('crud.form.addTitle', { entity: entityDef.name }) : t('crud.form.saveChanges')}
             </Button>
           </div>
         </form>

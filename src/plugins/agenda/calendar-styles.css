@@ -219,3 +219,26 @@
 .agenda-calendar .fc-timegrid .fc-col-header-cell {
   padding: 4px 0;
 }
+
+/* ── Alternating resource column backgrounds ── */
+.agenda-calendar .fc-resource-alt {
+  background-color: hsl(var(--muted) / 0.4) !important;
+}
+
+.dark .agenda-calendar .fc-resource-alt {
+  background-color: hsl(var(--muted-foreground) / 0.08) !important;
+}
+
+/* Resource group header separator — stronger border between professionals */
+.agenda-calendar .fc-resource-group {
+  border-left: 2px solid hsl(var(--border));
+}
+
+/* Also stripe the resource header label for the alt group */
+.agenda-calendar th.fc-resource-alt {
+  background-color: hsl(var(--muted) / 0.4) !important;
+}
+
+.dark .agenda-calendar th.fc-resource-alt {
+  background-color: hsl(var(--muted-foreground) / 0.06) !important;
+}

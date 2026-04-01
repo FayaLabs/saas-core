@@ -5,6 +5,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { AuthUser } from '../../types'
 
 interface UserProfileProps {
@@ -24,6 +25,7 @@ function getInitials(name: string): string {
 }
 
 export function UserProfile({ user, onSave, onAvatarChange }: UserProfileProps) {
+  const { t } = useTranslation()
   const [fullName, setFullName] = React.useState(user?.fullName ?? '')
   const [saving, setSaving] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
@@ -64,9 +66,9 @@ export function UserProfile({ user, onSave, onAvatarChange }: UserProfileProps) 
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Profile</CardTitle>
+          <CardTitle className="text-lg">{t('settings.profile.title')}</CardTitle>
           <CardDescription>
-            Manage your personal information and account settings.
+            {t('settings.profile.subtitle')}
           </CardDescription>
         </CardHeader>
 
@@ -110,7 +112,7 @@ export function UserProfile({ user, onSave, onAvatarChange }: UserProfileProps) 
 
           <div className="space-y-2">
             <label htmlFor="full-name" className="text-sm font-medium">
-              Full Name
+              {t('settings.profile.fullName')}
             </label>
             <Input
               id="full-name"
@@ -122,7 +124,7 @@ export function UserProfile({ user, onSave, onAvatarChange }: UserProfileProps) 
 
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">
-              Email
+              {t('settings.profile.email')}
             </label>
             <Input
               id="email"
@@ -132,7 +134,7 @@ export function UserProfile({ user, onSave, onAvatarChange }: UserProfileProps) 
               className="bg-muted"
             />
             <p className="text-xs text-muted-foreground">
-              Email cannot be changed directly. Contact support for assistance.
+              {t('settings.profile.emailHelp')}
             </p>
           </div>
         </CardContent>
@@ -140,7 +142,7 @@ export function UserProfile({ user, onSave, onAvatarChange }: UserProfileProps) 
         <CardFooter className="justify-end">
           <Button type="submit" disabled={saving}>
             <Save className="mr-2 h-4 w-4" />
-            {saving ? 'Saving...' : 'Save Profile'}
+            {saving ? t('common.saving') : t('settings.profile.saveProfile')}
           </Button>
         </CardFooter>
       </Card>

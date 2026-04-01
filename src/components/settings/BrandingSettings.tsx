@@ -4,6 +4,7 @@ import { cn } from '../../lib/cn'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { TenantSettings } from '../../types'
 
 interface BrandingSettingsProps {
@@ -31,6 +32,7 @@ function FileUploadField({
   onClear,
   hint,
 }: FileUploadProps) {
+  const { t } = useTranslation()
   const inputRef = React.useRef<HTMLInputElement>(null)
   const [preview, setPreview] = React.useState<string | null>(null)
 
@@ -86,7 +88,7 @@ function FileUploadField({
             size="sm"
             onClick={() => inputRef.current?.click()}
           >
-            Choose File
+            {t('settings.branding.chooseFile')}
           </Button>
           {hint && (
             <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
@@ -105,6 +107,7 @@ function FileUploadField({
 }
 
 export function BrandingSettings({ branding, onSave }: BrandingSettingsProps) {
+  const { t } = useTranslation()
   const [primaryColor, setPrimaryColor] = React.useState(branding?.primaryColor ?? '#000000')
   const [accentColor, setAccentColor] = React.useState(branding?.accentColor ?? '#6366f1')
   const [logoFile, setLogoFile] = React.useState<File | null>(null)
@@ -148,9 +151,9 @@ export function BrandingSettings({ branding, onSave }: BrandingSettingsProps) {
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Branding</CardTitle>
+          <CardTitle className="text-lg">{t('settings.branding.title')}</CardTitle>
           <CardDescription>
-            Customize the look and feel of your workspace.
+            {t('settings.branding.subtitle')}
           </CardDescription>
         </CardHeader>
 
@@ -158,7 +161,7 @@ export function BrandingSettings({ branding, onSave }: BrandingSettingsProps) {
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="primary-color" className="text-sm font-medium">
-                Primary Color
+                {t('settings.branding.primaryColor')}
               </label>
               <div className="flex items-center gap-3">
                 <input
@@ -180,7 +183,7 @@ export function BrandingSettings({ branding, onSave }: BrandingSettingsProps) {
 
             <div className="space-y-2">
               <label htmlFor="accent-color" className="text-sm font-medium">
-                Accent Color
+                {t('settings.branding.accentColor')}
               </label>
               <div className="flex items-center gap-3">
                 <input
@@ -202,7 +205,7 @@ export function BrandingSettings({ branding, onSave }: BrandingSettingsProps) {
           </div>
 
           <div className="rounded-md border p-4">
-            <p className="mb-3 text-sm font-medium">Preview</p>
+            <p className="mb-3 text-sm font-medium">{t('settings.branding.preview')}</p>
             <div className="flex items-center gap-3">
               <div
                 className="h-10 w-24 rounded-md"
@@ -243,7 +246,7 @@ export function BrandingSettings({ branding, onSave }: BrandingSettingsProps) {
         <CardFooter className="justify-end">
           <Button type="submit" disabled={saving}>
             <Save className="mr-2 h-4 w-4" />
-            {saving ? 'Saving...' : 'Save Branding'}
+            {saving ? t('common.saving') : t('settings.branding.saveBranding')}
           </Button>
         </CardFooter>
       </Card>

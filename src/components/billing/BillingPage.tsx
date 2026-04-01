@@ -3,6 +3,7 @@ import { PlanSelector } from './PlanSelector'
 import { SubscriptionCard } from './SubscriptionCard'
 import { useBillingStore } from '../../stores/billing.store'
 import { useBilling } from '../../hooks/useBilling'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { PlanInterval } from '../../types'
 
 interface BillingPageProps {
@@ -12,6 +13,7 @@ interface BillingPageProps {
 export function BillingPage({ className }: BillingPageProps) {
   const { plans, subscription, loading } = useBillingStore()
   const billing = useBilling()
+  const { t } = useTranslation()
   const [interval, setInterval] = React.useState<PlanInterval>('monthly')
 
   // Fetch subscription on mount
@@ -24,9 +26,9 @@ export function BillingPage({ className }: BillingPageProps) {
   return (
     <div className={className ?? 'mx-auto max-w-5xl space-y-8'}>
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t('billing.title')}</h1>
         <p className="text-sm text-muted-foreground">
-          Manage your subscription and billing.
+          {t('billing.subtitle')}
         </p>
       </div>
 

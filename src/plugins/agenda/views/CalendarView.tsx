@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback, useMemo, useState } from 'react'
-import '../calendar-styles.css'
+import { injectCalendarStyles } from '../calendar-styles'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -13,6 +13,7 @@ import { useAgendaConfig, useAgendaStore } from '../AgendaContext'
 import { MiniCalendar } from '../components/MiniCalendar'
 import { AppointmentModal } from '../components/AppointmentModal'
 import { AppointmentPopover } from '../components/AppointmentPopover'
+import { PersonLink } from '../../../components/shared/PersonLink'
 import { EventContextMenu } from '../components/EventContextMenu'
 import type { CalendarBooking, Schedule } from '../types'
 
@@ -168,9 +169,58 @@ function generateAvailabilityEvents(
   return bgEvents
 }
 
+// ---------------------------------------------------------------------------
+// Loading skeleton — mimics the resource-timegrid-week layout
+// ---------------------------------------------------------------------------
+
+function CalendarSkeleton({ profCount = 2 }: { profCount?: number }) {
+  const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+  const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
+
+  return (
+    <div className="flex-1 overflow-hidden animate-pulse">
+      <div className="flex border-b" style={{ paddingLeft: 56 }}>
+        {Array.from({ length: profCount }).map((_, pi) => (
+          <div key={pi} className="flex-1 border-r last:border-r-0 py-2 px-3">
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-6 w-6 rounded-full bg-muted" />
+              <div className="h-3 w-20 rounded bg-muted" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex border-b" style={{ paddingLeft: 56 }}>
+        {Array.from({ length: profCount }).map((_, pi) => (
+          <div key={pi} className="flex-1 flex border-r last:border-r-0">
+            {days.map((d) => (
+              <div key={d} className="flex-1 py-1.5 text-center">
+                <span className="text-[10px] text-muted-foreground/40">{d}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="relative">
+        {hours.map((h) => (
+          <div key={h} className="flex border-b border-border/30" style={{ height: 50 }}>
+            <div className="w-14 shrink-0 pr-2 text-right">
+              <span className="text-[10px] text-muted-foreground/30">{h}</span>
+            </div>
+            <div className="flex-1 flex">
+              {Array.from({ length: profCount * 7 }).map((_, ci) => (
+                <div key={ci} className={`flex-1 border-r border-border/20 ${Math.floor(ci / 7) % 2 === 1 ? 'bg-muted/20' : ''}`} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const VIEW_OPTIONS = [
   { key: 'resourceTimeGridDay', label: 'Day' },
-  { key: 'timeGridWeek', label: 'Week' },
+  { key: 'resourceTimeGridWeek', label: 'Week' },
   { key: 'dayGridMonth', label: 'Month' },
 ] as const
 
@@ -179,12 +229,15 @@ const VIEW_OPTIONS = [
 // ---------------------------------------------------------------------------
 
 export function CalendarView() {
+  injectCalendarStyles()
   const config = useAgendaConfig()
   const calendarRef = useRef<FullCalendar>(null)
-  const prefs = usePluginPrefs('agenda', { calendarView: 'timeGridWeek' })
+  const prefs = usePluginPrefs('agenda', { calendarView: 'resourceTimeGridWeek' })
 
   const bookings = useAgendaStore((s) => s.bookings)
+  const bookingsLoading = useAgendaStore((s) => s.bookingsLoading)
   const professionals = useAgendaStore((s) => s.professionals)
+  const professionalsLoading = useAgendaStore((s) => s.professionalsLoading)
   const currentView = useAgendaStore((s) => s.currentView)
   const selectedProfIds = useAgendaStore((s) => s.selectedProfessionalIds)
   const selectedStatuses = useAgendaStore((s) => s.selectedStatuses)
@@ -392,14 +445,36 @@ export function CalendarView() {
     setFilters({ statuses: next })
   }
 
+  // Alternating resource backgrounds — apply via DOM after render
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  const applyResourceStriping = useCallback(() => {
+    const container = wrapperRef.current
+    if (!container) return
+    const resourceIds = resources.map((r: { id: string }) => r.id)
+    if (resourceIds.length < 2) return
+    container.querySelectorAll('[data-resource-id]').forEach((el: Element) => {
+      const rid = el.getAttribute('data-resource-id')
+      const idx = rid ? resourceIds.indexOf(rid) : -1
+      el.classList.toggle('fc-resource-alt', idx % 2 === 1)
+    })
+  }, [resources])
+
+  useEffect(() => {
+    applyResourceStriping()
+    const t1 = setTimeout(applyResourceStriping, 100)
+    const t2 = setTimeout(applyResourceStriping, 300)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [applyResourceStriping, currentView, visibleRange, bookings])
+
   const resourceLabelContent = useCallback((arg: any) => {
-    const { title, extendedProps } = arg.resource
+    const { id, title, extendedProps } = arg.resource
     const initials = title.split(' ').map((n: string) => n[0]).join('').slice(0, 2)
     return (
       <div className="flex items-center gap-2 px-2 py-1.5">
         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">{initials}</div>
         <div className="min-w-0">
-          <p className="text-xs font-medium truncate">{title}</p>
+          <PersonLink personId={id} name={title} size="sm" tab="schedule" />
           {extendedProps?.locationName && <p className="text-[10px] text-muted-foreground truncate">{extendedProps.locationName}</p>}
         </div>
       </div>
@@ -544,11 +619,14 @@ export function CalendarView() {
         </div>
 
         {/* Calendar */}
-        <div className="flex-1 overflow-hidden agenda-calendar">
+        {professionalsLoading && professionals.length === 0 ? (
+          <CalendarSkeleton profCount={2} />
+        ) : (
+        <div ref={wrapperRef} className="flex-1 overflow-hidden agenda-calendar">
           <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, resourceTimeGridPlugin, interactionPlugin, listPlugin]}
-            initialView={prefs.get('calendarView')}
+            initialView={prefs.get('calendarView') === 'timeGridWeek' ? 'resourceTimeGridWeek' : prefs.get('calendarView')}
             schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
             resources={resources}
             events={events}
@@ -579,6 +657,7 @@ export function CalendarView() {
             slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
           />
         </div>
+        )}
       </div>
 
       {/* Popover — stays mounted until animation finishes */}

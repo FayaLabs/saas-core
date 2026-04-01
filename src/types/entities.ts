@@ -1,4 +1,4 @@
-export type EntityArchetype = 'person' | 'category' | 'product' | 'service' | 'order' | 'transaction' | 'booking' | 'schedule' | 'location'
+export type EntityArchetype = 'person' | 'category' | 'product' | 'service' | 'order' | 'transaction' | 'schedule' | 'location'
 
 export interface BaseEntity {
   id: string
@@ -126,33 +126,6 @@ export interface TransactionEntity extends BaseEntity {
   metadata: Record<string, unknown>
 }
 
-export interface BookingEntity extends BaseEntity {
-  archetype: 'booking'
-  kind: string
-  partyId?: string
-  assigneeId?: string
-  locationId?: string
-  orderId?: string
-  startsAt: string
-  endsAt?: string
-  status: string
-  notes?: string
-  metadata: Record<string, unknown>
-}
-
-export interface BookingItemEntity {
-  id: string
-  bookingId: string
-  serviceId?: string
-  assigneeId?: string
-  name: string
-  durationMinutes?: number
-  price: number
-  sortOrder: number
-  notes?: string
-  metadata: Record<string, unknown>
-  createdAt: string
-}
 
 export interface LocationEntity extends BaseEntity {
   archetype: 'location'
@@ -193,5 +166,4 @@ export type Entity =
   | LocationEntity
   | OrderEntity
   | TransactionEntity
-  | BookingEntity
   | ScheduleEntity

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { FileText, Plus, Pencil } from 'lucide-react'
 import { useCrmStore, useCrmConfig, formatCurrency } from '../CrmContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { TableSkeleton } from '../../../components/ui/skeleton'
 
@@ -13,6 +14,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export function QuoteListView({ onNew, onEdit, onEditQuote }: { onNew?: () => void; onEdit?: (id: string) => void; onEditQuote?: (id: string) => void }) {
+  const { t } = useTranslation()
   const { currency } = useCrmConfig()
   const quotes = useCrmStore((s) => s.quotes)
   const quotesLoading = useCrmStore((s) => s.quotesLoading)
@@ -23,11 +25,11 @@ export function QuoteListView({ onNew, onEdit, onEditQuote }: { onNew?: () => vo
   return (
     <div className="space-y-4">
       <SubpageHeader
-        title="Quotes"
-        subtitle={`${quotes.length} quotes`}
+        title={t('crm.quotes.title')}
+        subtitle={t('crm.quotes.quotesCount', { count: String(quotes.length) })}
         actions={onNew && (
           <button onClick={onNew} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-            <Plus className="h-3.5 w-3.5" /> New Quote
+            <Plus className="h-3.5 w-3.5" /> {t('crm.quotes.newQuote')}
           </button>
         )}
       />
@@ -36,8 +38,8 @@ export function QuoteListView({ onNew, onEdit, onEditQuote }: { onNew?: () => vo
       ) : quotes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed border-muted">
           <FileText className="h-8 w-8 text-muted-foreground/30 mb-2" />
-          <p className="text-sm text-muted-foreground">No quotes yet</p>
-          {onNew && <button onClick={onNew} className="text-xs text-primary hover:underline mt-1">Create your first quote</button>}
+          <p className="text-sm text-muted-foreground">{t('crm.quotes.noQuotes')}</p>
+          {onNew && <button onClick={onNew} className="text-xs text-primary hover:underline mt-1">{t('crm.quotes.createFirst')}</button>}
         </div>
       ) : (
         <div className="rounded-lg border overflow-hidden">

@@ -2,8 +2,10 @@ import React, { useEffect } from 'react'
 import { CreditCard, Check } from 'lucide-react'
 import { useFinancialConfig, useFinancialStore, formatCurrency } from '../FinancialContext'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 export function CardsView() {
+  const { t } = useTranslation()
   const { currency, labels } = useFinancialConfig()
   const cardTransactions = useFinancialStore((s) => s.cardTransactions)
   const cardsLoading = useFinancialStore((s) => s.cardsLoading)
@@ -21,7 +23,7 @@ export function CardsView() {
 
   return (
     <div className="space-y-4">
-      <SubpageHeader title="Cards" subtitle="Credit and debit card transactions" />
+      <SubpageHeader title={t('financial.cards.title')} subtitle={t('financial.cards.subtitle')} />
       {cardsLoading ? (
         <div className="text-center py-12 text-sm text-muted-foreground">Loading...</div>
       ) : cardTransactions.length === 0 ? (
@@ -29,8 +31,8 @@ export function CardsView() {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-500/20 mb-2">
             <CreditCard className="h-5 w-5 text-indigo-500" />
           </div>
-          <p className="text-sm text-muted-foreground">No card transactions</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Card transactions will appear here when payments are made via credit/debit cards</p>
+          <p className="text-sm text-muted-foreground">{t('financial.cards.noTransactions')}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('financial.cards.transactionsAppear')}</p>
         </div>
       ) : (
         Object.entries(byBrand).map(([brand, txs]) => (

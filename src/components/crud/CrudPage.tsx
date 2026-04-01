@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useOrganizationStore } from '../../stores/organization.store'
+import { useTranslation } from '../../hooks/useTranslation'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -70,6 +71,7 @@ function CrudTableView<T extends { id: string }>({
   onDelete: (item: T) => void
   feature?: string
 }) {
+  const { t } = useTranslation()
   const columns = fieldToColumns(entityDef.fields)
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
 
@@ -103,7 +105,7 @@ function CrudTableView<T extends { id: string }>({
                   </span>
                 </th>
               ))}
-              <th className="text-right p-4 text-sm font-medium text-muted-foreground">Actions</th>
+              <th className="text-right p-4 text-sm font-medium text-muted-foreground">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -157,6 +159,7 @@ function CrudTableView<T extends { id: string }>({
 
 export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePath, display, feature, readOnly }: CrudPageProps<T>) {
   const store = useStore()
+  const { t } = useTranslation()
   const { sub, direction } = useSubRoute(basePath)
   const [deleteItem, setDeleteItem] = useState<T | null>(null)
   const [searchInput, setSearchInput] = useState('')
@@ -248,11 +251,11 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
           <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <button type="button" onClick={navigateToList} className="hover:text-foreground transition-colors">{namePlural}</button>
             <span>/</span>
-            <span className="text-foreground font-medium">Not Found</span>
+            <span className="text-foreground font-medium">{t('common.notFound')}</span>
           </nav>
           <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">{entityDef.name} not found.</p>
-            <Button onClick={navigateToList}>Back to {namePlural}</Button>
+            <p className="text-muted-foreground mb-4">{t('crud.detail.notFound', { entity: entityDef.name })}</p>
+            <Button onClick={navigateToList}>{t('crud.detail.backTo', { entities: namePlural })}</Button>
           </div>
         </div>
       )
@@ -276,7 +279,10 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
     const id = sub.slice(1, -5)
     window.location.hash = `${basePath}/${id}`
   } else if (sub.startsWith('/') && sub.length > 1) {
-    const id = sub.slice(1)
+    // Parse /uuid or /uuid/tab-name
+    const subParts = sub.slice(1).split('/')
+    const id = subParts[0]
+    const initialTab = subParts[1] || undefined
     const item = store.getById(id)
     viewKey = `detail-${id}`
 
@@ -328,11 +334,11 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
           <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <button type="button" onClick={navigateToList} className="hover:text-foreground transition-colors">{namePlural}</button>
             <span>/</span>
-            <span className="text-foreground font-medium">Not Found</span>
+            <span className="text-foreground font-medium">{t('common.notFound')}</span>
           </nav>
           <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">{entityDef.name} not found.</p>
-            <Button onClick={navigateToList}>Back to {namePlural}</Button>
+            <p className="text-muted-foreground mb-4">{t('crud.detail.notFound', { entity: entityDef.name })}</p>
+            <Button onClick={navigateToList}>{t('crud.detail.backTo', { entities: namePlural })}</Button>
           </div>
         </div>
       )
@@ -343,6 +349,7 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
           item={item as any}
           namePlural={namePlural}
           basePath={basePath}
+          initialTab={initialTab}
           onBack={navigateToList}
           onEdit={readOnly ? undefined : () => { window.location.hash = `${basePath}/${id}/edit` }}
           onDelete={readOnly ? undefined : () => setDeleteItem(item)}
@@ -372,12 +379,12 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
             {isInitialLoad ? (
               <div className="h-5 w-32 animate-pulse rounded bg-muted mt-1" />
             ) : (
-              <p className="text-muted-foreground">{store.total} total {namePlural.toLowerCase()}</p>
+              <p className="text-muted-foreground">{t('crud.list.totalCount', { count: String(store.total), entities: namePlural.toLowerCase() })}</p>
             )}
           </div>
           {!readOnly && (feature ? (
             <PermissionGate feature={feature} action="create">
-              <Button onClick={() => { window.location.hash = `${basePath}/new` }}>+ Add {entityDef.name}</Button>
+              <Button onClick={() => { window.location.hash = `${basePath}/new` }}>{t('crud.list.addEntity', { entity: entityDef.name })}</Button>
             </PermissionGate>
           ) : (
             <Button onClick={() => { window.location.hash = `${basePath}/new` }}>+ Add {entityDef.name}</Button>
@@ -387,7 +394,7 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
         {entityDef.fields.some((f) => f.searchable) && (
           <Input
             type="text"
-            placeholder={`Search ${namePlural.toLowerCase()}...`}
+            placeholder={t('crud.list.search', { entities: namePlural.toLowerCase() })}
             value={searchInput}
             onChange={(e) => handleSearch(e.target.value)}
             className="max-w-sm"
@@ -422,7 +429,7 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
                       {columns.map((col) => (
                         <th key={col.key} className="text-left p-4 text-sm font-medium text-muted-foreground">{col.label}</th>
                       ))}
-                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">{t('common.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -450,8 +457,8 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
           display === 'cards' ? (
             <Card>
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-muted-foreground mb-4">No {namePlural.toLowerCase()} yet</p>
-                {!readOnly && <button type="button" onClick={() => { window.location.hash = `${basePath}/new` }} className="text-sm font-medium text-primary hover:underline">Add your first {entityDef.name.toLowerCase()}</button>}
+                <p className="text-muted-foreground mb-4">{t('crud.list.empty', { entities: namePlural.toLowerCase() })}</p>
+                {!readOnly && <button type="button" onClick={() => { window.location.hash = `${basePath}/new` }} className="text-sm font-medium text-primary hover:underline">{t('crud.list.addFirst', { entity: entityDef.name.toLowerCase() })}</button>}
               </div>
             </Card>
           ) : (
@@ -463,15 +470,15 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
                       {columns.map((col) => (
                         <th key={col.key} className="text-left p-4 text-sm font-medium text-muted-foreground">{col.label}</th>
                       ))}
-                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">{t('common.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
                       <td colSpan={columns.length + 1}>
                         <div className="flex flex-col items-center justify-center py-12 text-center">
-                          <p className="text-muted-foreground mb-4">No {namePlural.toLowerCase()} yet</p>
-                          {!readOnly && <button type="button" onClick={() => { window.location.hash = `${basePath}/new` }} className="text-sm font-medium text-primary hover:underline">Add your first {entityDef.name.toLowerCase()}</button>}
+                          <p className="text-muted-foreground mb-4">{t('crud.list.empty', { entities: namePlural.toLowerCase() })}</p>
+                          {!readOnly && <button type="button" onClick={() => { window.location.hash = `${basePath}/new` }} className="text-sm font-medium text-primary hover:underline">{t('crud.list.addFirst', { entity: entityDef.name.toLowerCase() })}</button>}
                         </div>
                       </td>
                     </tr>

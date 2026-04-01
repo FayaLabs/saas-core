@@ -18,6 +18,7 @@ import { useOrganizationStore } from '../../stores/organization.store'
 import { useInviteStore } from '../../stores/invite.store'
 import { useOrgAdapterOptional } from '../../lib/org-context'
 import { useAuthStore } from '../../stores/auth.store'
+import { useTranslation } from '../../hooks/useTranslation'
 
 interface InviteMemberDialogProps {
   open: boolean
@@ -25,6 +26,7 @@ interface InviteMemberDialogProps {
 }
 
 export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogProps) {
+  const { t } = useTranslation()
   const adapter = useOrgAdapterOptional()
   const currentOrg = useOrganizationStore((s) => s.currentOrg)
   const profiles = usePermissionsStore((s) => s.profiles)
@@ -86,8 +88,8 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
     <Modal open={open} onOpenChange={handleClose}>
       <ModalContent>
         <ModalHeader>
-          <ModalTitle>Invite Team Members</ModalTitle>
-          <ModalDescription>Send invites to join your organization.</ModalDescription>
+          <ModalTitle>{t('organization.invite.title')}</ModalTitle>
+          <ModalDescription>{t('organization.invite.description')}</ModalDescription>
         </ModalHeader>
 
         {sent ? (
@@ -95,13 +97,13 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
               <svg className="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
             </div>
-            <p className="text-sm font-medium">Invitations sent</p>
-            <p className="text-xs text-muted-foreground mt-1">Your team members will receive an email with instructions to join.</p>
+            <p className="text-sm font-medium">{t('organization.invite.sent')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('organization.invite.sentDescription')}</p>
           </div>
         ) : (
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email addresses</label>
+              <label className="text-sm font-medium">{t('organization.invite.emailLabel')}</label>
               {emails.map((email, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <Input
@@ -119,15 +121,15 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
               ))}
               <Button variant="ghost" size="sm" onClick={addEmail} className="text-xs">
                 <Plus className="h-3.5 w-3.5 mr-1" />
-                Add another
+                {t('organization.invite.addAnother')}
               </Button>
             </div>
 
             <div>
-              <label className="text-sm font-medium">Role</label>
+              <label className="text-sm font-medium">{t('organization.invite.roleLabel')}</label>
               <Select value={profileId} onValueChange={setProfileId}>
                 <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select a role" />
+                  <SelectValue placeholder={t('organization.invite.rolePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {profiles.map((p) => (
@@ -141,12 +143,12 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
 
         <ModalFooter>
           {sent ? (
-            <Button onClick={handleClose}>Done</Button>
+            <Button onClick={handleClose}>{t('common.done')}</Button>
           ) : (
             <>
-              <Button variant="outline" onClick={handleClose}>Cancel</Button>
+              <Button variant="outline" onClick={handleClose}>{t('common.cancel')}</Button>
               <Button onClick={handleSend} disabled={sending || emails.every((e) => !e.trim())}>
-                {sending ? 'Sending...' : 'Send Invites'}
+                {sending ? t('organization.invite.sending') : t('organization.invite.sendInvites')}
               </Button>
             </>
           )}

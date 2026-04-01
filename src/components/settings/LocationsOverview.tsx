@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Checkbox } from '../ui/checkbox'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { Location } from '../../types/tenant'
 
 interface LocationsOverviewProps {
@@ -14,6 +15,7 @@ interface LocationsOverviewProps {
 }
 
 function AddLocationForm({ onAdd, onCancel }: { onAdd: LocationsOverviewProps['onAdd']; onCancel: () => void }) {
+  const { t } = useTranslation()
   const [name, setName] = React.useState('')
   const [address, setAddress] = React.useState('')
   const [city, setCity] = React.useState('')
@@ -47,24 +49,24 @@ function AddLocationForm({ onAdd, onCancel }: { onAdd: LocationsOverviewProps['o
 
   return (
     <form onSubmit={handleSubmit} className="border rounded-lg p-4 space-y-3">
-      <p className="text-sm font-medium">New Location</p>
-      <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Location name *" required />
-      <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Address" />
+      <p className="text-sm font-medium">{t('settings.locations.newLocation')}</p>
+      <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('settings.locations.namePlaceholder')} required />
+      <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t('settings.locations.addressPlaceholder')} />
       <div className="grid gap-3 sm:grid-cols-3">
-        <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" />
-        <Input value={state} onChange={(e) => setState(e.target.value)} placeholder="State" />
-        <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Country" />
+        <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t('settings.locations.cityPlaceholder')} />
+        <Input value={state} onChange={(e) => setState(e.target.value)} placeholder={t('settings.locations.statePlaceholder')} />
+        <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder={t('settings.locations.countryPlaceholder')} />
       </div>
-      <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" />
+      <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('settings.locations.phonePlaceholder')} />
       <label className="flex items-center gap-2.5 cursor-pointer text-sm">
         <Checkbox checked={isHQ} onChange={setIsHQ} />
-        Headquarters
+        {t('settings.locations.headquarters')}
       </label>
       <div className="flex justify-end gap-2 pt-1">
-        <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving}>Cancel</Button>
+        <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving}>{t('common.cancel')}</Button>
         <Button type="submit" size="sm" disabled={saving || !name.trim()}>
           {saving && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-          {saving ? 'Adding...' : 'Add Location'}
+          {saving ? t('settings.locations.adding') : t('settings.locations.addLocation')}
         </Button>
       </div>
     </form>
@@ -72,14 +74,15 @@ function AddLocationForm({ onAdd, onCancel }: { onAdd: LocationsOverviewProps['o
 }
 
 export function LocationsOverview({ locations, loading, canManage, onAdd }: LocationsOverviewProps) {
+  const { t } = useTranslation()
   const [showForm, setShowForm] = React.useState(false)
 
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Locations</CardTitle>
-          <CardDescription>Your organization's locations.</CardDescription>
+          <CardTitle className="text-lg">{t('settings.locations.title')}</CardTitle>
+          <CardDescription>{t('settings.locations.subtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
@@ -98,14 +101,14 @@ export function LocationsOverview({ locations, loading, canManage, onAdd }: Loca
             <CardTitle className="text-lg">Locations</CardTitle>
             <CardDescription>
               {locations.length === 0
-                ? 'No locations configured yet.'
-                : `${locations.length} location${locations.length === 1 ? '' : 's'} registered.`}
+                ? t('settings.locations.noLocations')
+                : t('settings.locations.countDescription', { count: String(locations.length), plural: locations.length === 1 ? '' : 's' })}
             </CardDescription>
           </div>
           {canManage && !showForm && (
             <Button size="sm" variant="outline" onClick={() => setShowForm(true)}>
               <Plus className="h-4 w-4 mr-1" />
-              Add Location
+              {t('settings.locations.addLocation')}
             </Button>
           )}
         </div>
@@ -119,12 +122,12 @@ export function LocationsOverview({ locations, loading, canManage, onAdd }: Loca
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <MapPin className="h-8 w-8 text-muted-foreground/50 mb-2" />
             <p className="text-sm text-muted-foreground mb-3">
-              No locations have been added to this organization yet.
+              {t('settings.locations.empty')}
             </p>
             {canManage && (
               <Button size="sm" onClick={() => setShowForm(true)}>
                 <Plus className="h-4 w-4 mr-1" />
-                Add your first location
+                {t('settings.locations.addFirst')}
               </Button>
             )}
           </div>
@@ -142,7 +145,7 @@ export function LocationsOverview({ locations, loading, canManage, onAdd }: Loca
                     )}
                     {!loc.isActive && (
                       <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                        Inactive
+                        {t('common.inactive')}
                       </span>
                     )}
                   </div>

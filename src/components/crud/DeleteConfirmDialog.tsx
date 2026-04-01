@@ -8,6 +8,7 @@ import {
   ModalFooter,
 } from '../ui/modal'
 import { Button } from '../ui/button'
+import { useTranslation } from '../../hooks/useTranslation'
 
 interface DeleteConfirmDialogProps {
   open: boolean
@@ -18,20 +19,21 @@ interface DeleteConfirmDialogProps {
 }
 
 export function DeleteConfirmDialog({ open, onClose, onConfirm, entityName, displayValue }: DeleteConfirmDialogProps) {
+  const { t } = useTranslation()
   return (
     <Modal open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <ModalContent>
         <ModalHeader>
-          <ModalTitle>Delete {entityName}?</ModalTitle>
+          <ModalTitle>{t('crud.delete.title', { entity: entityName })}</ModalTitle>
           <ModalDescription>
             {displayValue
-              ? `Are you sure you want to delete "${displayValue}"? This action cannot be undone.`
-              : `Are you sure you want to delete this ${entityName.toLowerCase()}? This action cannot be undone.`}
+              ? t('crud.delete.confirmNamed', { name: displayValue })
+              : t('crud.delete.confirmGeneric', { entity: entityName.toLowerCase() })}
           </ModalDescription>
         </ModalHeader>
         <ModalFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button variant="destructive" onClick={onConfirm}>Delete</Button>
+          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button variant="destructive" onClick={onConfirm}>{t('common.delete')}</Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

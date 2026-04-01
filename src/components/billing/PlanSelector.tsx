@@ -4,6 +4,7 @@ import { cn } from '../../lib/cn'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { Plan, PlanInterval } from '../../types'
 
 interface PlanSelectorProps {
@@ -23,6 +24,8 @@ export function PlanSelector({
   onSelectPlan,
   loading,
 }: PlanSelectorProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-center gap-3">
@@ -36,7 +39,7 @@ export function PlanSelector({
           )}
           onClick={() => onIntervalChange('monthly')}
         >
-          Monthly
+          {t('billing.monthly')}
         </button>
         <button
           type="button"
@@ -48,8 +51,8 @@ export function PlanSelector({
           )}
           onClick={() => onIntervalChange('yearly')}
         >
-          Yearly
-          <span className="ml-1.5 text-xs opacity-80">Save 20%</span>
+          {t('billing.yearly')}
+          <span className="ml-1.5 text-xs opacity-80">{t('billing.yearlySave')}</span>
         </button>
       </div>
 
@@ -68,7 +71,7 @@ export function PlanSelector({
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge>Most Popular</Badge>
+                  <Badge>{t('billing.mostPopular')}</Badge>
                 </div>
               )}
 
@@ -100,7 +103,7 @@ export function PlanSelector({
               <CardFooter>
                 {isCurrent ? (
                   <Button variant="outline" className="w-full" disabled>
-                    Current Plan
+                    {t('billing.currentPlan')}
                   </Button>
                 ) : (
                   <Button
@@ -109,7 +112,7 @@ export function PlanSelector({
                     disabled={loading}
                     onClick={() => onSelectPlan(plan.id)}
                   >
-                    {loading ? 'Processing...' : 'Get Started'}
+                    {loading ? t('billing.processing') : t('billing.getStarted')}
                   </Button>
                 )}
               </CardFooter>

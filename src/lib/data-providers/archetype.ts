@@ -3,7 +3,7 @@ import { getSupabaseClientOptional } from '../supabase'
 import type { EntityArchetype } from '../../types/entities'
 
 // Archetypes that have a `kind` discriminator column
-const HAS_KIND = new Set<EntityArchetype>(['person', 'category', 'order', 'transaction', 'booking', 'schedule', 'location'])
+const HAS_KIND = new Set<EntityArchetype>(['person', 'category', 'order', 'transaction', 'schedule', 'location'])
 
 const ARCHETYPE_CONFIG: Record<EntityArchetype, { table: string; fkColumn: string }> = {
   person: { table: 'persons', fkColumn: 'person_id' },
@@ -13,7 +13,7 @@ const ARCHETYPE_CONFIG: Record<EntityArchetype, { table: string; fkColumn: strin
   location: { table: 'locations', fkColumn: 'location_id' },
   order: { table: 'orders', fkColumn: 'order_id' },
   transaction: { table: 'transactions', fkColumn: 'transaction_id' },
-  booking: { table: 'bookings', fkColumn: 'booking_id' },
+
   schedule: { table: 'schedules', fkColumn: 'schedule_id' },
 }
 
@@ -25,7 +25,7 @@ const ARCHETYPE_COLUMNS: Record<EntityArchetype, Set<string>> = {
   location: new Set(['name', 'email', 'phone', 'address', 'city', 'state', 'country', 'postal_code', 'is_headquarters', 'is_active', 'tags', 'notes', 'metadata']),
   order: new Set(['reference_number', 'status', 'party_id', 'assignee_id', 'location_id', 'subtotal', 'discount', 'tax', 'total', 'currency', 'due_at', 'completed_at', 'notes', 'tags', 'metadata']),
   transaction: new Set(['order_id', 'party_id', 'amount', 'currency', 'payment_method', 'reference', 'status', 'transacted_at', 'notes', 'metadata']),
-  booking: new Set(['party_id', 'assignee_id', 'location_id', 'order_id', 'starts_at', 'ends_at', 'status', 'notes', 'metadata']),
+
   schedule: new Set(['assignee_id', 'location_id', 'day_of_week', 'specific_date', 'starts_at', 'ends_at', 'is_active', 'metadata']),
 }
 

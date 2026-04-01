@@ -7,6 +7,7 @@ import { PermissionMatrixEditor } from './PermissionMatrixEditor'
 import { usePermissionsStore } from '../../stores/permissions.store'
 import { useOrganizationStore } from '../../stores/organization.store'
 import { useOrgAdapterOptional } from '../../lib/org-context'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { PermissionProfile, PermissionAction, SystemPermission } from '../../types/permissions'
 
 export function PermissionProfilesTab() {
@@ -17,6 +18,7 @@ export function PermissionProfilesTab() {
   const setProfiles = usePermissionsStore((s) => s.setProfiles)
   const members = useOrganizationStore((s) => s.members)
 
+  const { t } = useTranslation()
   const [editingProfile, setEditingProfile] = React.useState<PermissionProfile | null>(null)
   const [creating, setCreating] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
@@ -64,7 +66,7 @@ export function PermissionProfilesTab() {
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">
-          {editingProfile ? `Edit: ${editingProfile.name}` : 'Create Custom Profile'}
+          {editingProfile ? t('organization.permissions.editProfile', { name: editingProfile.name }) : t('organization.permissions.createCustom')}
         </h3>
         <PermissionMatrixEditor
           features={features}
@@ -81,12 +83,12 @@ export function PermissionProfilesTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Permission Profiles</h3>
-          <p className="text-sm text-muted-foreground">Manage roles and their permissions.</p>
+          <h3 className="text-lg font-semibold">{t('organization.permissions.title')}</h3>
+          <p className="text-sm text-muted-foreground">{t('organization.permissions.subtitle')}</p>
         </div>
         <Button onClick={() => setCreating(true)} size="sm">
           <Plus className="h-4 w-4 mr-1" />
-          Create Profile
+          {t('organization.permissions.createProfile')}
         </Button>
       </div>
 
@@ -100,13 +102,13 @@ export function PermissionProfilesTab() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <CardTitle className="text-sm">{profile.name}</CardTitle>
-                  {profile.isSystem && <Badge variant="secondary" className="text-xs">System</Badge>}
+                  {profile.isSystem && <Badge variant="secondary" className="text-xs">{t('organization.permissions.system')}</Badge>}
                 </div>
                 {profile.description && (
                   <CardDescription className="text-xs mt-0.5">{profile.description}</CardDescription>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
-                  {memberCountByProfile[profile.id] ?? 0} member{(memberCountByProfile[profile.id] ?? 0) !== 1 ? 's' : ''}
+                  {t('organization.permissions.memberCount', { count: String(memberCountByProfile[profile.id] ?? 0), plural: (memberCountByProfile[profile.id] ?? 0) !== 1 ? 's' : '' })}
                 </p>
               </div>
               <div className="flex items-center gap-1">

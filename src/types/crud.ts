@@ -79,6 +79,8 @@ export interface EntityDef<T = Record<string, any>> {
     filters?: Record<string, string>
     /** Default values merged into every create payload */
     defaults?: Record<string, unknown>
+    /** Cache TTL in ms for list queries (default: 60 000 — 1 minute) */
+    cacheTTL?: number
   }
   defaultSort?: string
   defaultSortDir?: 'asc' | 'desc'

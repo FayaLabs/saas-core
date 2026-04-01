@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { Clock, Plus, Trash2, Copy, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAgendaConfig, useAgendaProvider, useAgendaStore } from '../AgendaContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import type { Schedule, SaveScheduleInput } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -45,6 +46,7 @@ function schedulesToWeek(schedules: Schedule[]): WeekSchedule {
 // ---------------------------------------------------------------------------
 
 export function WorkingHoursView() {
+  const { t } = useTranslation()
   const config = useAgendaConfig()
   const provider = useAgendaProvider()
   const professionals = useAgendaStore((s) => s.professionals)
@@ -146,10 +148,10 @@ export function WorkingHoursView() {
           })
         }
       }
-      toast.success('Working hours saved')
+      toast.success(t('agenda.workingHours.saved'))
       loadSchedules(selectedProfId)
     } catch (err: any) {
-      toast.error('Failed to save', { description: err?.message })
+      toast.error(t('agenda.workingHours.saveFailed'), { description: err?.message })
     }
     setSaving(false)
   }
@@ -164,7 +166,7 @@ export function WorkingHoursView() {
           </div>
           <div>
             <h2 className="text-lg font-semibold">{config.labels.workingHours}</h2>
-            <p className="text-sm text-muted-foreground">Manage working hours per professional</p>
+            <p className="text-sm text-muted-foreground">{t('agenda.workingHours.subtitle')}</p>
           </div>
         </div>
         <button
@@ -173,19 +175,19 @@ export function WorkingHoursView() {
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
           <Save className="h-4 w-4" />
-          {saving ? 'Saving...' : 'Save'}
+          {saving ? t('agenda.workingHours.saving') : t('agenda.workingHours.save')}
         </button>
       </div>
 
       {/* Professional selector */}
       <div>
-        <label className="text-sm font-medium text-muted-foreground">Professional</label>
+        <label className="text-sm font-medium text-muted-foreground">{t('agenda.workingHours.professional')}</label>
         <select
           value={selectedProfId}
           onChange={(e) => setSelectedProfId(e.target.value)}
           className="mt-1 block w-full max-w-xs rounded-lg border bg-background px-3 py-2 text-sm"
         >
-          {profLoading && <option>Loading...</option>}
+          {profLoading && <option>{t('agenda.confirmations.loading')}</option>}
           {professionals.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
@@ -194,7 +196,7 @@ export function WorkingHoursView() {
 
       {/* Schedule grid */}
       {loading ? (
-        <div className="flex items-center justify-center py-12 text-muted-foreground">Loading...</div>
+        <div className="flex items-center justify-center py-12 text-muted-foreground">{t('agenda.confirmations.loading')}</div>
       ) : (
         <div className="space-y-3">
           {[1, 2, 3, 4, 5, 6, 0].map((dayOfWeek) => {
@@ -223,7 +225,7 @@ export function WorkingHoursView() {
                           onChange={(e) => updatePeriod(dayOfWeek, idx, 'startsAt', e.target.value)}
                           className="rounded border bg-background px-2 py-1 text-sm"
                         />
-                        <span className="text-muted-foreground">to</span>
+                        <span className="text-muted-foreground">{t('agenda.workingHours.to')}</span>
                         <input
                           type="time"
                           value={period.endsAt}
@@ -244,18 +246,18 @@ export function WorkingHoursView() {
                         onClick={() => addPeriod(dayOfWeek)}
                         className="flex items-center gap-1 text-xs text-primary hover:underline"
                       >
-                        <Plus className="h-3 w-3" /> Add break
+                        <Plus className="h-3 w-3" /> {t('agenda.workingHours.addBreak')}
                       </button>
                       <button
                         onClick={() => copyToAll(dayOfWeek)}
                         className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                       >
-                        <Copy className="h-3 w-3" /> Copy to all
+                        <Copy className="h-3 w-3" /> {t('agenda.workingHours.copyToAll')}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <span className="pt-1 text-sm text-muted-foreground">Day off</span>
+                  <span className="pt-1 text-sm text-muted-foreground">{t('agenda.workingHours.dayOff')}</span>
                 )}
               </div>
             )

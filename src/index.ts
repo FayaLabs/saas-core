@@ -4,6 +4,7 @@ import { useBillingStore } from './stores/billing.store'
 import { useAuthStore } from './stores/auth.store'
 import { usePermissionsStore } from './stores/permissions.store'
 import { createSupabaseClient, getSupabaseClientOptional } from './lib/supabase'
+import { setEntityRouteMap, resolveEntityHref } from './lib/entity-routes'
 import { ToastProvider } from './components/notifications/ToastProvider'
 import { RouterProvider, setGlobalRouter, hashRouterAdapter, type RouterAdapter } from './lib/router'
 import { AppShell } from './components/layout/AppShell'
@@ -51,6 +52,9 @@ import type { PermissionsConfig, PermissionAction } from './types/permissions'
 import { useOrganizationStore } from './stores/organization.store'
 import { usePermission } from './hooks/usePermission'
 import { useTenantPlugins } from './hooks/useTenantPlugins'
+import { I18nProvider, builtInLocales } from './lib/i18n'
+import { useLocaleStore } from './stores/locale.store'
+import { useTranslation } from './hooks/useTranslation'
 
 // ---------------------------------------------------------------------------
 // Page config — unifies navigation + routing in one declaration
@@ -350,7 +354,7 @@ function createGlobalEntitySearch(): EntitySearchFn {
   }
 }
 
-function CommandPaletteWrapper({ navigation, routerAdapter, entityRouteMap }: { navigation: NavigationItem[]; routerAdapter: RouterAdapter; entityRouteMap: Map<string, string> }) {
+function CommandPaletteWrapper({ navigation, routerAdapter }: { navigation: NavigationItem[]; routerAdapter: RouterAdapter }) {
   const { commandPaletteOpen, setCommandPaletteOpen } = useLayoutStore()
 
   const entitySearch = React.useMemo(() => createGlobalEntitySearch(), [])
@@ -386,25 +390,11 @@ function CommandPaletteWrapper({ navigation, routerAdapter, entityRouteMap }: { 
   }, [navigation, routerAdapter])
 
   const handleEntitySelect = React.useCallback((result: EntitySearchResult) => {
-    // Look up the registered route for this entity's archetype+kind
     const archetype = result.data?.archetype ? String(result.data.archetype) : undefined
     const kind = result.data?.kind ? String(result.data.kind) : undefined
-
-    // Try specific archetype:kind match first, then archetype-only, then fall back to group-based guess
-    const routePath = (archetype && kind && entityRouteMap.get(`${archetype}:${kind}`))
-      || (archetype && entityRouteMap.get(archetype))
-      || null
-
-    if (routePath) {
-      routerAdapter.navigate(`${routePath}/${result.id}`)
-    } else {
-      // Fallback for entities without registered CRUD routes
-      const group = result.group?.toLowerCase()
-      if (group) {
-        routerAdapter.navigate(`/${group}/${result.id}`)
-      }
-    }
-  }, [routerAdapter, entityRouteMap])
+    const href = resolveEntityHref(result.id, archetype, kind)
+    routerAdapter.navigate(href)
+  }, [routerAdapter])
 
   return React.createElement(CommandPalette, {
     commands,
@@ -458,14 +448,15 @@ function buildSettingsTabs(
   config: SaasAppConfig,
   pluginTabs: PluginSettingsTab[],
   can: (feature: string, action: PermissionAction) => boolean,
+  t: (key: string, params?: Record<string, string | number>) => string,
 ): { id: string; label: string; icon?: React.ReactNode; component: React.ReactNode }[] {
   const settingsTabs: { id: string; label: string; icon?: React.ReactNode; component: React.ReactNode }[] = []
 
   if (config.organization) {
     settingsTabs.push(
-      { id: 'team', label: 'Team', icon: React.createElement(Users, { className: 'h-4 w-4' }), component: React.createElement(TeamTab) },
-      { id: 'permissions', label: 'Permissions', icon: React.createElement(ShieldCheck, { className: 'h-4 w-4' }), component: React.createElement(PermissionProfilesTab) },
-      { id: 'locations', label: 'Locations', icon: React.createElement(MapPin, { className: 'h-4 w-4' }), component: React.createElement(ConnectedLocationsOverview) },
+      { id: 'team', label: t('settings.team'), icon: React.createElement(Users, { className: 'h-4 w-4' }), component: React.createElement(TeamTab) },
+      { id: 'permissions', label: t('settings.permissions'), icon: React.createElement(ShieldCheck, { className: 'h-4 w-4' }), component: React.createElement(PermissionProfilesTab) },
+      { id: 'locations', label: t('settings.locations'), icon: React.createElement(MapPin, { className: 'h-4 w-4' }), component: React.createElement(ConnectedLocationsOverview) },
     )
   }
 
@@ -504,6 +495,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
   setGlobalRouter(routerAdapter)
 
   const { navigation: baseNavigation, routes: baseRoutes, entityRouteMap } = buildNavigation(config.pages, config)
+  setEntityRouteMap(entityRouteMap)
   const layout = config.layout ?? 'sidebar'
   const logoNode = renderLogo(config.name, config.logo)
 
@@ -534,6 +526,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
     const currentProfile = usePermissionsStore((s) => s.currentProfile)
     const { can } = usePermission()
     const { tenantPlugins: hydratedTenantPlugins } = useTenantPlugins()
+    const { t } = useTranslation()
 
     // Derive display user from auth or config fallback
     const user = authUser
@@ -627,18 +620,18 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
       },
     }
     const NotFoundPage: React.FC = () => React.createElement('div', { className: 'flex flex-col items-center justify-center py-24 text-center' },
-      React.createElement('h1', { className: 'text-6xl font-bold text-muted-foreground/20 mb-4' }, '404'),
-      React.createElement('h2', { className: 'text-xl font-semibold mb-2' }, 'Page not found'),
-      React.createElement('p', { className: 'text-sm text-muted-foreground mb-6' }, 'The page you\'re looking for doesn\'t exist or has been moved.'),
+      React.createElement('h1', { className: 'text-6xl font-bold text-muted-foreground/20 mb-4' }, t('app.notFound.title')),
+      React.createElement('h2', { className: 'text-xl font-semibold mb-2' }, t('app.notFound.heading')),
+      React.createElement('p', { className: 'text-sm text-muted-foreground mb-6' }, t('app.notFound.message')),
       React.createElement('button', {
         className: 'rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors',
         onClick: () => routerAdapter.navigate('/'),
-      }, 'Go to Dashboard'),
+      }, t('app.notFound.goToDashboard')),
     )
     const PageComponent = routeEntry?.component ?? NotFoundPage
     const pagePermission = routeEntry?.permission
     const pageTitle = navigation.find((n) => n.route === matchedPath)?.label ?? navigation.find((n) => n.route === route)?.label ?? navigation[0]?.label ?? ''
-    const settingsTabs = buildSettingsTabs(config, pluginRuntime.settingsTabs, can)
+    const settingsTabs = buildSettingsTabs(config, pluginRuntime.settingsTabs, can, t)
 
     const handleSignOut = async () => {
       if (authAdapter) {
@@ -695,8 +688,8 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
             action: pagePermission.action,
             fallback: React.createElement('div', { className: 'flex items-center justify-center py-24' },
               React.createElement('div', { className: 'text-center' },
-                React.createElement('h2', { className: 'text-xl font-semibold mb-2' }, 'Access Denied'),
-                React.createElement('p', { className: 'text-muted-foreground' }, 'You don\'t have permission to view this page.')
+                React.createElement('h2', { className: 'text-xl font-semibold mb-2' }, t('app.accessDenied.heading')),
+                React.createElement('p', { className: 'text-muted-foreground' }, t('app.accessDenied.message'))
               )
             ),
             children: pageContent,
@@ -767,7 +760,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
           contextOverrides: { matchedPath },
         }),
         // Command palette
-        React.createElement(CommandPaletteWrapper, { navigation, routerAdapter, entityRouteMap }),
+        React.createElement(CommandPaletteWrapper, { navigation, routerAdapter }),
       ),
     )
 
@@ -818,6 +811,11 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
       }
     }, [setFeatures])
 
+    // Initialize locale store
+    React.useEffect(() => {
+      useLocaleStore.getState().setLocale(config.locale?.default ?? 'en')
+    }, [])
+
     let inner: React.ReactNode = React.createElement(
       RouterProvider,
       { value: routerAdapter },
@@ -840,6 +838,34 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
         { value: authAdapter, children: inner },
       )
     }
+
+    // Merge built-in locale packs + plugin locales + consumer overrides
+    const mergedTranslations: Record<string, Record<string, string>> = {}
+    const supportedLocales = config.locale?.supported ?? ['en', 'pt-BR']
+    for (const loc of supportedLocales) {
+      // Layer 1: built-in core translations
+      const layer: Record<string, string> = { ...(builtInLocales[loc] ?? {}) }
+      // Layer 2: plugin translations (each plugin can ship its own locales)
+      if (config.plugins) {
+        for (const plugin of config.plugins) {
+          if (plugin.locales?.[loc]) {
+            Object.assign(layer, plugin.locales[loc])
+          }
+        }
+      }
+      // Layer 3: consumer app overrides (highest priority)
+      Object.assign(layer, config.locale?.translations?.[loc] ?? {})
+      mergedTranslations[loc] = layer
+    }
+
+    // Wrap in I18nProvider (outermost)
+    inner = React.createElement(I18nProvider, {
+      value: {
+        defaultLocale: config.locale?.default ?? 'en',
+        supported: supportedLocales,
+        translations: mergedTranslations,
+      }
+    }, inner)
 
     return inner as React.JSX.Element
   }

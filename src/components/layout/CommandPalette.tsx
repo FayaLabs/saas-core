@@ -10,6 +10,7 @@ import {
   Contact, Building2, Filter, Plus, List, User, Box, Sparkles, Loader2,
   type LucideIcon,
 } from 'lucide-react'
+import { useTranslation } from '../../hooks/useTranslation'
 
 export interface CommandItem {
   id: string
@@ -109,6 +110,7 @@ function useEntitySearch(searchFn: EntitySearchFn | undefined, query: string, op
 // ---------------------------------------------------------------------------
 
 export function CommandPalette({ commands = [], open, onOpenChange, onEntitySearch, onEntitySelect }: CommandPaletteProps) {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const { results: entityResults, loading: entityLoading } = useEntitySearch(onEntitySearch, search, open)
 
@@ -151,14 +153,14 @@ export function CommandPalette({ commands = [], open, onOpenChange, onEntitySear
       <Dialog.Portal>
         <Dialog.Overlay className="saas-overlay fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
         <Dialog.Content className="saas-cmd-palette fixed left-1/2 top-[15%] z-50 w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-2xl border border-border/50 bg-popover shadow-2xl">
-          <Dialog.Title className="sr-only">Command palette</Dialog.Title>
-          <Dialog.Description className="sr-only">Search for pages, actions, people, products and services</Dialog.Description>
+          <Dialog.Title className="sr-only">{t('layout.commandPalette.title')}</Dialog.Title>
+          <Dialog.Description className="sr-only">{t('layout.commandPalette.description')}</Dialog.Description>
 
           <Command className="flex flex-col" label="Command palette" shouldFilter={true}>
             <div className="flex items-center gap-3 border-b border-border/50 px-4">
               <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
               <Command.Input
-                placeholder="Search pages, people, products, services..."
+                placeholder={t('layout.commandPalette.placeholder')}
                 className="flex h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 autoFocus
                 value={search}
@@ -170,7 +172,7 @@ export function CommandPalette({ commands = [], open, onOpenChange, onEntitySear
 
             <Command.List className="max-h-[360px] overflow-y-auto p-1.5">
               <Command.Empty className="py-8 text-center text-sm text-muted-foreground">
-                {entityLoading ? 'Searching…' : 'No results found.'}
+                {entityLoading ? t('layout.commandPalette.searching') : t('layout.commandPalette.noResults')}
               </Command.Empty>
 
               {/* Static commands (pages, actions) */}
@@ -235,16 +237,16 @@ export function CommandPalette({ commands = [], open, onOpenChange, onEntitySear
             <div className="flex items-center justify-between border-t border-border/50 px-4 py-2">
               <span className="text-xs text-muted-foreground">
                 {entityLoading
-                  ? 'Searching…'
+                  ? t('layout.commandPalette.searching')
                   : hasSearch
-                    ? `${totalResults} result${totalResults !== 1 ? 's' : ''}`
-                    : `${commands.length} command${commands.length !== 1 ? 's' : ''}`}
+                    ? t('layout.commandPalette.resultCount', { count: String(totalResults), plural: totalResults !== 1 ? 's' : '' })
+                    : t('layout.commandPalette.commandCount', { count: String(commands.length), plural: commands.length !== 1 ? 's' : '' })}
               </span>
               <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                 <kbd className="rounded border border-border bg-muted px-1 py-0.5 font-medium">&uarr;&darr;</kbd>
-                <span>navigate</span>
+                <span>{t('layout.commandPalette.navigate')}</span>
                 <kbd className="rounded border border-border bg-muted px-1 py-0.5 font-medium">&crarr;</kbd>
-                <span>open</span>
+                <span>{t('layout.commandPalette.open')}</span>
               </div>
             </div>
           </Command>

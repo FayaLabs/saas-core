@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { LoginForm } from './LoginForm'
 import { SignupForm } from './SignupForm'
 import { RecoveryForm } from './RecoveryForm'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { AuthProvider } from '../../types'
 
 interface SplitLoginProps {
@@ -18,13 +19,14 @@ type View = 'login' | 'signup' | 'recovery'
 
 export function SplitLogin({ appName, logo, tagline, description, showOAuth, oauthProviders, onSuccess }: SplitLoginProps) {
   const [view, setView] = useState<View>('login')
+  const { t } = useTranslation()
 
-  const heading = view === 'login' ? 'Sign in' : view === 'signup' ? 'Create account' : 'Reset password'
+  const heading = view === 'login' ? t('auth.login.title') : view === 'signup' ? t('auth.signup.title') : t('auth.recovery.title')
   const subtitle = view === 'login'
-    ? 'Enter your credentials to access your account'
+    ? t('auth.login.enterCredentials')
     : view === 'signup'
-      ? 'Get started with your new account'
-      : 'We\'ll send you a reset link'
+      ? t('auth.signup.getStarted')
+      : t('auth.recovery.resetSubtitle')
 
   return (
     <div className="flex min-h-screen bg-sidebar">
@@ -43,7 +45,7 @@ export function SplitLogin({ appName, logo, tagline, description, showOAuth, oau
           <div className="space-y-4">
             <p className="text-sm font-medium text-sidebar-muted">{appName}</p>
             <h2 className="text-3xl font-bold text-sidebar-foreground">
-              {tagline ?? `Welcome to ${appName}`}
+              {tagline ?? t('auth.login.welcomeTo', { appName })}
             </h2>
             {description && (
               <p className="max-w-md text-sm leading-relaxed text-sidebar-muted">
@@ -59,7 +61,7 @@ export function SplitLogin({ appName, logo, tagline, description, showOAuth, oau
                 ))}
               </div>
               <p className="text-xs text-sidebar-foreground/80">
-                Join thousands of businesses already using {appName}
+                {t('auth.login.socialProof', { appName })}
               </p>
             </div>
           </div>
@@ -91,9 +93,9 @@ export function SplitLogin({ appName, logo, tagline, description, showOAuth, oau
                 oauthProviders={oauthProviders}
               />
               <p className="text-center text-sm text-muted-foreground">
-                Don't have an account?{' '}
+                {t('auth.login.noAccount')}{' '}
                 <button type="button" onClick={() => setView('signup')} className="font-medium text-primary hover:underline">
-                  Sign up
+                  {t('auth.signUp')}
                 </button>
               </p>
             </div>
@@ -103,9 +105,9 @@ export function SplitLogin({ appName, logo, tagline, description, showOAuth, oau
             <div className="space-y-6">
               <SignupForm onSuccess={onSuccess} />
               <p className="text-center text-sm text-muted-foreground">
-                Already have an account?{' '}
+                {t('auth.signup.hasAccount')}{' '}
                 <button type="button" onClick={() => setView('login')} className="font-medium text-primary hover:underline">
-                  Sign in
+                  {t('auth.signIn')}
                 </button>
               </p>
             </div>

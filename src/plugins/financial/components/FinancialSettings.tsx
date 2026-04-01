@@ -2,12 +2,14 @@ import React from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { PluginRegistryManager } from '../../../components/plugins/PluginRegistryManager'
 import type { PluginRegistryDef } from '../../../types/plugins'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 export function FinancialSettings({ registries, routeBase, onClose }: {
   registries: PluginRegistryDef[]
   routeBase: string
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -18,8 +20,8 @@ export function FinancialSettings({ registries, routeBase, onClose }: {
           <ChevronLeft className="h-4 w-4" />
         </button>
         <div>
-          <h2 className="text-lg font-bold">Financial Settings</h2>
-          <p className="text-xs text-muted-foreground">Manage payment methods, accounts, and configurations</p>
+          <h2 className="text-lg font-bold">{t('financial.settingsPage.title')}</h2>
+          <p className="text-xs text-muted-foreground">{t('financial.settingsPage.subtitle')}</p>
         </div>
       </div>
 

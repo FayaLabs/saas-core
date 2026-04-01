@@ -1,6 +1,7 @@
 import React from 'react'
 import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react'
 import { useAgendaConfig } from '../AgendaContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 interface CalendarToolbarProps {
   title: string
@@ -12,17 +13,18 @@ interface CalendarToolbarProps {
   onNewAppointment: () => void
 }
 
-const VIEW_OPTIONS = [
-  { key: 'dayGridMonth', label: 'Month' },
-  { key: 'resourceTimeGridWeek', label: 'Week' },
-  { key: 'resourceTimeGridDay', label: 'Day' },
-  { key: 'listWeek', label: 'Agenda' },
+const VIEW_OPTION_KEYS = [
+  { key: 'dayGridMonth', labelKey: 'agenda.calendar.viewMonth' },
+  { key: 'resourceTimeGridWeek', labelKey: 'agenda.calendar.viewWeek' },
+  { key: 'resourceTimeGridDay', labelKey: 'agenda.calendar.viewDay' },
+  { key: 'listWeek', labelKey: 'agenda.calendar.viewAgenda' },
 ] as const
 
 export function CalendarToolbar({
   title, onPrev, onNext, onToday, onViewChange, currentView, onNewAppointment,
 }: CalendarToolbarProps) {
   const config = useAgendaConfig()
+  const { t } = useTranslation()
 
   return (
     <div className="flex items-center justify-between pb-4">
@@ -34,19 +36,19 @@ export function CalendarToolbar({
             className="flex h-8 items-center justify-center rounded-lg border px-2 text-sm hover:bg-muted/50 transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Previous</span>
+            <span className="hidden sm:inline">{t('agenda.toolbar.previous')}</span>
           </button>
           <button
             onClick={onToday}
             className="flex h-8 items-center justify-center rounded-lg border px-3 text-sm font-medium hover:bg-muted/50 transition-colors"
           >
-            Today
+            {t('agenda.toolbar.today')}
           </button>
           <button
             onClick={onNext}
             className="flex h-8 items-center justify-center rounded-lg border px-2 text-sm hover:bg-muted/50 transition-colors"
           >
-            <span className="hidden sm:inline">Next</span>
+            <span className="hidden sm:inline">{t('agenda.toolbar.next')}</span>
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
@@ -60,7 +62,7 @@ export function CalendarToolbar({
       {/* Right: view switcher + new */}
       <div className="flex items-center gap-3">
         <div className="flex items-center rounded-lg border p-0.5">
-          {VIEW_OPTIONS.map((opt) => (
+          {VIEW_OPTION_KEYS.map((opt) => (
             <button
               key={opt.key}
               onClick={() => onViewChange(opt.key)}
@@ -70,7 +72,7 @@ export function CalendarToolbar({
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
               }`}
             >
-              {opt.label}
+              {t(opt.labelKey)}
             </button>
           ))}
         </div>

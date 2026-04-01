@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { DollarSign, Landmark, CreditCard, BookOpen, ChevronRight, Check } from 'lucide-react'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 const STEPS = [
   {
@@ -29,6 +30,7 @@ const STEPS = [
 ]
 
 export function FinancialOnboarding({ onComplete }: { onComplete: () => void }) {
+  const { t } = useTranslation()
   const [step, setStep] = useState(0)
   const current = STEPS[step]
   const isLast = step === STEPS.length - 1
@@ -65,7 +67,7 @@ export function FinancialOnboarding({ onComplete }: { onComplete: () => void }) 
           {/* Step-specific hint */}
           {step > 0 && step < STEPS.length - 1 && (
             <div className="rounded-lg bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-              You can configure this in detail from the Settings gear icon inside the Financial module.
+              {t('financial.onboarding.configureHint')}
             </div>
           )}
 
@@ -76,7 +78,7 @@ export function FinancialOnboarding({ onComplete }: { onComplete: () => void }) 
                 onClick={() => setStep(step - 1)}
                 className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors"
               >
-                Back
+                {t('financial.onboarding.back')}
               </button>
             )}
             {isLast ? (
@@ -84,14 +86,14 @@ export function FinancialOnboarding({ onComplete }: { onComplete: () => void }) 
                 onClick={onComplete}
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                <Check className="h-4 w-4" /> Start using Financial
+                <Check className="h-4 w-4" /> {t('financial.onboarding.startUsing')}
               </button>
             ) : (
               <button
                 onClick={() => setStep(step + 1)}
                 className="inline-flex items-center gap-1 rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                {step === 0 ? 'Get Started' : 'Next'}
+                {step === 0 ? t('financial.onboarding.getStarted') : t('financial.onboarding.next')}
                 <ChevronRight className="h-4 w-4" />
               </button>
             )}
@@ -103,7 +105,7 @@ export function FinancialOnboarding({ onComplete }: { onComplete: () => void }) 
               onClick={onComplete}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Skip setup — I'll configure later
+              {t('financial.onboarding.skip')}
             </button>
           )}
         </div>

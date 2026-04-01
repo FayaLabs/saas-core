@@ -7,6 +7,7 @@ import { createMockInventoryProvider } from './data/mock'
 import { createSupabaseInventoryProvider } from './data/supabase'
 import { createInventoryStore } from './store'
 import { inventoryRegistries } from './registries'
+import { inventoryLocales } from './locales'
 import { PluginSettingsPanel } from '../../components/plugins/PluginSettingsPanel'
 import { InventoryGeneralSettings } from './components/InventoryGeneralSettings'
 
@@ -180,6 +181,7 @@ export function createInventoryPlugin(options?: InventoryPluginOptions): PluginM
         permission: { feature: 'inventory', action: 'read' as const },
       },
     ],
+    locales: inventoryLocales,
   }
 }
 

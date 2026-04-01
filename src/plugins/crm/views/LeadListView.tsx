@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Search, Plus, UserPlus } from 'lucide-react'
 import { useCrmStore } from '../CrmContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { TableSkeleton } from '../../../components/ui/skeleton'
 import type { LeadStatus } from '../types'
@@ -14,6 +15,7 @@ const STATUS_OPTIONS: { value: LeadStatus; label: string; color: string }[] = [
 ]
 
 export function LeadListView({ onNew, onEdit }: { onNew?: () => void; onEdit?: (id: string) => void }) {
+  const { t } = useTranslation()
   const leads = useCrmStore((s) => s.leads)
   const leadsLoading = useCrmStore((s) => s.leadsLoading)
   const fetchLeads = useCrmStore((s) => s.fetchLeads)
@@ -26,15 +28,15 @@ export function LeadListView({ onNew, onEdit }: { onNew?: () => void; onEdit?: (
 
   return (
     <div className="space-y-4">
-      <SubpageHeader title="Leads" subtitle={`${leads.length} leads`} />
+      <SubpageHeader title={t('crm.leads.title')} subtitle={`${leads.length} leads`} />
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <input type="text" placeholder="Search leads..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-lg border bg-background pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          <input type="text" placeholder={t('crm.leads.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-lg border bg-background pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
         </div>
         {onNew && (
           <button onClick={onNew} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-            <Plus className="h-3.5 w-3.5" /> New Lead
+            <Plus className="h-3.5 w-3.5" /> {t('crm.leads.newLead')}
           </button>
         )}
       </div>
@@ -53,8 +55,8 @@ export function LeadListView({ onNew, onEdit }: { onNew?: () => void; onEdit?: (
       ) : leads.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed border-muted">
           <UserPlus className="h-8 w-8 text-muted-foreground/30 mb-2" />
-          <p className="text-sm text-muted-foreground">No leads yet</p>
-          {onNew && <button onClick={onNew} className="text-xs text-primary hover:underline mt-1">Capture your first lead</button>}
+          <p className="text-sm text-muted-foreground">{t('crm.leads.noLeads')}</p>
+          {onNew && <button onClick={onNew} className="text-xs text-primary hover:underline mt-1">{t('crm.leads.captureFirst')}</button>}
         </div>
       ) : (
         <div className="rounded-lg border overflow-hidden">

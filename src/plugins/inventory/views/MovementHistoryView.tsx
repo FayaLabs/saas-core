@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { ArrowUpRight, ArrowDownRight, RefreshCw, ArrowRightLeft, Trash2, Search, Eye } from 'lucide-react'
 import { useInventoryStore, formatCurrency, useInventoryConfig } from '../InventoryContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { TableSkeleton } from '../../../components/ui/skeleton'
 import type { MovementType } from '../types'
@@ -22,6 +23,7 @@ const TYPE_COLORS: Record<MovementType, string> = {
 }
 
 export function MovementHistoryView({ onViewDetail }: { onViewDetail?: (id: string) => void } = {}) {
+  const { t } = useTranslation()
   const { currency } = useInventoryConfig()
   const movements = useInventoryStore((s) => s.movements)
   const movementsLoading = useInventoryStore((s) => s.movementsLoading)
@@ -33,18 +35,18 @@ export function MovementHistoryView({ onViewDetail }: { onViewDetail?: (id: stri
 
   return (
     <div className="space-y-4">
-      <SubpageHeader title="Stock History" subtitle="All stock movements" />
+      <SubpageHeader title={t('inventory.history.title')} subtitle={t('inventory.history.subtitle')} />
 
       <div className="relative max-w-sm">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-        <input type="text" placeholder="Search movements..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-lg border bg-background pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+        <input type="text" placeholder={t('inventory.history.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-lg border bg-background pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
       </div>
 
       {movementsLoading ? (
         <TableSkeleton columns={6} />
       ) : movements.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed border-muted">
-          <p className="text-sm text-muted-foreground">No movements recorded</p>
+          <p className="text-sm text-muted-foreground">{t('inventory.history.noMovements')}</p>
         </div>
       ) : (
         <div className="rounded-lg border overflow-hidden">

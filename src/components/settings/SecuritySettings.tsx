@@ -2,6 +2,7 @@ import * as React from 'react'
 import { KeyRound, Loader2, Clock, ShieldCheck, UserPlus } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { AuthUser } from '../../types'
 
 export interface TenantSecuritySettings {
@@ -78,6 +79,7 @@ export function SecuritySettings({
   onResetPassword,
   onTenantSecurityChange,
 }: SecuritySettingsProps) {
+  const { t } = useTranslation()
   const [resetting, setResetting] = React.useState(false)
   const [resetSent, setResetSent] = React.useState(false)
   const [savingTenant, setSavingTenant] = React.useState(false)
@@ -115,9 +117,9 @@ export function SecuritySettings({
       {/* Password reset */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Password</CardTitle>
+          <CardTitle className="text-lg">{t('settings.security.passwordTitle')}</CardTitle>
           <CardDescription>
-            Manage your account password. A reset link will be sent to your email.
+            {t('settings.security.passwordSubtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -126,8 +128,8 @@ export function SecuritySettings({
               <p className="text-sm font-medium">{user?.email}</p>
               <p className="text-xs text-muted-foreground">
                 {resetSent
-                  ? 'Reset link sent — check your inbox.'
-                  : 'Send a password reset link to your email address.'}
+                  ? t('settings.security.resetLinkSent')
+                  : t('settings.security.resetLinkDescription')}
               </p>
             </div>
             <Button
@@ -138,7 +140,7 @@ export function SecuritySettings({
             >
               {resetting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <KeyRound className="mr-2 h-4 w-4" />
-              {resetSent ? 'Link Sent' : 'Reset Password'}
+              {resetSent ? t('settings.security.linkSent') : t('settings.security.resetPassword')}
             </Button>
           </div>
         </CardContent>
@@ -148,24 +150,24 @@ export function SecuritySettings({
       {isAdmin && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Organization Security</CardTitle>
+            <CardTitle className="text-lg">{t('settings.security.orgSecurityTitle')}</CardTitle>
             <CardDescription>
-              Security policies applied to all members of this organization.
+              {t('settings.security.orgSecuritySubtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-1 divide-y">
             <ToggleRow
               icon={<ShieldCheck className="h-4 w-4" />}
-              label="Require Two-Factor Authentication"
-              description="All members must enable 2FA to access this organization."
+              label={t('settings.security.require2FA')}
+              description={t('settings.security.require2FADescription')}
               checked={tenantSecurity?.require2FA ?? false}
               onChange={(val) => updateTenantSecurity({ require2FA: val })}
               disabled={savingTenant}
             />
             <ToggleRow
               icon={<UserPlus className="h-4 w-4" />}
-              label="Invite-Only Access"
-              description="New users can only join this organization via invite."
+              label={t('settings.security.inviteOnly')}
+              description={t('settings.security.inviteOnlyDescription')}
               checked={tenantSecurity?.inviteOnly ?? true}
               onChange={(val) => updateTenantSecurity({ inviteOnly: val })}
               disabled={savingTenant}
@@ -177,9 +179,9 @@ export function SecuritySettings({
                   <Clock className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Session Timeout</p>
+                  <p className="text-sm font-medium">{t('settings.security.sessionTimeout')}</p>
                   <p className="text-xs text-muted-foreground">
-                    Automatically sign out inactive users after this period.
+                    {t('settings.security.sessionTimeoutDescription')}
                   </p>
                 </div>
               </div>

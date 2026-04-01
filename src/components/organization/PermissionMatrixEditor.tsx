@@ -4,6 +4,7 @@ import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { Checkbox, type CheckboxColor } from '../ui/checkbox'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { FeatureDeclaration, PermissionAction, PermissionProfile, SystemPermission } from '../../types/permissions'
 
 const ACTIONS: PermissionAction[] = ['read', 'create', 'edit', 'delete']
@@ -13,11 +14,11 @@ const ACTION_COLORS: Record<PermissionAction, CheckboxColor> = {
   edit: 'warning',
   delete: 'destructive',
 }
-const SYSTEM_PERMISSIONS: { id: SystemPermission; label: string }[] = [
-  { id: 'manage_team', label: 'Manage Team' },
-  { id: 'manage_billing', label: 'Manage Billing' },
-  { id: 'manage_settings', label: 'Manage Settings' },
-  { id: 'manage_permissions', label: 'Manage Permissions' },
+const SYSTEM_PERMISSIONS: { id: SystemPermission; key: string }[] = [
+  { id: 'manage_team', key: 'organization.permissions.manageTeam' },
+  { id: 'manage_billing', key: 'organization.permissions.manageBilling' },
+  { id: 'manage_settings', key: 'organization.permissions.manageSettings' },
+  { id: 'manage_permissions', key: 'organization.permissions.managePermissions' },
 ]
 
 interface PermissionMatrixEditorProps {
@@ -29,6 +30,7 @@ interface PermissionMatrixEditorProps {
 }
 
 export function PermissionMatrixEditor({ features, profile, onSave, onCancel, saving }: PermissionMatrixEditorProps) {
+  const { t } = useTranslation()
   const [name, setName] = React.useState(profile?.name ?? '')
   const [description, setDescription] = React.useState(profile?.description ?? '')
   const [systemPerms, setSystemPerms] = React.useState<SystemPermission[]>(profile?.systemPermissions ?? [])
@@ -70,18 +72,18 @@ export function PermissionMatrixEditor({ features, profile, onSave, onCancel, sa
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="text-sm font-medium">Profile Name</label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Custom Role" className="mt-1" />
+          <label className="text-sm font-medium">{t('organization.permissions.profileName')}</label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('organization.permissions.profileNamePlaceholder')} className="mt-1" />
         </div>
         <div>
-          <label className="text-sm font-medium">Description</label>
-          <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description" className="mt-1" />
+          <label className="text-sm font-medium">{t('organization.permissions.description')}</label>
+          <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t('organization.permissions.descriptionPlaceholder')} className="mt-1" />
         </div>
       </div>
 
       {/* System Permissions */}
       <Card className="p-4">
-        <h3 className="text-sm font-semibold mb-3">System Permissions</h3>
+        <h3 className="text-sm font-semibold mb-3">{t('organization.permissions.systemPermissions')}</h3>
         <div className="grid gap-2 sm:grid-cols-2">
           {SYSTEM_PERMISSIONS.map((sp) => (
             <label key={sp.id} className="flex items-center gap-2.5 text-sm cursor-pointer">
@@ -89,7 +91,7 @@ export function PermissionMatrixEditor({ features, profile, onSave, onCancel, sa
                 checked={systemPerms.includes(sp.id)}
                 onChange={() => toggleSystemPerm(sp.id)}
               />
-              {sp.label}
+              {t(sp.key)}
             </label>
           ))}
         </div>
@@ -101,7 +103,7 @@ export function PermissionMatrixEditor({ features, profile, onSave, onCancel, sa
           <table className="w-full">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="text-left p-3 text-sm font-medium text-muted-foreground">Feature</th>
+                <th className="text-left p-3 text-sm font-medium text-muted-foreground">{t('common.feature')}</th>
                 {ACTIONS.map((action) => (
                   <th key={action} className="p-3 text-center text-sm font-medium text-muted-foreground capitalize w-20">
                     {action}
@@ -141,9 +143,9 @@ export function PermissionMatrixEditor({ features, profile, onSave, onCancel, sa
       </Card>
 
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button variant="outline" onClick={onCancel}>{t('common.cancel')}</Button>
         <Button onClick={handleSave} disabled={!name.trim() || saving}>
-          {saving ? 'Saving...' : profile ? 'Update Profile' : 'Create Profile'}
+          {saving ? t('common.saving') : profile ? t('organization.permissions.updateProfile') : t('organization.permissions.createProfile')}
         </Button>
       </div>
     </div>

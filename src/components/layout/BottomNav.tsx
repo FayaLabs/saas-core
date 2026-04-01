@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useChatStore } from '../../stores/chat.store'
+import { useTranslation } from '../../hooks/useTranslation'
 
 interface NavigationItem {
   id: string
@@ -55,6 +56,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 }
 
 export function BottomNav({ navigation, activeRoute, onNavigate, showChat = true }: BottomNavProps) {
+  const { t } = useTranslation()
   const maxItems = showChat ? 4 : 5
   const items = navigation.filter((n) => n.section === 'main').slice(0, maxItems)
   const { isOpen, toggleOpen } = useChatStore()
@@ -98,7 +100,7 @@ export function BottomNav({ navigation, activeRoute, onNavigate, showChat = true
           )}
         >
           <MessageCircle className="h-5 w-5" />
-          <span>Chat</span>
+          <span>{t('layout.bottomNav.chat')}</span>
         </button>
       )}
     </nav>

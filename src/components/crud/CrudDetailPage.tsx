@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
@@ -11,6 +11,7 @@ import { PRODUCT_DETAIL_TABS } from './archetypes/ProductDetailTabs'
 import { SERVICE_DETAIL_TABS } from './archetypes/ServiceDetailTabs'
 import { LOCATION_DETAIL_TABS } from './archetypes/LocationDetailTabs'
 import { SUBJECT_DETAIL_TABS } from './archetypes/SubjectDetailTabs'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { EntityDef, FieldDef, FieldGroup, FormLayout, DetailTab } from '../../types/crud'
 
 interface CrudDetailPageProps {
@@ -18,6 +19,7 @@ interface CrudDetailPageProps {
   item: Record<string, any>
   namePlural: string
   basePath: string
+  initialTab?: string
   onBack: () => void
   onEdit?: () => void
   onDelete?: () => void
@@ -209,11 +211,13 @@ export function CrudDetailPage({
   item,
   namePlural,
   basePath,
+  initialTab,
   onBack,
   onEdit,
   onDelete,
   feature,
 }: CrudDetailPageProps) {
+  const { t } = useTranslation()
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
   const displayValue = item[displayField] ?? 'Untitled'
   const subtitleValue = entityDef.subtitleField ? item[entityDef.subtitleField] : null
@@ -225,6 +229,16 @@ export function CrudDetailPage({
   const customTabs = [...archetypeTabs, ...(entityDef.detailTabs ?? [])]
   const entityId = entityDef.name.toLowerCase().replace(/\s+/g, '-')
   const widgetZone = `${entityId}.detail.tabs`
+
+  // Resolve initial tab — validate it exists, fallback to "overview"
+  const validTabs = ['overview', ...customTabs.map((t) => t.id)]
+  const activeTab = initialTab && validTabs.includes(initialTab) ? initialTab : 'overview'
+
+  const handleTabChange = useCallback((value: string) => {
+    const detailPath = `${basePath}/${item.id}`
+    const newHash = value === 'overview' ? detailPath : `${detailPath}/${value}`
+    window.history.replaceState(null, '', `#${newHash}`)
+  }, [basePath, item.id])
 
   return (
     <div className="space-y-6">
@@ -267,7 +281,7 @@ export function CrudDetailPage({
             )}
             {item.is_active !== undefined && (
               <Badge variant={item.is_active ? 'default' : 'secondary'}>
-                {item.is_active ? 'Active' : 'Inactive'}
+                {item.is_active ? t('common.active') : t('common.inactive')}
               </Badge>
             )}
           </div>
@@ -279,7 +293,7 @@ export function CrudDetailPage({
             {onEdit && (
               <Button variant="outline" size="sm" onClick={onEdit}>
                 <Edit className="h-4 w-4 mr-1.5" />
-                Edit
+                {t('common.edit')}
               </Button>
             )}
             {onDelete && (
@@ -294,9 +308,9 @@ export function CrudDetailPage({
       <Separator />
 
       {/* Tabs */}
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="overview">{t('common.overview')}</TabsTrigger>
           {customTabs.map((tab) => (
             <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
           ))}
@@ -313,7 +327,7 @@ export function CrudDetailPage({
             ) : (
               <Card>
                 <CardContent className="flex items-center justify-center py-12">
-                  <p className="text-muted-foreground">No content yet</p>
+                  <p className="text-muted-foreground">{t('common.noContent')}</p>
                 </CardContent>
               </Card>
             )}

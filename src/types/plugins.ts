@@ -311,6 +311,8 @@ export interface PluginManifest {
   migrations?: PluginMigration[]
   /** First-time setup wizard */
   onboarding?: PluginOnboarding
+  /** i18n translations keyed by locale code (e.g. { en: { 'agenda.title': 'Agenda' }, 'pt-BR': { ... } }) */
+  locales?: Record<string, Record<string, string>>
 }
 
 export interface ResolvedPluginManifest extends PluginManifest {

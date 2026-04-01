@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { LoginForm } from './LoginForm'
 import { SignupForm } from './SignupForm'
 import { RecoveryForm } from './RecoveryForm'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { AuthProvider } from '../../types'
 
 interface CenteredLoginProps {
@@ -17,6 +18,7 @@ type View = 'login' | 'signup' | 'recovery'
 
 export function CenteredLogin({ appName, logo, tagline, showOAuth, oauthProviders, onSuccess }: CenteredLoginProps) {
   const [view, setView] = useState<View>('login')
+  const { t } = useTranslation()
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-sidebar p-4">
@@ -32,15 +34,15 @@ export function CenteredLogin({ appName, logo, tagline, showOAuth, oauthProvider
         <div className="mb-8 text-center">
           <div className="mb-4 flex justify-center">{logo}</div>
           <h1 className="text-2xl font-bold text-foreground">
-            {view === 'login' ? 'Welcome Back' : view === 'signup' ? 'Create Account' : 'Reset Password'}
+            {view === 'login' ? t('auth.login.welcomeBack') : view === 'signup' ? t('auth.signup.title') : t('auth.recovery.title')}
           </h1>
           {view === 'login' && (
             <p className="mt-1 text-sm text-muted-foreground">
               {tagline ?? (
                 <>
-                  Don't have an account yet?{' '}
+                  {t('auth.login.noAccountYet')}{' '}
                   <button type="button" onClick={() => setView('signup')} className="font-medium text-primary hover:underline">
-                    Sign up
+                    {t('auth.signUp')}
                   </button>
                 </>
               )}
@@ -48,14 +50,14 @@ export function CenteredLogin({ appName, logo, tagline, showOAuth, oauthProvider
           )}
           {view === 'signup' && (
             <p className="mt-1 text-sm text-muted-foreground">
-              Already have an account?{' '}
+              {t('auth.signup.hasAccount')}{' '}
               <button type="button" onClick={() => setView('login')} className="font-medium text-primary hover:underline">
-                Sign in
+                {t('auth.signIn')}
               </button>
             </p>
           )}
           {view === 'recovery' && (
-            <p className="mt-1 text-sm text-muted-foreground">We'll send you a reset link</p>
+            <p className="mt-1 text-sm text-muted-foreground">{t('auth.recovery.resetSubtitle')}</p>
           )}
         </div>
 

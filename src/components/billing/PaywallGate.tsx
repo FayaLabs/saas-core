@@ -3,6 +3,7 @@ import { Lock } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { useBillingStore } from '../../stores/billing.store'
+import { useTranslation } from '../../hooks/useTranslation'
 
 interface PaywallGateProps {
   requiredPlan?: string
@@ -54,22 +55,24 @@ export function PaywallGate({
     return <>{fallback}</>
   }
 
+  const { t } = useTranslation()
+
   return (
     <Card className="border-dashed">
       <CardHeader className="text-center">
         <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
           <Lock className="h-6 w-6 text-muted-foreground" />
         </div>
-        <CardTitle className="text-lg">Upgrade Required</CardTitle>
+        <CardTitle className="text-lg">{t('billing.paywall.upgradeRequired')}</CardTitle>
         <CardDescription>
           {requiredPlan
-            ? `This feature requires the ${requiredPlan} plan or higher.`
-            : `This feature is not available on your current plan.`}
+            ? t('billing.paywall.requiresPlan', { plan: requiredPlan })
+            : t('billing.paywall.notAvailable')}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center">
         <Button onClick={onUpgrade}>
-          View Plans
+          {t('billing.paywall.viewPlans')}
         </Button>
       </CardContent>
     </Card>

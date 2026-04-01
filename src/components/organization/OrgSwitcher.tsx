@@ -22,6 +22,7 @@ import {
 } from '../ui/modal'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
+import { useTranslation } from '../../hooks/useTranslation'
 
 interface OrgSwitcherProps {
   collapsed?: boolean
@@ -41,6 +42,8 @@ export function OrgSwitcher({ collapsed }: OrgSwitcherProps) {
   const [createOpen, setCreateOpen] = React.useState(false)
   const [newOrgName, setNewOrgName] = React.useState('')
   const [creating, setCreating] = React.useState(false)
+
+  const { t } = useTranslation()
 
   if (!adapter || !currentOrg) return null
 
@@ -140,7 +143,7 @@ export function OrgSwitcher({ collapsed }: OrgSwitcherProps) {
             <DropdownSeparator className="bg-sidebar-border" />
             <DropdownItem onClick={() => setCreateOpen(true)} className="flex items-center gap-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground">
               <Plus className="h-4 w-4" />
-              <span>Create organization</span>
+              <span>{t('organization.createOrg')}</span>
             </DropdownItem>
           </DropdownContent>
         </Dropdown>
@@ -149,12 +152,12 @@ export function OrgSwitcher({ collapsed }: OrgSwitcherProps) {
       <Modal open={createOpen} onOpenChange={setCreateOpen}>
         <ModalContent>
           <ModalHeader>
-            <ModalTitle>Create Organization</ModalTitle>
-            <ModalDescription>Create a new workspace for your team.</ModalDescription>
+            <ModalTitle>{t('organization.createOrgTitle')}</ModalTitle>
+            <ModalDescription>{t('organization.createOrgDescription')}</ModalDescription>
           </ModalHeader>
           <div className="py-4">
             <Input
-              placeholder="Organization name"
+              placeholder={t('organization.orgNamePlaceholder')}
               value={newOrgName}
               onChange={(e) => setNewOrgName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleCreate() }}
@@ -162,9 +165,9 @@ export function OrgSwitcher({ collapsed }: OrgSwitcherProps) {
             />
           </div>
           <ModalFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleCreate} disabled={!newOrgName.trim() || creating}>
-              {creating ? 'Creating...' : 'Create'}
+              {creating ? t('organization.creating') : t('common.create')}
             </Button>
           </ModalFooter>
         </ModalContent>

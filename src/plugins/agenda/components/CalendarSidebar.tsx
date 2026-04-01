@@ -1,9 +1,11 @@
 import React from 'react'
 import { Filter, X } from 'lucide-react'
 import { useAgendaConfig, useAgendaStore } from '../AgendaContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import type { Professional } from '../types'
 
 export function CalendarSidebar() {
+  const { t } = useTranslation()
   const config = useAgendaConfig()
   const professionals = useAgendaStore((s) => s.professionals)
   const selectedProfIds = useAgendaStore((s) => s.selectedProfessionalIds)
@@ -49,7 +51,7 @@ export function CalendarSidebar() {
       {/* Professional filter */}
       <div>
         <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Agendas
+          {t('agenda.sidebar.agendas')}
         </label>
         <div className="mt-2 space-y-1">
           {professionals.map((prof) => (
@@ -74,7 +76,7 @@ export function CalendarSidebar() {
       {/* Status filter */}
       <div>
         <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Status
+          {t('agenda.sidebar.status')}
         </label>
         <div className="mt-2 space-y-1">
           {config.statuses.map((status) => (
@@ -98,14 +100,14 @@ export function CalendarSidebar() {
       {config.locations.length > 1 && (
         <div>
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Location
+            {t('agenda.sidebar.location')}
           </label>
           <select
             value={selectedLocationId ?? ''}
             onChange={(e) => setFilters({ locationId: e.target.value || null })}
             className="mt-2 block w-full rounded-lg border bg-background px-2 py-1.5 text-sm"
           >
-            <option value="">All locations</option>
+            <option value="">{t('agenda.sidebar.allLocations')}</option>
             {config.locations.map((loc) => (
               <option key={loc.id} value={loc.id}>{loc.name}</option>
             ))}

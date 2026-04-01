@@ -1,5 +1,6 @@
 import React from 'react'
 import { cn } from '../../lib/cn'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { AuthProvider } from '../../types'
 
 interface OAuthButtonsProps {
@@ -42,6 +43,7 @@ const providerConfig: Record<Exclude<AuthProvider, 'email'>, { label: string; ic
 }
 
 export function OAuthButtons({ providers, onProviderClick, className }: OAuthButtonsProps) {
+  const { t } = useTranslation()
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       {providers.map((provider) => {
@@ -55,7 +57,7 @@ export function OAuthButtons({ providers, onProviderClick, className }: OAuthBut
             className="inline-flex items-center justify-center gap-2 h-10 px-4 py-2 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
           >
             <Icon className="h-4 w-4" />
-            Continue with {config.label}
+            {t('auth.oauth.continueWith', { provider: config.label })}
           </button>
         )
       })}

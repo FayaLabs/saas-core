@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Save } from 'lucide-react'
 import { useCrmStore } from '../CrmContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 
 export function LeadFormView({ onSaved }: { onSaved?: (id?: string) => void }) {
+  const { t } = useTranslation()
   const createLead = useCrmStore((s) => s.createLead)
   const fetchPipelines = useCrmStore((s) => s.fetchPipelines)
   const pipelines = useCrmStore((s) => s.pipelines)
@@ -29,11 +31,11 @@ export function LeadFormView({ onSaved }: { onSaved?: (id?: string) => void }) {
 
   return (
     <div className="space-y-5">
-      <SubpageHeader title="New Lead" subtitle="Capture a new lead" onBack={onSaved} actions={
+      <SubpageHeader title={t('crm.leadForm.title')} subtitle={t('crm.leadForm.subtitle')} onBack={onSaved} actions={
         <div className="flex items-center gap-2">
-          {onSaved && <button onClick={() => onSaved()} className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">Cancel</button>}
+          {onSaved && <button onClick={() => onSaved()} className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">{t('crm.leadForm.cancel')}</button>}
           <button onClick={handleSave} disabled={!name.trim() || saving} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
-            <Save className="h-3 w-3" /> {saving ? 'Saving...' : 'Save'}
+            <Save className="h-3 w-3" /> {saving ? t('crm.leadForm.saving') : t('crm.leadForm.save')}
           </button>
         </div>
       } />

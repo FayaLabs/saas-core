@@ -4,6 +4,7 @@ import { cn } from '../../lib/cn'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Skeleton } from '../ui/skeleton'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { Invoice } from '../../types'
 
 interface InvoiceListProps {
@@ -35,6 +36,7 @@ function formatDate(dateString: string): string {
 }
 
 export function InvoiceList({ invoices, loading }: InvoiceListProps) {
+  const { t } = useTranslation()
   if (loading) {
     return (
       <div className="space-y-3">
@@ -49,7 +51,7 @@ export function InvoiceList({ invoices, loading }: InvoiceListProps) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <FileText className="mb-3 h-10 w-10 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">No invoices yet</p>
+        <p className="text-sm text-muted-foreground">{t('billing.invoice.noInvoices')}</p>
       </div>
     )
   }
@@ -60,16 +62,16 @@ export function InvoiceList({ invoices, loading }: InvoiceListProps) {
         <thead>
           <tr className="border-b bg-muted/50">
             <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Date
+              {t('billing.invoice.date')}
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Amount
+              {t('billing.invoice.amount')}
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Status
+              {t('billing.invoice.status')}
             </th>
             <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Invoice
+              {t('billing.invoice.invoice')}
             </th>
           </tr>
         </thead>

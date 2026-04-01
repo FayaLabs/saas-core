@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '../ui/select'
 import { cn } from '../../lib/cn'
+import { useTranslation } from '../../hooks/useTranslation'
 import { useOrgAdapter } from '../../lib/org-context'
 import { useAuthStore } from '../../stores/auth.store'
 import { useOrganizationStore } from '../../stores/organization.store'
@@ -40,6 +41,7 @@ interface TenantOnboardingProps {
 }
 
 export function TenantOnboarding({ verticalId, appName, logo }: TenantOnboardingProps) {
+  const { t } = useTranslation()
   const adapter = useOrgAdapter()
   const user = useAuthStore((s) => s.user)
   const setCurrentOrg = useOrganizationStore((s) => s.setCurrentOrg)
@@ -97,8 +99,8 @@ export function TenantOnboarding({ verticalId, appName, logo }: TenantOnboarding
       <div className="saas-page-enter space-y-6 text-center">
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
         <div>
-          <h2 className="text-lg font-semibold">Setting up your workspace</h2>
-          <p className="text-sm text-muted-foreground mt-1">This will only take a moment...</p>
+          <h2 className="text-lg font-semibold">{t('organization.onboarding.settingUp')}</h2>
+          <p className="text-sm text-muted-foreground mt-1">{t('organization.onboarding.oneMoment')}</p>
         </div>
       </div>
     )
@@ -111,9 +113,9 @@ export function TenantOnboarding({ verticalId, appName, logo }: TenantOnboarding
         <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
           <Building2 className="h-5 w-5 text-primary" />
         </div>
-        <h2 className="text-xl font-bold">Set up your workspace</h2>
+        <h2 className="text-xl font-bold">{t('organization.onboarding.setupWorkspace')}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          {step === 0 ? 'What should we call your workspace?' : 'Regional preferences'}
+          {step === 0 ? t('organization.onboarding.whatName') : t('organization.onboarding.preferences')}
         </p>
       </div>
 
@@ -121,7 +123,7 @@ export function TenantOnboarding({ verticalId, appName, logo }: TenantOnboarding
       {step === 0 && (
         <div className="saas-nav-forward space-y-4">
           <div>
-            <label className="text-sm font-medium">Workspace name</label>
+            <label className="text-sm font-medium">{t('organization.onboarding.workspaceName')}</label>
             <Input
               value={companyName}
               onChange={(e) => { setCompanyName(e.target.value); setError('') }}
@@ -131,7 +133,7 @@ export function TenantOnboarding({ verticalId, appName, logo }: TenantOnboarding
             />
           </div>
           <Button className="w-full" onClick={() => setStep(1)} disabled={!companyName.trim()}>
-            Continue <ArrowRight className="ml-2 h-4 w-4" />
+            {t('common.continue')} <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       )}
@@ -140,7 +142,7 @@ export function TenantOnboarding({ verticalId, appName, logo }: TenantOnboarding
       {step === 1 && (
         <div className="saas-nav-forward space-y-4">
           <div>
-            <label className="text-sm font-medium">Timezone</label>
+            <label className="text-sm font-medium">{t('organization.onboarding.timezone')}</label>
             <Select value={timezone} onValueChange={setTimezone}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -151,7 +153,7 @@ export function TenantOnboarding({ verticalId, appName, logo }: TenantOnboarding
             </Select>
           </div>
           <div>
-            <label className="text-sm font-medium">Currency</label>
+            <label className="text-sm font-medium">{t('organization.onboarding.currency')}</label>
             <Select value={currency} onValueChange={setCurrency}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -165,9 +167,9 @@ export function TenantOnboarding({ verticalId, appName, logo }: TenantOnboarding
           {error && <p className="text-sm text-destructive">{error}</p>}
 
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => setStep(0)}>Back</Button>
+            <Button variant="outline" className="flex-1" onClick={() => setStep(0)}>{t('common.back')}</Button>
             <Button className="flex-1" onClick={handleCreate}>
-              Create Workspace <Check className="ml-2 h-4 w-4" />
+              {t('organization.onboarding.createWorkspace')} <Check className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>

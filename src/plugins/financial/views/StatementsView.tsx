@@ -3,8 +3,10 @@ import { Receipt } from 'lucide-react'
 import { useFinancialConfig, useFinancialStore, formatCurrency } from '../FinancialContext'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { DatePicker } from '../../../components/ui/date-picker'
+import { useTranslation } from '../../../hooks/useTranslation'
 
 export function StatementsView() {
+  const { t } = useTranslation()
   const { currency, labels } = useFinancialConfig()
   const bankAccounts = useFinancialStore((s) => s.bankAccounts)
   const statementEntries = useFinancialStore((s) => s.statementEntries)
@@ -36,28 +38,28 @@ export function StatementsView() {
 
   return (
     <div className="space-y-4">
-      <SubpageHeader title="Statements" subtitle="Bank account transactions and balances" />
+      <SubpageHeader title={t('financial.statements.title')} subtitle={t('financial.statements.subtitle')} />
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
         <div className="flex-1 max-w-xs">
-          <label className="text-[10px] font-medium text-muted-foreground uppercase">Account</label>
+          <label className="text-[10px] font-medium text-muted-foreground uppercase">{t('financial.statements.account')}</label>
           <select
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             className="w-full mt-0.5 rounded-lg border bg-background px-3 py-2 text-sm"
           >
-            <option value="">Select account</option>
+            <option value="">{t('financial.statements.selectAccount')}</option>
             {bankAccounts.map((a) => (
               <option key={a.id} value={a.id}>{a.name}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className="text-[10px] font-medium text-muted-foreground uppercase">From</label>
+          <label className="text-[10px] font-medium text-muted-foreground uppercase">{t('financial.statements.from')}</label>
           <DatePicker value={dateFrom} onChange={setDateFrom} className="mt-0.5" />
         </div>
         <div>
-          <label className="text-[10px] font-medium text-muted-foreground uppercase">To</label>
+          <label className="text-[10px] font-medium text-muted-foreground uppercase">{t('financial.statements.to')}</label>
           <DatePicker value={dateTo} onChange={setDateTo} className="mt-0.5" />
         </div>
       </div>
@@ -66,14 +68,14 @@ export function StatementsView() {
       {!accountId ? (
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed border-muted">
           <Receipt className="h-8 w-8 text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">Select an account to view statement</p>
+          <p className="text-sm text-muted-foreground">{t('financial.statements.selectToView')}</p>
         </div>
       ) : statementLoading ? (
         <div className="text-center py-12 text-sm text-muted-foreground">Loading...</div>
       ) : statementEntries.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed border-muted">
           <Receipt className="h-8 w-8 text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">No transactions in this period</p>
+          <p className="text-sm text-muted-foreground">{t('financial.statements.noTransactions')}</p>
         </div>
       ) : (
         <div className="rounded-lg border overflow-hidden">

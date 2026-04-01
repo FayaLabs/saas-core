@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '../ui/select'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card'
+import { useTranslation } from '../../hooks/useTranslation'
 import type { Tenant } from '../../types'
 
 interface CompanySettingsProps {
@@ -64,6 +65,7 @@ const LOCALES = [
 ]
 
 export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
+  const { t } = useTranslation()
   const [name, setName] = React.useState(tenant?.name ?? '')
   const [timezone, setTimezone] = React.useState(tenant?.settings?.timezone ?? 'UTC')
   const [currency, setCurrency] = React.useState(tenant?.settings?.currency ?? 'USD')
@@ -95,16 +97,16 @@ export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Company Information</CardTitle>
+          <CardTitle className="text-lg">{t('settings.company.title')}</CardTitle>
           <CardDescription>
-            Update your organization details and regional preferences.
+            {t('settings.company.subtitle')}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="company-name" className="text-sm font-medium">
-              Company Name
+              {t('settings.company.name')}
             </label>
             <Input
               id="company-name"
@@ -116,10 +118,10 @@ export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Timezone</label>
+              <label className="text-sm font-medium">{t('settings.company.timezone')}</label>
               <Select value={timezone} onValueChange={setTimezone}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select timezone" />
+                  <SelectValue placeholder={t('settings.company.timezonePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {TIMEZONES.map((tz) => (
@@ -132,10 +134,10 @@ export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Currency</label>
+              <label className="text-sm font-medium">{t('settings.company.currency')}</label>
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select currency" />
+                  <SelectValue placeholder={t('settings.company.currencyPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {CURRENCIES.map((c) => (
@@ -148,10 +150,10 @@ export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Locale</label>
+              <label className="text-sm font-medium">{t('settings.company.locale')}</label>
               <Select value={locale} onValueChange={setLocale}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select locale" />
+                  <SelectValue placeholder={t('settings.company.localePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {LOCALES.map((l) => (
@@ -168,7 +170,7 @@ export function CompanySettings({ tenant, onSave }: CompanySettingsProps) {
         <CardFooter className="justify-end">
           <Button type="submit" disabled={saving}>
             <Save className="mr-2 h-4 w-4" />
-            {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? t('common.saving') : t('settings.save')}
           </Button>
         </CardFooter>
       </Card>

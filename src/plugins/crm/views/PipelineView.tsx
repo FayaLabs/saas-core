@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Loader2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCrmStore, useCrmConfig, formatCurrency } from '../CrmContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { DealSidebar } from './DealSidebar'
 import type { Deal } from '../types'
@@ -91,6 +92,7 @@ function StageColumn({ stageId, stageName, stageColor, deals, savingDealIds, cur
   onDragLeave: () => void
   onDrop: () => void
 }) {
+  const { t } = useTranslation()
   const isOver = dragOverStageId === stageId
   const [hovered, setHovered] = useState(false)
 
@@ -123,7 +125,7 @@ function StageColumn({ stageId, stageName, stageColor, deals, savingDealIds, cur
       >
         {deals.length === 0 ? (
           <div className={`rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground ${isOver ? 'border-primary/30' : ''}`}>
-            {isOver ? 'Drop here' : 'No deals'}
+            {isOver ? t('crm.pipeline.dropHere') : t('crm.pipeline.noDeals')}
           </div>
         ) : (
           deals.map((deal) => (
@@ -168,6 +170,7 @@ export function PipelineView({ onDealClick, onViewLead, onViewQuote, onAddLead }
   const [dragOverStageId, setDragOverStageId] = useState<string | null>(null)
   const [savingDealIds, setSavingDealIds] = useState<Set<string>>(new Set())
   const [optimisticBoard, setOptimisticBoard] = useState<Map<string, Deal[]> | null>(null)
+  const { t } = useTranslation()
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null)
   const dragRef = useRef<{ dealId: string; fromStageId: string } | null>(null)
 
@@ -231,11 +234,11 @@ export function PipelineView({ onDealClick, onViewLead, onViewQuote, onAddLead }
     // Persist in background
     moveDealToStage(dealId, toStageId)
       .then(() => {
-        toast.success(`Moved to ${targetStage?.name ?? 'stage'}`)
+        toast.success(t('crm.pipeline.movedTo', { stage: targetStage?.name ?? 'stage' }))
       })
       .catch(() => {
         setOptimisticBoard(null)
-        toast.error('Failed to move deal')
+        toast.error(t('crm.pipeline.moveFailed'))
       })
       .finally(() => {
         setSavingDealIds((prev) => {
@@ -253,7 +256,7 @@ export function PipelineView({ onDealClick, onViewLead, onViewQuote, onAddLead }
 
   return (
     <div className="space-y-4">
-      <SubpageHeader title="Pipeline" subtitle="Drag deals between stages" />
+      <SubpageHeader title={t('crm.pipeline.title')} subtitle={t('crm.pipeline.subtitle')} />
 
       {dealsLoading && dealsByStage.size === 0 ? (
         <PipelineSkeleton />

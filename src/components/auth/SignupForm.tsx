@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { cn } from '../../lib/cn'
 import { useAuth } from '../../hooks/useAuth'
+import { useTranslation } from '../../hooks/useTranslation'
 
 interface SignupFormProps {
   onSuccess?: () => void
@@ -16,6 +17,7 @@ export function SignupForm({
   className,
 }: SignupFormProps) {
   const { signUp, loading } = useAuth()
+  const { t } = useTranslation()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -29,26 +31,26 @@ export function SignupForm({
     setSuccess(null)
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.')
+      setError(t('auth.signup.passwordsMismatch'))
       return
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+      setError(t('auth.signup.passwordMinLength'))
       return
     }
 
     try {
       const result = await signUp(email, password, fullName)
       if (result.requiresEmailVerification) {
-        setSuccess(`Account created for ${email}. Check your inbox to confirm your email before signing in.`)
+        setSuccess(t('auth.signup.emailVerification', { email }))
         setPassword('')
         setConfirmPassword('')
         return
       }
       onSuccess?.()
     } catch (err: any) {
-      setError(err.message ?? 'Failed to create account. Please try again.')
+      setError(err.message ?? t('auth.signup.failedDefault'))
     }
   }
 
@@ -74,14 +76,14 @@ export function SignupForm({
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="signup-name" className="text-sm font-medium text-foreground">
-          Full name
+          {t('auth.signup.fullName')}
         </label>
         <input
           id="signup-name"
           type="text"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          placeholder="John Doe"
+          placeholder={t('auth.signup.placeholder.name')}
           required
           autoComplete="name"
           className={inputClass}
@@ -90,14 +92,14 @@ export function SignupForm({
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="signup-email" className="text-sm font-medium text-foreground">
-          Email
+          {t('auth.email')}
         </label>
         <input
           id="signup-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
+          placeholder={t('auth.login.placeholder.email')}
           required
           autoComplete="email"
           className={inputClass}
@@ -106,14 +108,14 @@ export function SignupForm({
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="signup-password" className="text-sm font-medium text-foreground">
-          Password
+          {t('auth.password')}
         </label>
         <input
           id="signup-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="At least 8 characters"
+          placeholder={t('auth.signup.placeholder.password')}
           required
           minLength={8}
           autoComplete="new-password"
@@ -123,14 +125,14 @@ export function SignupForm({
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="signup-confirm" className="text-sm font-medium text-foreground">
-          Confirm password
+          {t('auth.signup.confirmPassword')}
         </label>
         <input
           id="signup-confirm"
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder="Repeat your password"
+          placeholder={t('auth.signup.placeholder.confirm')}
           required
           minLength={8}
           autoComplete="new-password"
@@ -140,16 +142,16 @@ export function SignupForm({
 
       {(termsUrl || privacyUrl) && (
         <p className="text-xs text-muted-foreground">
-          By creating an account, you agree to our{' '}
+          {t('auth.signup.termsAgreement')}{' '}
           {termsUrl && (
             <a href={termsUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
-              Terms of Service
+              {t('auth.signup.termsOfService')}
             </a>
           )}
           {termsUrl && privacyUrl && ' and '}
           {privacyUrl && (
             <a href={privacyUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
-              Privacy Policy
+              {t('auth.signup.privacyPolicy')}
             </a>
           )}
           .
@@ -161,7 +163,7 @@ export function SignupForm({
         disabled={loading}
         className="inline-flex items-center justify-center h-10 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
       >
-        {loading ? 'Creating account...' : 'Create account'}
+        {loading ? t('auth.signup.creating') : t('auth.signup.title')}
       </button>
     </form>
   )

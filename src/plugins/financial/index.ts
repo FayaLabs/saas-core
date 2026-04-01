@@ -8,6 +8,7 @@ import { createMockFinancialProvider } from './data/mock'
 import { createSupabaseFinancialProvider } from './data/supabase'
 import { createFinancialStore } from './store'
 import { financialRegistries } from './registries'
+import { financialLocales } from './locales'
 import { PluginSettingsPanel } from '../../components/plugins/PluginSettingsPanel'
 import { FinancialGeneralSettings } from './components/FinancialGeneralSettings'
 
@@ -277,6 +278,7 @@ export function createFinancialPlugin(options?: FinancialPluginOptions): PluginM
         permission: { feature: 'financial', action: 'read' as const },
       },
     ],
+    locales: financialLocales,
   }
 }
 

@@ -8,6 +8,7 @@ import { createAgendaStore } from './store'
 import { agendaRegistries } from './registries'
 import { PluginSettingsPanel } from '../../components/plugins/PluginSettingsPanel'
 import { AgendaGeneralSettings } from './components/AgendaGeneralSettings'
+import { agendaLocales } from './locales'
 import { ConnectedHolidaysSettings } from '../../components/settings/ConnectedHolidaysSettings'
 import { setScheduleBlockConfig, getScheduleBlockConfig } from '../../lib/schedule-config'
 
@@ -168,6 +169,7 @@ export function createAgendaPlugin(options?: AgendaPluginOptions): PluginManifes
         permission: { feature: 'appointments', action: 'read' as const },
       },
     ],
+    locales: agendaLocales,
   }
 }
 

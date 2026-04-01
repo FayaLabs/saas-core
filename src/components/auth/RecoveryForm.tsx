@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { cn } from '../../lib/cn'
 import { useAuth } from '../../hooks/useAuth'
+import { useTranslation } from '../../hooks/useTranslation'
 
 interface RecoveryFormProps {
   onSuccess?: () => void
@@ -14,6 +15,7 @@ export function RecoveryForm({
   className,
 }: RecoveryFormProps) {
   const { resetPassword, loading } = useAuth()
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
@@ -27,7 +29,7 @@ export function RecoveryForm({
       setSubmitted(true)
       onSuccess?.()
     } catch (err: any) {
-      setError(err.message ?? 'Failed to send reset email. Please try again.')
+      setError(err.message ?? t('auth.recovery.failedDefault'))
     }
   }
 
@@ -36,10 +38,10 @@ export function RecoveryForm({
       <div className={cn('flex flex-col gap-4 w-full max-w-sm text-center', className)}>
         <div className="rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 px-4 py-6">
           <h3 className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">
-            Check your email
+            {t('auth.recovery.checkEmail')}
           </h3>
           <p className="text-sm text-green-700 dark:text-green-300">
-            We sent a password reset link to <strong>{email}</strong>. Please check your inbox and follow the instructions.
+            {t('auth.recovery.resetLinkSent', { email })}
           </p>
         </div>
         {onBackToLogin && (
@@ -48,7 +50,7 @@ export function RecoveryForm({
             onClick={onBackToLogin}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            Back to login
+            {t('auth.recovery.backToLogin')}
           </button>
         )}
       </div>
@@ -61,7 +63,7 @@ export function RecoveryForm({
       className={cn('flex flex-col gap-4 w-full max-w-sm', className)}
     >
       <p className="text-sm text-muted-foreground">
-        Enter your email address and we will send you a link to reset your password.
+        {t('auth.recovery.description')}
       </p>
 
       {error && (
@@ -72,14 +74,14 @@ export function RecoveryForm({
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="recovery-email" className="text-sm font-medium text-foreground">
-          Email
+          {t('auth.email')}
         </label>
         <input
           id="recovery-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
+          placeholder={t('auth.login.placeholder.email')}
           required
           autoComplete="email"
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
@@ -91,7 +93,7 @@ export function RecoveryForm({
         disabled={loading}
         className="inline-flex items-center justify-center h-10 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
       >
-        {loading ? 'Sending...' : 'Send reset link'}
+        {loading ? t('auth.recovery.sending') : t('auth.recovery.sendResetLink')}
       </button>
 
       {onBackToLogin && (
@@ -100,7 +102,7 @@ export function RecoveryForm({
           onClick={onBackToLogin}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          Back to login
+          {t('auth.recovery.backToLogin')}
         </button>
       )}
     </form>

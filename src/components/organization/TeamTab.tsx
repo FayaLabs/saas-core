@@ -19,6 +19,7 @@ import { useInviteStore } from '../../stores/invite.store'
 import { useOrgAdapterOptional } from '../../lib/org-context'
 import { useAuthStore } from '../../stores/auth.store'
 import { usePermission } from '../../hooks/usePermission'
+import { useTranslation } from '../../hooks/useTranslation'
 import { dedup } from '../../lib/dedup'
 
 export function TeamTab() {
@@ -85,6 +86,7 @@ export function TeamTab() {
     }
   }
 
+  const { t } = useTranslation()
   const canManageTeam = hasSystemPermission('manage_team')
   const pendingInvites = invites.filter((i) => i.status === 'pending')
 
@@ -94,13 +96,13 @@ export function TeamTab() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold">Members</h3>
-            <p className="text-sm text-muted-foreground">{members.length} member{members.length !== 1 ? 's' : ''} in this organization.</p>
+            <h3 className="text-lg font-semibold">{t('organization.team.title')}</h3>
+            <p className="text-sm text-muted-foreground">{t('organization.team.memberCount', { count: String(members.length), plural: members.length !== 1 ? 's' : '' })}</p>
           </div>
           {canManageTeam && (
             <Button size="sm" onClick={() => setInviteOpen(true)}>
               <UserPlus className="h-4 w-4 mr-1" />
-              Invite
+              {t('organization.team.invite')}
             </Button>
           )}
         </div>
@@ -110,9 +112,9 @@ export function TeamTab() {
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Member</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Role</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Joined</th>
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">{t('organization.team.member')}</th>
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">{t('organization.team.role')}</th>
+                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">{t('organization.team.joined')}</th>
                   {canManageTeam && (
                     <th className="text-right p-3 text-sm font-medium text-muted-foreground w-12" />
                   )}
@@ -139,7 +141,7 @@ export function TeamTab() {
                           <div>
                             <p className="text-sm font-medium">
                               {member.user.fullName}
-                              {isCurrentUser && <span className="text-muted-foreground ml-1">(you)</span>}
+                              {isCurrentUser && <span className="text-muted-foreground ml-1">{t('organization.team.you')}</span>}
                             </p>
                             <p className="text-xs text-muted-foreground">{member.user.email}</p>
                           </div>
@@ -181,7 +183,7 @@ export function TeamTab() {
                                   className="text-destructive"
                                   onClick={() => handleRemoveMember(member.id)}
                                 >
-                                  Remove member
+                                  {t('organization.team.removeMember')}
                                 </DropdownItem>
                               </DropdownContent>
                             </Dropdown>
@@ -200,7 +202,7 @@ export function TeamTab() {
       {/* Pending Invites */}
       {pendingInvites.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-3">Pending Invites</h3>
+          <h3 className="text-lg font-semibold mb-3">{t('organization.team.pendingInvites')}</h3>
           <div className="space-y-2">
             {pendingInvites.map((invite) => (
               <Card key={invite.id} className="p-3">
@@ -221,10 +223,10 @@ export function TeamTab() {
                   {canManageTeam && (
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="sm" className="text-xs" onClick={() => handleResendInvite(invite.id)}>
-                        Resend
+                        {t('organization.team.resend')}
                       </Button>
                       <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => handleRevokeInvite(invite.id)}>
-                        Revoke
+                        {t('organization.team.revoke')}
                       </Button>
                     </div>
                   )}

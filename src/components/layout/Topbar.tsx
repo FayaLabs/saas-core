@@ -66,6 +66,7 @@ import {
 import { cn } from '../../lib/cn'
 import { useRouter } from '../../lib/router'
 import { useLayoutStore } from '../../stores/layout.store'
+import { useTranslation } from '../../hooks/useTranslation'
 
 interface NavigationItem {
   id: string
@@ -168,6 +169,7 @@ export function Topbar({ navigation, logo, onMenuClick, leftContent, rightConten
   const router = useRouter()
   const currentPath = router.usePathname()
   const setCommandPaletteOpen = useLayoutStore((s) => s.setCommandPaletteOpen)
+  const { t } = useTranslation()
   const mainNav = navigation.filter((item) => item.section === 'main')
   const secondaryNav = navigation.filter((item) => item.section === 'secondary')
   const allNav = [...mainNav, ...secondaryNav]
@@ -198,7 +200,7 @@ export function Topbar({ navigation, logo, onMenuClick, leftContent, rightConten
               className="relative flex h-8 w-full items-center rounded-md bg-sidebar/60 px-3 pl-8 text-sm text-sidebar-muted transition-colors hover:bg-sidebar/80"
             >
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-sidebar-muted" />
-              <span className="text-xs">Search...</span>
+              <span className="text-xs">{t('layout.topbar.search')}</span>
               <kbd className="ml-auto hidden rounded bg-sidebar/60 px-1.5 py-0.5 text-[10px] font-medium text-sidebar-muted sm:inline-block">
                 ⌘K
               </kbd>

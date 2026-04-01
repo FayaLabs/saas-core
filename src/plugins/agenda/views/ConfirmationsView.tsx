@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { CheckCircle, Phone, MessageCircle, XCircle, Clock } from 'lucide-react'
 import { useAgendaConfig, useAgendaStore } from '../AgendaContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import type { CalendarBooking, ConfirmationRecord } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -31,6 +32,7 @@ function getConfirmationStatus(booking: CalendarBooking): string {
 // ---------------------------------------------------------------------------
 
 export function ConfirmationsView() {
+  const { t } = useTranslation()
   const config = useAgendaConfig()
   const confirmations = useAgendaStore((s) => s.pendingConfirmations)
   const loading = useAgendaStore((s) => s.confirmationsLoading)
@@ -53,13 +55,13 @@ export function ConfirmationsView() {
           </div>
           <div>
             <h2 className="text-lg font-semibold">{config.labels.confirmations}</h2>
-            <p className="text-sm text-muted-foreground">Upcoming appointments pending confirmation</p>
+            <p className="text-sm text-muted-foreground">{t('agenda.confirmations.subtitle')}</p>
           </div>
         </div>
 
         {/* Confirmation rate */}
         <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
-          <span className="text-sm text-muted-foreground">Confirmed:</span>
+          <span className="text-sm text-muted-foreground">{t('agenda.confirmations.confirmed')}</span>
           <span className="text-lg font-semibold text-primary">{confirmRate}%</span>
           <span className="text-xs text-muted-foreground">({confirmedCount}/{totalCount})</span>
         </div>
@@ -67,12 +69,12 @@ export function ConfirmationsView() {
 
       {/* List */}
       {loading ? (
-        <div className="flex items-center justify-center py-12 text-muted-foreground">Loading...</div>
+        <div className="flex items-center justify-center py-12 text-muted-foreground">{t('agenda.confirmations.loading')}</div>
       ) : confirmations.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <CheckCircle className="h-12 w-12 text-muted-foreground/30 mb-3" />
-          <p className="text-muted-foreground">No pending confirmations</p>
-          <p className="text-sm text-muted-foreground/70">All upcoming appointments have been confirmed</p>
+          <p className="text-muted-foreground">{t('agenda.confirmations.empty')}</p>
+          <p className="text-sm text-muted-foreground/70">{t('agenda.confirmations.emptySubtitle')}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -92,7 +94,7 @@ export function ConfirmationsView() {
 
                 {/* Client info */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{booking.clientName ?? 'Unknown client'}</p>
+                  <p className="font-medium truncate">{booking.clientName ?? t('agenda.confirmations.unknownClient')}</p>
                   <p className="text-sm text-muted-foreground truncate">{services}</p>
                 </div>
 

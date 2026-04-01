@@ -1,9 +1,12 @@
 import * as React from 'react'
 import * as Avatar from '@radix-ui/react-avatar'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { LogOut, User, Settings, CreditCard, HelpCircle, Moon, Sun } from 'lucide-react'
+import { LogOut, User, Settings, CreditCard, HelpCircle, Moon, Sun, Globe } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useThemeStore } from '../../stores/theme.store'
+import { useTranslation } from '../../hooks/useTranslation'
+import { useLocaleStore } from '../../stores/locale.store'
+import { useI18nConfig } from '../../lib/i18n'
 
 interface UserMenuUser {
   fullName: string
@@ -47,6 +50,20 @@ export function UserMenu({
 }: UserMenuProps) {
   const mode = useThemeStore((s) => s.mode)
   const setMode = useThemeStore((s) => s.setMode)
+  const { t } = useTranslation()
+  const { locale, setLocale } = useLocaleStore()
+  const i18nConfig = useI18nConfig()
+
+  const LOCALE_LABELS: Record<string, string> = {
+    en: 'English',
+    'pt-BR': 'Português (BR)',
+  }
+
+  const nextLocale = () => {
+    const supported = i18nConfig.supported.length > 1 ? i18nConfig.supported : ['en', 'pt-BR']
+    const idx = supported.indexOf(locale)
+    return supported[(idx + 1) % supported.length]
+  }
 
   return (
     <DropdownMenu.Root>
@@ -94,7 +111,7 @@ export function UserMenu({
               onSelect={onProfile}
             >
               <User className="h-4 w-4" />
-              Profile
+              {t('layout.userMenu.profile')}
             </DropdownMenu.Item>
           )}
           {onSettings && (
@@ -103,7 +120,7 @@ export function UserMenu({
               onSelect={onSettings}
             >
               <Settings className="h-4 w-4" />
-              Settings
+              {t('layout.userMenu.settings')}
             </DropdownMenu.Item>
           )}
           {onBilling && (
@@ -112,12 +129,12 @@ export function UserMenu({
               onSelect={onBilling}
             >
               <CreditCard className="h-4 w-4" />
-              Billing
+              {t('layout.userMenu.billing')}
             </DropdownMenu.Item>
           )}
           <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted">
             <HelpCircle className="h-4 w-4" />
-            Help
+            {t('layout.userMenu.help')}
           </DropdownMenu.Item>
           {/* Extra items from vertical */}
           {extraItems && extraItems.length > 0 && (
@@ -144,7 +161,18 @@ export function UserMenu({
             onSelect={() => setMode(mode === 'dark' ? 'light' : 'dark')}
           >
             {mode === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            {mode === 'dark' ? 'Light mode' : 'Dark mode'}
+            {mode === 'dark' ? t('layout.userMenu.lightMode') : t('layout.userMenu.darkMode')}
+          </DropdownMenu.Item>
+
+          {/* Language Toggle */}
+          <DropdownMenu.Item
+            className="flex cursor-pointer items-center justify-between rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted"
+            onSelect={() => setLocale(nextLocale())}
+          >
+            <span className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              {LOCALE_LABELS[locale] ?? locale}
+            </span>
           </DropdownMenu.Item>
 
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
@@ -155,7 +183,7 @@ export function UserMenu({
             onSelect={onSignOut}
           >
             <LogOut className="h-4 w-4" />
-            Sign out
+            {t('layout.userMenu.signOut')}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

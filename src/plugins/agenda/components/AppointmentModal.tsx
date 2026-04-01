@@ -8,6 +8,7 @@ import { DatePicker } from '../../../components/ui/date-picker'
 import { TimePicker } from '../../../components/ui/time-picker'
 import { SearchCombobox, type ComboboxOption } from './SearchCombobox'
 import { useAgendaConfig, useAgendaProvider, useAgendaStore } from '../AgendaContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { isStatusAvailable } from '../types'
 import type { CreateBookingInput } from '../types'
 
@@ -92,6 +93,7 @@ function ProfessionalSelect({ value, onChange, professionals }: {
   value: string; onChange: (v: string) => void
   professionals: Array<{ id: string; name: string }>
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const current = professionals.find((p) => p.id === value)
@@ -117,7 +119,7 @@ function ProfessionalSelect({ value, onChange, professionals }: {
             <span>{current.name}</span>
           </>
         ) : (
-          <span className="text-muted-foreground">Select professional...</span>
+          <span className="text-muted-foreground">{t('agenda.appointment.selectProfessional')}</span>
         )}
         <svg className="ml-auto h-3.5 w-3.5 text-muted-foreground shrink-0" viewBox="0 0 16 16" fill="none">
           <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -149,6 +151,7 @@ function LocationSelect({ value, onChange, locations }: {
   value: string; onChange: (v: string) => void
   locations: Array<{ id: string; name: string }>
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const current = locations.find((l) => l.id === value)
@@ -167,7 +170,7 @@ function LocationSelect({ value, onChange, locations }: {
         {current ? (
           <span>{current.name}</span>
         ) : (
-          <span className="text-muted-foreground">Select location...</span>
+          <span className="text-muted-foreground">{t('agenda.appointment.selectLocation')}</span>
         )}
         <svg className="ml-auto h-3.5 w-3.5 text-muted-foreground shrink-0" viewBox="0 0 16 16" fill="none">
           <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -201,6 +204,7 @@ interface Props {
 }
 
 export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Props) {
+  const { t } = useTranslation()
   const config = useAgendaConfig()
   const provider = useAgendaProvider()
   const createBooking = useAgendaStore((s) => s.createBooking)
@@ -349,7 +353,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
   }
 
   async function handleDelete() {
-    if (!bookingId || !confirm('Delete this appointment?')) return
+    if (!bookingId || !confirm(t('agenda.appointment.deleteConfirm'))) return
     await deleteBooking(bookingId); onClose()
   }
 
@@ -362,7 +366,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
         {/* ═══ TOP — title + date/time (sticky) ═══ */}
         <div className="px-5 pt-5 pb-4 shrink-0">
           <ModalTitle className="!text-xl mb-4">
-            {mode === 'create' ? 'New Appointment' : 'Edit Appointment'}
+            {mode === 'create' ? t('agenda.appointment.new') : t('agenda.appointment.edit')}
           </ModalTitle>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -370,14 +374,14 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
             <TimePicker value={startTime} onChange={setStartTime}
               min={config.businessHours.startTime} max={config.businessHours.endTime}
               interval={config.slotDuration} className="w-[110px]" />
-            <span className="text-sm text-muted-foreground">to</span>
+            <span className="text-sm text-muted-foreground">{t('agenda.appointment.to')}</span>
             <TimePicker value={endTime} onChange={() => {}} readOnly className="w-[110px]" />
           </div>
 
           {conflict && (
             <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive mt-3">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              Time conflict — this professional is already booked at this time.
+              {t('agenda.appointment.conflict')}
             </div>
           )}
         </div>
@@ -440,31 +444,31 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
             <div className="flex items-start gap-3">
               <User className="h-4 w-4 mt-2.5 text-muted-foreground shrink-0" />
               <div className="flex-1">
-                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Client</label>
+                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">{t('agenda.appointment.client')}</label>
                 {!quickCreate ? (
                   <SearchCombobox
                     value={clientSearch}
                     onChange={(v) => { setClientSearch(v); setClientId('') }}
                     onSelect={selectClient}
                     options={clientOptions}
-                    placeholder="Search client..."
+                    placeholder={t('agenda.appointment.searchClient')}
                     allowCreate
-                    createLabel="New client"
+                    createLabel={t('agenda.appointment.newClient')}
                     onCreateNew={(name) => { setQuickCreate(true); setNewClientName(name); setNewClientPhone(''); setNewClientEmail('') }}
                   />
                 ) : (
                   <div className="rounded-lg border bg-background p-2.5 space-y-2">
                     <div className="flex items-center gap-2">
                       <input type="text" value={newClientName} onChange={(e) => setNewClientName(e.target.value)}
-                        placeholder="Name" className="flex-1 rounded-md border bg-background px-2.5 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring" autoFocus />
+                        placeholder={t('agenda.appointment.name')} className="flex-1 rounded-md border bg-background px-2.5 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring" autoFocus />
                       <button type="button" onClick={() => setQuickCreate(false)}
                         className="p-1 text-muted-foreground hover:text-foreground shrink-0"><X className="h-3.5 w-3.5" /></button>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <input type="tel" value={newClientPhone} onChange={(e) => setNewClientPhone(e.target.value)}
-                        placeholder="Phone" className="rounded-md border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                        placeholder={t('agenda.appointment.phone')} className="rounded-md border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                       <input type="email" value={newClientEmail} onChange={(e) => setNewClientEmail(e.target.value)}
-                        placeholder="Email (optional)" className="rounded-md border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                        placeholder={t('agenda.appointment.emailOptional')} className="rounded-md border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
                     <button type="button" disabled={creatingClient || !newClientName.trim()}
                       onClick={async () => {
@@ -483,12 +487,12 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
                           setClientId(data.id); setClientSearch(data.name); setQuickCreate(false)
                         } catch (err: any) {
                           const { toast } = await import('sonner')
-                          toast.error('Failed to create client', { description: err?.message })
+                          toast.error(t('agenda.appointment.createClientFailed'), { description: err?.message })
                         }
                         setCreatingClient(false)
                       }}
                       className="w-full rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-colors">
-                      {creatingClient ? 'Creating...' : 'Create'}
+                      {creatingClient ? t('agenda.appointment.creating') : t('agenda.appointment.create')}
                     </button>
                   </div>
                 )}
@@ -499,7 +503,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
             <div className="flex items-start gap-3">
               <User className="h-4 w-4 mt-2.5 text-muted-foreground shrink-0" />
               <div className="flex-1">
-                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Professional</label>
+                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">{t('agenda.appointment.professional')}</label>
                 <ProfessionalSelect value={professionalId} onChange={setProfessionalId} professionals={professionals} />
               </div>
             </div>
@@ -509,7 +513,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
               <div className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 mt-2.5 text-muted-foreground shrink-0" />
                 <div className="flex-1">
-                  <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Location</label>
+                  <label className="text-[11px] font-medium text-muted-foreground mb-1 block">{t('agenda.appointment.location')}</label>
                   <LocationSelect
                     value={locationId}
                     onChange={setLocationId}
@@ -523,7 +527,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
             <div className="flex items-start gap-3">
               <Briefcase className="h-4 w-4 mt-2.5 text-muted-foreground shrink-0" />
               <div className="flex-1">
-                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Services</label>
+                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">{t('agenda.appointment.services')}</label>
 
                 {services.length > 0 && (
                   <div className="space-y-1 mb-1.5">
@@ -546,7 +550,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
                     onChange={setServiceSearch}
                     onSelect={addService}
                     options={serviceOptions}
-                    placeholder="Search service to add..."
+                    placeholder={t('agenda.appointment.searchService')}
                     autoFocus={showServiceSearch}
                     onBlurEmpty={() => services.length > 0 && setShowServiceSearch(false)}
                     renderRight={(opt) => opt.price != null ? (
@@ -556,7 +560,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
                 ) : (
                   <button type="button" onClick={() => setShowServiceSearch(true)}
                     className="flex items-center gap-1.5 text-xs text-primary font-medium hover:underline mt-0.5">
-                    <Plus className="h-3 w-3" /> Add service
+                    <Plus className="h-3 w-3" /> {t('agenda.appointment.addService')}
                   </button>
                 )}
               </div>
@@ -566,7 +570,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
             <div className="flex items-start gap-3">
                 <CircleDot className="h-4 w-4 mt-2.5 text-muted-foreground shrink-0" />
                 <div className="flex-1">
-                  <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Status</label>
+                  <label className="text-[11px] font-medium text-muted-foreground mb-1 block">{t('agenda.appointment.status')}</label>
                   <StatusSelect value={status} onChange={setStatus} statuses={config.statuses} bookingDate={date} />
                 </div>
             </div>
@@ -575,9 +579,9 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
             <div className="flex items-start gap-3">
               <FileText className="h-4 w-4 mt-2.5 text-muted-foreground shrink-0" />
               <div className="flex-1">
-                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Notes</label>
+                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">{t('agenda.appointment.notes')}</label>
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Add description..." rows={3}
+                  placeholder={t('agenda.appointment.addDescription')} rows={3}
                   className="w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring" />
               </div>
             </div>
@@ -589,7 +593,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
           <div className="px-5 py-3 border-t bg-card flex items-center justify-between shrink-0 sm:rounded-b-2xl">
             <div className="flex items-center gap-4">
               {mode === 'edit' && (
-                <button type="button" onClick={handleDelete} className="text-xs text-destructive font-medium hover:underline">Delete</button>
+                <button type="button" onClick={handleDelete} className="text-xs text-destructive font-medium hover:underline">{t('agenda.appointment.delete')}</button>
               )}
               {/* Summary */}
               {services.length > 0 && (
@@ -601,10 +605,10 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
             </div>
             <div className="flex items-center gap-2">
               <button type="button" onClick={onClose}
-                className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors">Cancel</button>
+                className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors">{t('agenda.appointment.cancel')}</button>
               <button type="submit" disabled={!canSubmit}
                 className="rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-colors">
-                {saving ? 'Saving...' : mode === 'create' ? 'Save' : 'Update'}
+                {saving ? t('agenda.appointment.saving') : mode === 'create' ? t('agenda.appointment.save') : t('agenda.appointment.update')}
               </button>
             </div>
           </div>

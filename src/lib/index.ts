@@ -1,3 +1,4 @@
+export { resolveEntityRoute, resolveEntityHref } from './entity-routes'
 export { cn } from './cn'
 export { createSupabaseClient, getSupabaseClient, getSupabaseClientOptional } from './supabase'
 export { createApiClient, ApiError } from './api'
@@ -45,3 +46,4 @@ export type { ScheduleRecord, SaveScheduleInput, BlockSettings } from './schedul
 export { parseBlockSettings, mergeBlockSettings } from './schedule-service'
 export { setScheduleBlockConfig, getScheduleBlockConfig, subscribeScheduleBlockConfig } from './schedule-config'
 export type { ScheduleBlockConfig } from './schedule-config'
+export { I18nProvider, useI18nConfig, defaultTranslations, builtInLocales } from './i18n'

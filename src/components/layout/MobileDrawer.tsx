@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { useTranslation } from '../../hooks/useTranslation'
 
 interface NavigationItem {
   id: string
@@ -44,6 +45,7 @@ export function MobileDrawer({
   activeRoute,
   onNavigate,
 }: MobileDrawerProps) {
+  const { t } = useTranslation()
   const mainItems = navigation.filter((item) => item.section === 'main')
   const secondaryItems = navigation.filter((item) => item.section === 'secondary')
   const settingsItems = navigation.filter((item) => item.section === 'settings')
@@ -86,8 +88,8 @@ export function MobileDrawer({
       <Dialog.Portal>
         <Dialog.Overlay className="saas-overlay fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
         <Dialog.Content className="saas-drawer fixed inset-y-0 left-0 z-50 w-72 bg-card shadow-2xl outline-none">
-          <Dialog.Title className="sr-only">Navigation menu</Dialog.Title>
-          <Dialog.Description className="sr-only">Application navigation links</Dialog.Description>
+          <Dialog.Title className="sr-only">{t('layout.mobileDrawer.title')}</Dialog.Title>
+          <Dialog.Description className="sr-only">{t('layout.mobileDrawer.description')}</Dialog.Description>
 
           {/* Header */}
           <div className="flex h-14 items-center justify-between px-4">
@@ -111,7 +113,7 @@ export function MobileDrawer({
             {secondaryItems.length > 0 && (
               <div className="mt-6 space-y-0.5">
                 <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  More
+                  {t('common.more')}
                 </p>
                 {secondaryItems.map(renderItem)}
               </div>

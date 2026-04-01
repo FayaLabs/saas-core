@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Checkbox } from '../ui/checkbox'
+import { useTranslation } from '../../hooks/useTranslation'
 
 export interface Holiday {
   id: string
@@ -23,6 +24,7 @@ interface HolidaysSettingsProps {
 }
 
 function AddHolidayForm({ onAdd, onCancel }: { onAdd: HolidaysSettingsProps['onAdd']; onCancel: () => void }) {
+  const { t } = useTranslation()
   const [name, setName] = React.useState('')
   const [date, setDate] = React.useState('')
   const [recurring, setRecurring] = React.useState(false)
@@ -50,28 +52,29 @@ function AddHolidayForm({ onAdd, onCancel }: { onAdd: HolidaysSettingsProps['onA
 
   return (
     <form onSubmit={handleSubmit} className="border rounded-lg p-4 space-y-3">
-      <p className="text-sm font-medium">New Holiday</p>
+      <p className="text-sm font-medium">{t('settings.holidays.newHoliday')}</p>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Holiday name *" required />
+        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('settings.holidays.namePlaceholder')} required />
         <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
       </div>
-      <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" />
+      <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t('settings.holidays.descriptionPlaceholder')} />
       <label className="flex items-center gap-2.5 cursor-pointer text-sm">
         <Checkbox checked={recurring} onChange={setRecurring} />
-        Recurring annually
+        {t('settings.holidays.recurringAnnually')}
       </label>
       <div className="flex gap-2">
         <Button type="submit" size="sm" disabled={saving}>
           {saving && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-          Add
+          {t('common.add')}
         </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>{t('common.cancel')}</Button>
       </div>
     </form>
   )
 }
 
 export function HolidaysSettings({ holidays, loading, canManage, onAdd, onRemove }: HolidaysSettingsProps) {
+  const { t } = useTranslation()
   const [showForm, setShowForm] = React.useState(false)
 
   return (
@@ -79,13 +82,13 @@ export function HolidaysSettings({ holidays, loading, canManage, onAdd, onRemove
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-lg">Holidays</CardTitle>
-            <CardDescription>Non-working days and recurring holidays.</CardDescription>
+            <CardTitle className="text-lg">{t('settings.holidays.title')}</CardTitle>
+            <CardDescription>{t('settings.holidays.subtitle')}</CardDescription>
           </div>
           {canManage && !showForm && (
             <Button size="sm" variant="outline" onClick={() => setShowForm(true)}>
               <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Add Holiday
+              {t('settings.holidays.addHoliday')}
             </Button>
           )}
         </div>
@@ -98,7 +101,7 @@ export function HolidaysSettings({ holidays, loading, canManage, onAdd, onRemove
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         ) : holidays.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">No holidays configured yet.</p>
+          <p className="py-6 text-center text-sm text-muted-foreground">{t('settings.holidays.empty')}</p>
         ) : (
           <div className="divide-y rounded-lg border">
             {holidays.map((holiday) => (
@@ -110,7 +113,7 @@ export function HolidaysSettings({ holidays, loading, canManage, onAdd, onRemove
                     {holiday.recurring && (
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                         <Repeat className="h-2.5 w-2.5" />
-                        Annual
+                        {t('settings.holidays.annual')}
                       </span>
                     )}
                   </div>

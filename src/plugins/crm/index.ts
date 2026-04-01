@@ -8,6 +8,7 @@ import { createMockCrmProvider } from './data/mock'
 import { createSupabaseCrmProvider } from './data/supabase'
 import { createCrmStore } from './store'
 import { crmRegistries } from './registries'
+import { crmLocales } from './locales'
 import { PluginSettingsPanel } from '../../components/plugins/PluginSettingsPanel'
 import { CrmGeneralSettings } from './components/CrmGeneralSettings'
 import { PipelineSettings } from './components/PipelineSettings'
@@ -208,6 +209,7 @@ export function createCrmPlugin(options?: CrmPluginOptions): PluginManifest {
         permission: { feature: 'sales', action: 'read' as const },
       },
     ],
+    locales: crmLocales,
   }
 }
 

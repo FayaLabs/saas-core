@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { BookOpen, Plus, Clock, Layers } from 'lucide-react'
 import { useInventoryStore } from '../InventoryContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 
 function RecipeSkeleton() {
@@ -26,6 +27,7 @@ function RecipeSkeleton() {
 }
 
 export function RecipesView({ onNew, onView }: { onNew?: () => void; onView?: (id: string) => void }) {
+  const { t } = useTranslation()
   const recipes = useInventoryStore((s) => s.recipes)
   const recipesLoading = useInventoryStore((s) => s.recipesLoading)
   const fetchRecipes = useInventoryStore((s) => s.fetchRecipes)
@@ -35,11 +37,11 @@ export function RecipesView({ onNew, onView }: { onNew?: () => void; onView?: (i
   return (
     <div className="space-y-4">
       <SubpageHeader
-        title="Recipes"
-        subtitle={`${recipes.length} production formulas`}
+        title={t('inventory.recipes.title')}
+        subtitle={t('inventory.recipes.productionFormulas', { count: String(recipes.length) })}
         actions={onNew && (
           <button onClick={onNew} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-            <Plus className="h-3.5 w-3.5" /> New Recipe
+            <Plus className="h-3.5 w-3.5" /> {t('inventory.recipes.newRecipe')}
           </button>
         )}
       />
@@ -51,9 +53,9 @@ export function RecipesView({ onNew, onView }: { onNew?: () => void; onView?: (i
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/30 mb-3">
             <BookOpen className="h-5 w-5 text-muted-foreground/40" />
           </div>
-          <p className="text-sm text-muted-foreground">No recipes yet</p>
-          <p className="text-[10px] text-muted-foreground/60 mt-0.5">Recipes define how to produce products from ingredients</p>
-          {onNew && <button onClick={onNew} className="text-xs text-primary hover:underline mt-2">Create your first recipe</button>}
+          <p className="text-sm text-muted-foreground">{t('inventory.recipes.noRecipes')}</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5">{t('inventory.recipes.recipesDesc')}</p>
+          {onNew && <button onClick={onNew} className="text-xs text-primary hover:underline mt-2">{t('inventory.recipes.createFirst')}</button>}
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

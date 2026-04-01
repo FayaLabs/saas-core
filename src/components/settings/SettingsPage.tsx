@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Building2, User, Shield, Palette } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { useTranslation } from '../../hooks/useTranslation'
 import { ConnectedCompanySettings } from './ConnectedCompanySettings'
 import { ConnectedUserProfile } from './ConnectedUserProfile'
 import { ConnectedSecuritySettings } from './ConnectedSecuritySettings'
@@ -37,6 +38,7 @@ export function SettingsPage({
   beforeContent,
   afterContent,
 }: SettingsPageProps) {
+  const { t } = useTranslation()
   const baseTabs = tabs ?? DEFAULT_TABS
   const resolvedTabs = extraTabs ? [...baseTabs, ...extraTabs] : baseTabs
 
@@ -64,9 +66,9 @@ export function SettingsPage({
   return (
     <div className={cn('space-y-6', className)}>
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t('settings.title')}</h1>
         <p className="text-sm text-muted-foreground">
-          Manage your account and organization preferences.
+          {t('settings.subtitle')}
         </p>
       </div>
 
@@ -82,7 +84,7 @@ export function SettingsPage({
                 {(tab as any).isPlugin && (i === 0 || !(resolvedTabs[i - 1] as any)?.isPlugin) && (
                   <li className="py-2">
                     <div className="border-t" />
-                    <p className="px-3 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Plugins</p>
+                    <p className="px-3 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t('common.plugins')}</p>
                   </li>
                 )}
                 <li>

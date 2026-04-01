@@ -4,6 +4,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover'
 import { createArchetypeLookup } from '../../lib/archetype-lookup'
 import type { EntityLookupResult } from '../../types/entity-lookup'
 import { cn } from '../../lib/cn'
+import { resolveEntityHref } from '../../lib/entity-routes'
 
 // Singleton person lookup — shared across all PersonLink instances
 const personLookup = createArchetypeLookup({ archetype: 'person' })
@@ -15,6 +16,8 @@ interface PersonLinkProps {
   name: string
   /** Optional href to navigate to the person's profile */
   profileHref?: string
+  /** Optional tab to open on the detail page (e.g. "schedule") */
+  tab?: string
   /** Size variant */
   size?: 'sm' | 'default'
   /** Additional className for the trigger */
@@ -31,7 +34,7 @@ function formatAge(dob: string): string | null {
   } catch { return null }
 }
 
-export function PersonLink({ personId, name, profileHref, size = 'default', className }: PersonLinkProps) {
+export function PersonLink({ personId, name, profileHref, tab, size = 'default', className }: PersonLinkProps) {
   const [person, setPerson] = useState<EntityLookupResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [fetched, setFetched] = useState(false)
@@ -66,7 +69,7 @@ export function PersonLink({ personId, name, profileHref, size = 'default', clas
   const initial = name.charAt(0).toUpperCase()
 
   // Auto-derive profile href from person kind if not explicitly provided
-  const resolvedHref = profileHref ?? (kind && personId ? `#/${kind.endsWith('s') ? kind : kind + 's'}/${personId}` : undefined)
+  const resolvedHref = profileHref ?? (personId ? '#' + resolveEntityHref(personId, 'person', kind ?? undefined, tab) : undefined)
 
   return (
     <Popover onOpenChange={handleOpen}>

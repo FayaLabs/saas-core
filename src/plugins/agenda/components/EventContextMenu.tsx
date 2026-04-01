@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Pencil, Trash2, Check } from 'lucide-react'
 import { FloatingPanel } from './FloatingPanel'
 import { useAgendaConfig, useAgendaStore } from '../AgendaContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { isStatusAvailable } from '../types'
 import type { CalendarBooking } from '../types'
 
@@ -61,12 +62,13 @@ interface Props {
 }
 
 export function EventContextMenu({ booking, position, onClose, onEdit }: Props) {
+  const { t } = useTranslation()
   const config = useAgendaConfig()
   const updateStatus = useAgendaStore((s) => s.updateBookingStatus)
   const deleteBooking = useAgendaStore((s) => s.deleteBooking)
 
   async function handleDelete() {
-    if (!confirm('Delete this appointment?')) return
+    if (!confirm(t('agenda.appointment.deleteConfirm'))) return
     await deleteBooking(booking.id)
     onClose()
   }
@@ -78,21 +80,21 @@ export function EventContextMenu({ booking, position, onClose, onEdit }: Props) 
           <div className="py-1">
             <button onClick={() => panel.expandThen(() => onEdit(booking.id))}
               className="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-muted/50 transition-colors">
-              <Pencil className="h-4 w-4 text-muted-foreground" /> Edit
+              <Pencil className="h-4 w-4 text-muted-foreground" /> {t('agenda.contextMenu.edit')}
             </button>
             <button onClick={handleDelete}
               className="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-muted/50 transition-colors text-destructive">
-              <Trash2 className="h-4 w-4" /> Delete
+              <Trash2 className="h-4 w-4" /> {t('agenda.contextMenu.delete')}
             </button>
           </div>
 
           <div className="border-t px-4 py-3">
-            <p className="text-[11px] font-medium text-muted-foreground mb-2">Change status</p>
+            <p className="text-[11px] font-medium text-muted-foreground mb-2">{t('agenda.contextMenu.changeStatus')}</p>
             <div className="flex items-center gap-1.5">
               {config.statuses.map((s) => {
                 const available = isStatusAvailable(s, booking.startsAt)
                 return (
-                  <StatusDot key={s.value} color={s.color} label={available ? s.label : `${s.label} (not available)`}
+                  <StatusDot key={s.value} color={s.color} label={available ? s.label : `${s.label} ${t('agenda.contextMenu.notAvailable')}`}
                     isActive={booking.status === s.value}
                     disabled={!available}
                     onClick={() => { if (available) { updateStatus(booking.id, s.value); panel.dismiss() } }} />

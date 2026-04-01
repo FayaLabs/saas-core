@@ -3,6 +3,7 @@ import { X, Pencil, Trash2, Clock, MapPin, User, FileText } from 'lucide-react'
 import { PersonLink } from '../../../components/shared/PersonLink'
 import { FloatingPanel, type FloatingPanelRef } from './FloatingPanel'
 import { useAgendaConfig, useAgendaStore } from '../AgendaContext'
+import { useTranslation } from '../../../hooks/useTranslation'
 import { isStatusAvailable } from '../types'
 import type { CalendarBooking } from '../types'
 
@@ -72,6 +73,7 @@ function PopoverStatusSelect({ value, statuses, bookingStartsAt, onChange }: {
 }
 
 export function AppointmentPopover({ booking, position, onClose, onEdit }: Props) {
+  const { t } = useTranslation()
   const config = useAgendaConfig()
   const deleteBooking = useAgendaStore((s) => s.deleteBooking)
   const updateStatus = useAgendaStore((s) => s.updateBookingStatus)
@@ -80,7 +82,7 @@ export function AppointmentPopover({ booking, position, onClose, onEdit }: Props
   const timeRange = `${fmtTime(booking.startsAt)}${booking.endsAt ? ' – ' + fmtTime(booking.endsAt) : ''}`
 
   async function handleDelete(panel: FloatingPanelRef) {
-    if (!confirm('Delete this appointment?')) return
+    if (!confirm(t('agenda.appointment.deleteConfirm'))) return
     await deleteBooking(booking.id)
     onClose()
   }
@@ -148,7 +150,7 @@ export function AppointmentPopover({ booking, position, onClose, onEdit }: Props
 
             {booking.orderTotal != null && booking.orderTotal > 0 && (
               <div className="pt-2 border-t flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Total</span>
+                <span className="text-muted-foreground">{t('agenda.appointment.total')}</span>
                 <span className="font-medium">{fmtCurrency(booking.orderTotal, config.currency.locale, config.currency.code)}</span>
               </div>
             )}
