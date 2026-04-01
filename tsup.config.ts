@@ -14,6 +14,7 @@ export default defineConfig({
     'plugins/inventory/index': 'src/plugins/inventory/index.ts',
     'plugins/crm/index': 'src/plugins/crm/index.ts',
     'plugins/agenda/index': 'src/plugins/agenda/index.ts',
+    'plugins/reports/index': 'src/plugins/reports/index.ts',
   },
   format: ['esm', 'cjs'],
   dts: false,
