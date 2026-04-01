@@ -6,6 +6,7 @@ import type { ResolvedFinancialConfig } from './FinancialContext'
 import type { FinancialDataProvider } from './data/types'
 import { createMockFinancialProvider } from './data/mock'
 import { createSupabaseFinancialProvider } from './data/supabase'
+import { getSupabaseClientOptional } from '../../lib/supabase'
 import { createFinancialStore } from './store'
 import { financialRegistries } from './registries'
 import { financialLocales } from './locales'
@@ -161,7 +162,7 @@ function resolveConfig(options?: FinancialPluginOptions): ResolvedFinancialConfi
 export function createFinancialPlugin(options?: FinancialPluginOptions): PluginManifest {
   const config = resolveConfig(options)
 
-  const provider = options?.dataProvider ?? createSupabaseFinancialProvider()
+  const provider = options?.dataProvider ?? (getSupabaseClientOptional() ? createSupabaseFinancialProvider() : createMockFinancialProvider())
   const store = createFinancialStore(provider)
 
   const PageComponent: React.FC<any> = () =>

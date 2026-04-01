@@ -1678,6 +1678,11 @@ export const defaultTranslations: Record<string, string> = {
   'org.connectionError.title': 'Connection failed',
   'org.connectionError.description': 'Unable to connect to the server. Please check your internet connection and try again.',
   'org.connectionError.retry': 'Try again',
+
+  // ---------------------------------------------------------------------------
+  // app.mockMode.*
+  // ---------------------------------------------------------------------------
+  'app.mockMode.banner': 'You are in offline mode. Data shown may not be up to date.',
 }
 
 // ---------------------------------------------------------------------------
@@ -3382,5 +3387,8 @@ export const builtInLocales: Record<string, Record<string, string>> = {
     'org.connectionError.title': 'Falha na conexão',
     'org.connectionError.description': 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.',
     'org.connectionError.retry': 'Tentar novamente',
+
+    // app.mockMode
+    'app.mockMode.banner': 'Você está no modo offline. Os dados exibidos podem não estar atualizados.',
   },
 }

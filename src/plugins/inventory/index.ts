@@ -5,6 +5,7 @@ import type { ResolvedInventoryConfig } from './InventoryContext'
 import type { InventoryDataProvider } from './data/types'
 import { createMockInventoryProvider } from './data/mock'
 import { createSupabaseInventoryProvider } from './data/supabase'
+import { getSupabaseClientOptional } from '../../lib/supabase'
 import { createInventoryStore } from './store'
 import { inventoryRegistries } from './registries'
 import { inventoryLocales } from './locales'
@@ -101,9 +102,7 @@ function resolveConfig(options?: InventoryPluginOptions): ResolvedInventoryConfi
 
 export function createInventoryPlugin(options?: InventoryPluginOptions): PluginManifest {
   const config = resolveConfig(options)
-  // Use Supabase provider — it resolves the client lazily on first call
-  // Fall back to mock only if no explicit provider is given
-  const provider = options?.dataProvider ?? createSupabaseInventoryProvider()
+  const provider = options?.dataProvider ?? (getSupabaseClientOptional() ? createSupabaseInventoryProvider() : createMockInventoryProvider())
   const store = createInventoryStore(provider)
 
   const PageComponent: React.FC<any> = () =>

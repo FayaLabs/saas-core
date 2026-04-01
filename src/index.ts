@@ -8,6 +8,7 @@ import { setEntityRouteMap, resolveEntityHref } from './lib/entity-routes'
 import { ToastProvider } from './components/notifications/ToastProvider'
 import { RouterProvider, setGlobalRouter, hashRouterAdapter, type RouterAdapter } from './lib/router'
 import { AppShell } from './components/layout/AppShell'
+import { MockModeBanner } from './components/layout/MockModeBanner'
 import { WidgetSlot } from './components/plugins/WidgetSlot'
 import { SettingsPage } from './components/settings/SettingsPage'
 import { BillingPage } from './components/billing/BillingPage'
@@ -711,6 +712,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
       React.createElement(
         React.Fragment,
         null,
+        React.createElement(MockModeBanner),
         React.createElement(
           AppShell,
           {

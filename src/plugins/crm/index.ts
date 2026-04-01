@@ -5,6 +5,7 @@ import { CrmPage } from './CrmPage'
 import { CrmContextProvider, type ResolvedCrmConfig } from './CrmContext'
 import type { CrmDataProvider } from './data/types'
 import { createMockCrmProvider } from './data/mock'
+import { getSupabaseClientOptional } from '../../lib/supabase'
 import { createSupabaseCrmProvider } from './data/supabase'
 import { createCrmStore } from './store'
 import { crmRegistries } from './registries'
@@ -107,7 +108,7 @@ function resolveConfig(options?: CrmPluginOptions): ResolvedCrmConfig {
 
 export function createCrmPlugin(options?: CrmPluginOptions): PluginManifest {
   const config = resolveConfig(options)
-  const provider = options?.dataProvider ?? createSupabaseCrmProvider()
+  const provider = options?.dataProvider ?? (getSupabaseClientOptional() ? createSupabaseCrmProvider() : createMockCrmProvider())
   const store = createCrmStore(provider)
 
   const PageComponent: React.FC<any> = () =>

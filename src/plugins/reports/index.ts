@@ -3,6 +3,8 @@ import type { PluginManifest, PluginScope, VerticalId } from '../../types/plugin
 import { ReportsPage } from './ReportsPage'
 import type { ReportDataProvider } from './data/types'
 import { createSupabaseReportProvider } from './data/supabase'
+import { createMockReportProvider } from './data/mock'
+import { getSupabaseClientOptional } from '../../lib/supabase'
 import { useOrganizationStore } from '../../stores/organization.store'
 import { reportsLocales } from './locales'
 import type {
@@ -65,9 +67,10 @@ function resolveConfig(options: ReportsPluginOptions): ResolvedReportsConfig {
 
 export function createReportsPlugin(options: ReportsPluginOptions): PluginManifest {
   const config = resolveConfig(options)
-  const provider: ReportDataProvider = options.dataProvider ?? createSupabaseReportProvider({
-    tenantId: () => useOrganizationStore.getState().currentOrg?.id,
-  })
+  const provider: ReportDataProvider = options.dataProvider
+    ?? (getSupabaseClientOptional()
+      ? createSupabaseReportProvider({ tenantId: () => useOrganizationStore.getState().currentOrg?.id })
+      : createMockReportProvider())
 
   const PageComponent: React.FC<any> = () =>
     React.createElement(ReportsPage, { config, provider })

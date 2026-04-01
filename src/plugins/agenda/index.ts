@@ -4,6 +4,8 @@ import type { AgendaPluginOptions } from './config'
 import { resolveConfig } from './config'
 import { AgendaPage } from './AgendaPage'
 import { createSupabaseAgendaProvider } from './data/supabase'
+import { createMockAgendaProvider } from './data/mock'
+import { getSupabaseClientOptional } from '../../lib/supabase'
 import { createAgendaStore } from './store'
 import { agendaRegistries } from './registries'
 import { PluginSettingsPanel } from '../../components/plugins/PluginSettingsPanel'
@@ -18,7 +20,7 @@ import { setScheduleBlockConfig, getScheduleBlockConfig } from '../../lib/schedu
 
 export function createAgendaPlugin(options?: AgendaPluginOptions): PluginManifest {
   const config = resolveConfig(options)
-  const provider = options?.dataProvider ?? createSupabaseAgendaProvider()
+  const provider = options?.dataProvider ?? (getSupabaseClientOptional() ? createSupabaseAgendaProvider() : createMockAgendaProvider())
   const store = createAgendaStore(provider)
 
   // Register schedule block config globally so ScheduleEditor can read it
