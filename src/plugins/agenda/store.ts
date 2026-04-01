@@ -1,6 +1,7 @@
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import { dedup } from '../../lib/dedup'
 import { toast } from 'sonner'
+import { getScheduleBlockConfig, setScheduleBlockConfig } from '../../lib/schedule-config'
 import type { AgendaDataProvider } from './data/types'
 import type {
   CalendarBooking, Professional, Schedule,
@@ -28,6 +29,9 @@ export interface AgendaUIState {
   selectedLocationId: string | null
   selectedStatuses: string[]
 
+  // Locations
+  locations: Array<{ id: string; name: string }>
+
   // Schedules
   schedules: Schedule[]
   schedulesLoading: boolean
@@ -47,6 +51,7 @@ export interface AgendaUIState {
   // Actions
   fetchBookings(range: { start: string; end: string }): Promise<void>
   fetchProfessionals(): Promise<void>
+  fetchLocations(): Promise<void>
   fetchSchedules(professionalId?: string): Promise<void>
   fetchConfirmations(): Promise<void>
   createBooking(input: CreateBookingInput): Promise<CalendarBooking>
@@ -80,6 +85,8 @@ export function createAgendaStore(provider: AgendaDataProvider): StoreApi<Agenda
     selectedLocationId: null,
     selectedStatuses: [],
 
+    locations: [],
+
     schedules: [],
     schedulesLoading: false,
 
@@ -109,6 +116,19 @@ export function createAgendaStore(provider: AgendaDataProvider): StoreApi<Agenda
         set({ professionalsLoading: true })
         const professionals = await provider.getProfessionals()
         set({ professionals, professionalsLoading: false })
+      })
+    },
+
+    async fetchLocations() {
+      return dedup('agenda:locations', async () => {
+        if (!provider.getLocations) return
+        const locations = await provider.getLocations()
+        set({ locations })
+        // Update global schedule block config so ScheduleEditor picks up locations
+        const current = getScheduleBlockConfig()
+        if (current) {
+          setScheduleBlockConfig({ ...current, locations })
+        }
       })
     },
 

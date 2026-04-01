@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Clock, AlertTriangle, X, User, Briefcase, FileText, CircleDot, Plus } from 'lucide-react'
+import { Clock, AlertTriangle, X, User, Briefcase, FileText, CircleDot, Plus, MapPin } from 'lucide-react'
 import {
   Modal, ModalContent, ModalTitle,
 } from '../../../components/ui/modal'
@@ -142,6 +142,53 @@ function ProfessionalSelect({ value, onChange, professionals }: {
 }
 
 // ---------------------------------------------------------------------------
+// Location Select — custom dropdown with MapPin icon
+// ---------------------------------------------------------------------------
+
+function LocationSelect({ value, onChange, locations }: {
+  value: string; onChange: (v: string) => void
+  locations: Array<{ id: string; name: string }>
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const current = locations.find((l) => l.id === value)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen((p) => !p)}
+        className="flex w-full items-center gap-2.5 rounded-lg border bg-background px-3 py-2 text-sm hover:bg-muted/30 transition-colors text-left">
+        {current ? (
+          <span>{current.name}</span>
+        ) : (
+          <span className="text-muted-foreground">Select location...</span>
+        )}
+        <svg className="ml-auto h-3.5 w-3.5 text-muted-foreground shrink-0" viewBox="0 0 16 16" fill="none">
+          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-lg border bg-popover shadow-lg py-1 animate-in fade-in zoom-in-95 duration-100 max-h-48 overflow-y-auto">
+          {locations.map((l) => (
+            <button key={l.id} type="button"
+              onClick={() => { onChange(l.id); setOpen(false) }}
+              className={`flex w-full items-center gap-2.5 px-3 py-2 text-sm hover:bg-muted/50 transition-colors ${l.id === value ? 'bg-muted/30' : ''}`}>
+              <span>{l.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Appointment Modal — Google Calendar-inspired layout
 // ---------------------------------------------------------------------------
 
@@ -160,11 +207,13 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
   const updateBooking = useAgendaStore((s) => s.updateBooking)
   const deleteBooking = useAgendaStore((s) => s.deleteBooking)
   const professionals = useAgendaStore((s) => s.professionals)
+  const storeLocations = useAgendaStore((s) => s.locations)
 
   const [loading, setLoading] = useState(mode === 'edit')
   const [clientId, setClientId] = useState(prefill?.clientId ?? '')
   const [clientSearch, setClientSearch] = useState('')
   const [professionalId, setProfessionalId] = useState(prefill?.professionalId ?? '')
+  const [locationId, setLocationId] = useState(prefill?.locationId ?? '')
   const [services, setServices] = useState<ServiceItem[]>([])
   const [serviceSearch, setServiceSearch] = useState('')
   const [date, setDate] = useState(() => {
@@ -196,7 +245,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
     if (!open) return
     // Reset to defaults/prefill on each open
     setClientId(prefill?.clientId ?? ''); setClientSearch('')
-    setProfessionalId(prefill?.professionalId ?? ''); setServices([])
+    setProfessionalId(prefill?.professionalId ?? ''); setLocationId(prefill?.locationId ?? ''); setServices([])
     setServiceSearch(''); setNotes(''); setStatus('scheduled')
     setConflict(false); setShowServiceSearch(false); setLoading(mode === 'edit')
     setQuickCreate(false); setNewClientName(''); setNewClientPhone(''); setNewClientEmail(''); setCreatingClient(false)
@@ -223,7 +272,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
       provider.getBookingById(bookingId).then((b) => {
         if (!b) { setLoading(false); return }
         setClientId(b.clientId ?? ''); setClientSearch(b.clientName ?? '')
-        setProfessionalId(b.professionalId ?? '')
+        setProfessionalId(b.professionalId ?? ''); setLocationId(b.locationId ?? '')
         setDate(b.startsAt.slice(0, 10))
         const d = new Date(b.startsAt)
         setStartTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`)
@@ -289,10 +338,10 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
     try {
       const startsAt = new Date(`${date}T${startTime}:00`).toISOString()
       if (mode === 'create') {
-        await createBooking({ clientId, professionalId, startsAt, notes: notes || undefined,
+        await createBooking({ clientId, professionalId, locationId: locationId || undefined, startsAt, notes: notes || undefined,
           services: services.map((s) => ({ serviceId: s.serviceId, name: s.name, durationMinutes: s.durationMinutes, price: s.price })) })
       } else if (bookingId) {
-        await updateBooking(bookingId, { clientId, professionalId, startsAt, notes: notes || undefined, status: status as any })
+        await updateBooking(bookingId, { clientId, professionalId, locationId: locationId || undefined, startsAt, notes: notes || undefined, status: status as any })
       }
       onClose()
     } catch { /* toast */ }
@@ -454,6 +503,21 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
                 <ProfessionalSelect value={professionalId} onChange={setProfessionalId} professionals={professionals} />
               </div>
             </div>
+
+            {/* Location — only when locationSelection module is enabled */}
+            {config.modules.locationSelection && (storeLocations.length > 0 || config.locations.length > 0) && (
+              <div className="flex items-start gap-3">
+                <MapPin className="h-4 w-4 mt-2.5 text-muted-foreground shrink-0" />
+                <div className="flex-1">
+                  <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Location</label>
+                  <LocationSelect
+                    value={locationId}
+                    onChange={setLocationId}
+                    locations={storeLocations.length > 0 ? storeLocations : config.locations}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Services */}
             <div className="flex items-start gap-3">

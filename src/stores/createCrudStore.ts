@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { DataProvider, CrudQuery } from '../lib/data-providers/types'
 
 export interface CrudState<T> {
-  items: T[]
+  items: T[] | null
   total: number
   loading: boolean
   query: CrudQuery
@@ -31,7 +31,7 @@ export function createCrudStore<T extends { id: string }>(
   }
 
   return create<CrudStore<T>>((set, get) => ({
-    items: [],
+    items: null,
     total: 0,
     loading: false,
     query: {},
@@ -52,7 +52,7 @@ export function createCrudStore<T extends { id: string }>(
           const result = await dataProvider.list(get().query)
           set({ items: result.data, total: result.total, loading: false })
         } catch {
-          set({ loading: false })
+          set({ items: get().items ?? [], loading: false })
         } finally {
           inflightFetch = null
         }
@@ -91,7 +91,7 @@ export function createCrudStore<T extends { id: string }>(
     },
 
     getById(id) {
-      return get().items.find((item) => item.id === id)
+      return (get().items ?? []).find((item) => item.id === id)
     },
   }))
 }

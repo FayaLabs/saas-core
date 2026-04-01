@@ -1,11 +1,13 @@
-- [ ] Authentication
-- [ ] CRUDs
+- [x] Authentication
+- [x] CRUDs
 - [ ] Permissions
-- [ ] Archetypes
+- [ ] Archetypes Concept
 - [ ] User onboarding (sign up)
-- [ ] Plugins Injection Concept
+- [ ] Plugins Injection Concept <-- This is critical
 - [ ] i18n translations
 - [ ] AI Agent Chat
-- [ ] Migration (initial, for plugins, and for updates)
+- [ ] Migration (initial, for plugins, and for updates) <-- This is critical
 - [ ] Plugins package segregation from saas-core(agenda + fullcalendar)
-- [ ]
+- [ ] Documentation for Fayz Agents, Contribution etc. (open source the repo for web, allow fayz to build saas using the package)
+- [ ] Error monitoring (sentry) -> fix flow
+- [ ] Custom project plugin (allow users to create their own plugins + submit to us)

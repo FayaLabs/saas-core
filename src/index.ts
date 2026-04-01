@@ -191,9 +191,11 @@ function sortNavigation(
 function buildNavigation(
   pages: PageConfig[],
   config: SaasAppConfig
-): { navigation: (NavigationItem & { permission?: PluginPermissionRequirement })[]; routes: Map<string, RouteEntry> } {
+): { navigation: (NavigationItem & { permission?: PluginPermissionRequirement })[]; routes: Map<string, RouteEntry>; entityRouteMap: Map<string, string> } {
   const navigation: (NavigationItem & { permission?: PluginPermissionRequirement })[] = []
   const routes = new Map<string, RouteEntry>()
+  // Maps "archetype:kind" (e.g. "person:staff") or "archetype" to route path
+  const entityRouteMap = new Map<string, string>()
 
   // Vertical pages
   let mainPos = 0
@@ -219,6 +221,12 @@ function buildNavigation(
         if (child.component && !routes.has(child.path)) {
           if ((child.component as any)?.__isCrudPage) {
             ;(child.component as any).__crudBasePath = child.path
+            const eDef = (child.component as any).__entityDef
+            if (eDef?.data?.archetypeKind) {
+              entityRouteMap.set(`${eDef.data.archetype ?? ''}:${eDef.data.archetypeKind}`, child.path)
+            } else if (eDef?.data?.archetype) {
+              entityRouteMap.set(eDef.data.archetype, child.path)
+            }
           }
           routes.set(child.path, { component: child.component, permission: child.permission })
         }
@@ -239,6 +247,12 @@ function buildNavigation(
     // Set basePath on CRUD pages so they know their mount point
     if ((page.component as any)?.__isCrudPage) {
       ;(page.component as any).__crudBasePath = page.path
+      const eDef = (page.component as any).__entityDef
+      if (eDef?.data?.archetypeKind) {
+        entityRouteMap.set(`${eDef.data.archetype ?? ''}:${eDef.data.archetypeKind}`, page.path)
+      } else if (eDef?.data?.archetype) {
+        entityRouteMap.set(eDef.data.archetype, page.path)
+      }
     }
     routes.set(page.path, { component: page.component, permission: page.permission })
   }
@@ -255,7 +269,7 @@ function buildNavigation(
     routes.set('/settings', { component: SettingsPage })
   }
 
-  return { navigation: sortNavigation(navigation), routes }
+  return { navigation: sortNavigation(navigation), routes, entityRouteMap }
 }
 
 // ---------------------------------------------------------------------------
@@ -305,7 +319,7 @@ function createGlobalEntitySearch(): EntitySearchFn {
         subtitle: [p.email, p.phone].filter(Boolean).join(' · ') || undefined,
         group: kindLabel,
         icon: 'User',
-        data: p,
+        data: { ...p, archetype: 'person' },
       })
     }
     for (const p of products) {
@@ -315,7 +329,7 @@ function createGlobalEntitySearch(): EntitySearchFn {
         subtitle: [p.sku, p.price != null ? `$${p.price}` : null].filter(Boolean).join(' · ') || undefined,
         group: 'Products',
         icon: 'Box',
-        data: p,
+        data: { ...p, archetype: 'product' },
       })
     }
     for (const s of services) {
@@ -328,7 +342,7 @@ function createGlobalEntitySearch(): EntitySearchFn {
         ].filter(Boolean).join(' · ') || undefined,
         group: 'Services',
         icon: 'Sparkles',
-        data: s,
+        data: { ...s, archetype: 'service' },
       })
     }
 
@@ -336,7 +350,7 @@ function createGlobalEntitySearch(): EntitySearchFn {
   }
 }
 
-function CommandPaletteWrapper({ navigation, routerAdapter }: { navigation: NavigationItem[]; routerAdapter: RouterAdapter }) {
+function CommandPaletteWrapper({ navigation, routerAdapter, entityRouteMap }: { navigation: NavigationItem[]; routerAdapter: RouterAdapter; entityRouteMap: Map<string, string> }) {
   const { commandPaletteOpen, setCommandPaletteOpen } = useLayoutStore()
 
   const entitySearch = React.useMemo(() => createGlobalEntitySearch(), [])
@@ -372,16 +386,25 @@ function CommandPaletteWrapper({ navigation, routerAdapter }: { navigation: Navi
   }, [navigation, routerAdapter])
 
   const handleEntitySelect = React.useCallback((result: EntitySearchResult) => {
-    // Persons route by kind (e.g. client → /clients), products/services by group
-    const group = result.group?.toLowerCase()
-    if (group === 'persons' && result.data?.kind) {
-      const kind = String(result.data.kind)
-      const plural = kind.endsWith('s') ? kind : kind + 's'
-      routerAdapter.navigate(`/${plural}/${result.id}`)
-    } else if (group) {
-      routerAdapter.navigate(`/${group}/${result.id}`)
+    // Look up the registered route for this entity's archetype+kind
+    const archetype = result.data?.archetype ? String(result.data.archetype) : undefined
+    const kind = result.data?.kind ? String(result.data.kind) : undefined
+
+    // Try specific archetype:kind match first, then archetype-only, then fall back to group-based guess
+    const routePath = (archetype && kind && entityRouteMap.get(`${archetype}:${kind}`))
+      || (archetype && entityRouteMap.get(archetype))
+      || null
+
+    if (routePath) {
+      routerAdapter.navigate(`${routePath}/${result.id}`)
+    } else {
+      // Fallback for entities without registered CRUD routes
+      const group = result.group?.toLowerCase()
+      if (group) {
+        routerAdapter.navigate(`/${group}/${result.id}`)
+      }
     }
-  }, [routerAdapter])
+  }, [routerAdapter, entityRouteMap])
 
   return React.createElement(CommandPalette, {
     commands,
@@ -480,7 +503,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
   const routerAdapter = config.router ?? hashRouterAdapter()
   setGlobalRouter(routerAdapter)
 
-  const { navigation: baseNavigation, routes: baseRoutes } = buildNavigation(config.pages, config)
+  const { navigation: baseNavigation, routes: baseRoutes, entityRouteMap } = buildNavigation(config.pages, config)
   const layout = config.layout ?? 'sidebar'
   const logoNode = renderLogo(config.name, config.logo)
 
@@ -744,7 +767,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
           contextOverrides: { matchedPath },
         }),
         // Command palette
-        React.createElement(CommandPaletteWrapper, { navigation, routerAdapter }),
+        React.createElement(CommandPaletteWrapper, { navigation, routerAdapter, entityRouteMap }),
       ),
     )
 

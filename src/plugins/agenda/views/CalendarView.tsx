@@ -29,7 +29,7 @@ function bookingToEvent(booking: CalendarBooking, statusColors: Record<string, s
     title: booking.clientName ?? 'Unknown',
     start: booking.startsAt,
     end: booking.endsAt ?? undefined,
-    backgroundColor: color + '20',
+    backgroundColor: color + '40',
     borderColor: color,
     textColor: color,
     extendedProps: { booking, serviceNames },
@@ -46,6 +46,7 @@ function generateAvailabilityEvents(
   professionals: { id: string }[],
   dateRange: { start: string; end: string } | null,
   businessHours?: { startTime: string; endTime: string },
+  locationMap?: Map<string, string>,
 ): EventInput[] {
   if (!dateRange || schedules.length === 0) return []
 
@@ -98,25 +99,67 @@ function generateAvailabilityEvents(
         daySchedules = weekly.filter((s) => s.dayOfWeek === dayOfWeek && s.isActive)
       }
 
-      // Convert working periods to sorted minute ranges
+      // Convert working periods to sorted minute ranges, preserving locationId
       const workRanges = daySchedules
-        .map((s) => ({ start: timeToMinutes(s.startsAt), end: timeToMinutes(s.endsAt) }))
+        .map((s) => {
+          const locId = s.locationId ?? (s.metadata?.locationId as string | undefined)
+          return {
+            start: timeToMinutes(s.startsAt),
+            end: timeToMinutes(s.endsAt),
+            locationName: locId && locationMap ? locationMap.get(locId) : undefined,
+          }
+        })
         .sort((a, b) => a.start - b.start)
 
-      // Render working hours as available background
+      // Compute unavailable gaps within business hours
+      let cursor = bizStartMin
       for (const range of workRanges) {
-        const start = Math.max(range.start, bizStartMin)
-        const end = Math.min(range.end, bizEndMin)
-        if (start < end) {
+        const availStart = Math.max(range.start, bizStartMin)
+        const availEnd = Math.min(range.end, bizEndMin)
+
+        // Gap before this working range = unavailable
+        if (cursor < availStart) {
           bgEvents.push({
             resourceId: prof.id,
-            start: dateStr + 'T' + minutesToTime(start) + ':00',
-            end: dateStr + 'T' + minutesToTime(end) + ':00',
+            start: dateStr + 'T' + minutesToTime(cursor) + ':00',
+            end: dateStr + 'T' + minutesToTime(availStart) + ':00',
             display: 'background',
-            classNames: ['fc-available-bg'],
+            classNames: ['fc-unavailable-bg'],
           })
         }
+
+        // Location label on available range
+        if (availStart < availEnd && range.locationName) {
+          bgEvents.push({
+            id: `loc-${prof.id}-${dateStr}-${minutesToTime(availStart)}`,
+            resourceId: prof.id,
+            start: dateStr + 'T' + minutesToTime(availStart) + ':00',
+            end: dateStr + 'T' + minutesToTime(availStart + 20) + ':00',
+            title: range.locationName,
+            display: 'auto',
+            editable: false,
+            backgroundColor: 'transparent',
+            borderColor: 'transparent',
+            textColor: '#a3a3a3',
+            classNames: ['fc-location-label'],
+            extendedProps: { isLocationLabel: true },
+          })
+        }
+
+        cursor = Math.max(cursor, availEnd)
       }
+
+      // Gap after last working range = unavailable
+      if (cursor < bizEndMin) {
+        bgEvents.push({
+          resourceId: prof.id,
+          start: dateStr + 'T' + minutesToTime(cursor) + ':00',
+          end: dateStr + 'T' + minutesToTime(bizEndMin) + ':00',
+          display: 'background',
+          classNames: ['fc-unavailable-bg'],
+        })
+      }
+
 
       current.setDate(current.getDate() + 1)
     }
@@ -148,6 +191,8 @@ export function CalendarView() {
   const schedules = useAgendaStore((s) => s.schedules)
   const fetchBookings = useAgendaStore((s) => s.fetchBookings)
   const fetchProfessionals = useAgendaStore((s) => s.fetchProfessionals)
+  const fetchLocations = useAgendaStore((s) => s.fetchLocations)
+  const storeLocations = useAgendaStore((s) => s.locations)
   const fetchSchedules = useAgendaStore((s) => s.fetchSchedules)
   const rescheduleBooking = useAgendaStore((s) => s.rescheduleBooking)
   const setView = useAgendaStore((s) => s.setView)
@@ -173,7 +218,10 @@ export function CalendarView() {
     return map
   }, [config.statuses])
 
-  useEffect(() => { fetchProfessionals(); fetchSchedules() }, [])
+  useEffect(() => {
+    fetchProfessionals(); fetchSchedules()
+    if (config.modules.locationSelection) fetchLocations()
+  }, [])
 
   const resources = useMemo(() => {
     const filtered = selectedProfIds.length > 0
@@ -188,9 +236,22 @@ export function CalendarView() {
   const bookingEvents = useMemo(() =>
     bookings.map((b) => bookingToEvent(b, statusColors)), [bookings, statusColors])
 
+  // Merge static config locations with dynamically fetched locations
+  const allLocations = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const loc of config.locations) map.set(loc.id, loc.name)
+    for (const loc of storeLocations) map.set(loc.id, loc.name)
+    return map
+  }, [config.locations, storeLocations])
+
+  const locationMap = useMemo(() => {
+    if (!config.modules.locationSelection || allLocations.size === 0) return undefined
+    return allLocations
+  }, [config.modules.locationSelection, allLocations])
+
   const availabilityEvents = useMemo(() =>
-    generateAvailabilityEvents(schedules, professionals, visibleRange, config.businessHours),
-    [schedules, professionals, visibleRange, config.businessHours])
+    generateAvailabilityEvents(schedules, professionals, visibleRange, config.businessHours, locationMap),
+    [schedules, professionals, visibleRange, config.businessHours, locationMap])
 
   const events = useMemo(() =>
     [...bookingEvents, ...availabilityEvents], [bookingEvents, availabilityEvents])
@@ -234,11 +295,43 @@ export function CalendarView() {
   // Flag to suppress single-click after a double-click
   const skipClickRef = useRef(false)
 
+  // Hover timer — show popover after 4s hover on a booking event
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleEventMouseEnter = useCallback((arg: { event: any; el: HTMLElement }) => {
+    if (arg.event.display === 'background') return
+    if (arg.event.extendedProps?.isLocationLabel) return
+    const booking = arg.event.extendedProps.booking as CalendarBooking
+    if (!booking) return
+
+    hoverTimerRef.current = setTimeout(() => {
+      const rect = arg.el.getBoundingClientRect()
+      const popW = 320, popH = 340
+      let x = rect.right + 8
+      let y = rect.top + rect.height / 2 - popH / 2
+      if (x + popW > window.innerWidth - 16) x = rect.left - popW - 8
+      if (x < 16) x = Math.max(16, rect.left + rect.width / 2 - popW / 2)
+      if (y + popH > window.innerHeight - 16) y = window.innerHeight - popH - 16
+      if (y < 16) y = 16
+      setSelectedBooking(booking)
+      setPopoverAnchor({ x, y })
+      setPopoverVisible(true)
+    }, 3000)
+  }, [])
+
+  const handleEventMouseLeave = useCallback(() => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current)
+      hoverTimerRef.current = null
+    }
+  }, [])
+
   // Single click — open popover instantly, or slide to new position if already open
   const handleEventClick = useCallback((arg: EventClickArg) => {
     if (skipClickRef.current) { skipClickRef.current = false; return }
-    // Ignore clicks on background availability events
+    // Ignore clicks on background availability events and location labels
     if (arg.event.display === 'background') return
+    if (arg.event.extendedProps?.isLocationLabel) return
     setContextMenu(null); setContextMenuVisible(false)
     const booking = arg.event.extendedProps.booking as CalendarBooking
     if (!booking) return
@@ -314,6 +407,14 @@ export function CalendarView() {
   }, [])
 
   const eventContent = useCallback((arg: any) => {
+    // Location label events — render as a small tag
+    if (arg.event.extendedProps?.isLocationLabel) {
+      return (
+        <div className="px-1.5 py-0.5 overflow-hidden">
+          <p className="text-[10px] font-medium truncate">{arg.event.title}</p>
+        </div>
+      )
+    }
     const serviceNames = arg.event.extendedProps?.serviceNames
     return (
       <div className="px-1.5 py-0.5 overflow-hidden leading-tight">
@@ -465,6 +566,8 @@ export function CalendarView() {
             datesSet={handleDatesSet}
             eventDidMount={handleEventDidMount}
             eventClick={handleEventClick}
+            eventMouseEnter={handleEventMouseEnter}
+            eventMouseLeave={handleEventMouseLeave}
             select={handleSelect}
             eventDrop={handleEventDrop}
             resourceLabelContent={resourceLabelContent}

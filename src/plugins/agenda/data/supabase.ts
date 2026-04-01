@@ -257,6 +257,16 @@ export function createSupabaseAgendaProvider(): AgendaDataProvider {
       }))
     },
 
+    async getLocations(): Promise<Array<{ id: string; name: string }>> {
+      const { core } = getClients()
+      const { data, error } = await core.from('locations')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name')
+      if (error) throw error
+      return (data ?? []).map((l: any) => ({ id: l.id, name: l.name }))
+    },
+
     async getConfirmationsPending(daysAhead = 2): Promise<CalendarBooking[]> {
       const { pub } = getClients()
       const now = new Date().toISOString()

@@ -39,6 +39,7 @@ export interface AgendaPluginOptions {
     confirmations?: boolean
     conflictDetection?: boolean
     dragAndDrop?: boolean
+    locationSelection?: boolean
   }
   labels?: Partial<AgendaPluginLabels>
   currency?: { code?: string; locale?: string; symbol?: string }
@@ -143,6 +144,7 @@ export interface AgendaModules {
   confirmations: boolean
   conflictDetection: boolean
   dragAndDrop: boolean
+  locationSelection: boolean
 }
 
 export interface AgendaCurrency {
@@ -189,6 +191,7 @@ export function resolveConfig(options?: AgendaPluginOptions): ResolvedAgendaConf
       confirmations: options?.modules?.confirmations !== false,
       conflictDetection: options?.modules?.conflictDetection !== false,
       dragAndDrop: options?.modules?.dragAndDrop !== false,
+      locationSelection: options?.modules?.locationSelection === true,
     },
     labels: { ...DEFAULT_LABELS, ...options?.labels },
     currency: { ...DEFAULT_CURRENCY, ...options?.currency },

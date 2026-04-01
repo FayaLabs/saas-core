@@ -43,6 +43,7 @@ export interface BlockSettings {
   minAdvanceHours?: number
   maxAdvanceDays?: number
   label?: string
+  locationId?: string
 }
 
 /** Extract BlockSettings from a schedule record's metadata. */
@@ -54,6 +55,7 @@ export function parseBlockSettings(metadata: Record<string, unknown>): BlockSett
     minAdvanceHours: typeof metadata.minAdvanceHours === 'number' ? metadata.minAdvanceHours : undefined,
     maxAdvanceDays: typeof metadata.maxAdvanceDays === 'number' ? metadata.maxAdvanceDays : undefined,
     label: typeof metadata.label === 'string' ? metadata.label : undefined,
+    locationId: typeof metadata.locationId === 'string' ? metadata.locationId : undefined,
   }
 }
 

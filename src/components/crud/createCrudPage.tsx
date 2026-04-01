@@ -48,5 +48,6 @@ export function createCrudPage<T extends { id: string }>(
 
   GeneratedCrudPage.displayName = `CrudPage(${entityDef.name})`
   ;(GeneratedCrudPage as any).__isCrudPage = true
+  ;(GeneratedCrudPage as any).__entityDef = entityDef
   return GeneratedCrudPage
 }

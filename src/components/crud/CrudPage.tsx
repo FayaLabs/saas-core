@@ -107,7 +107,7 @@ function CrudTableView<T extends { id: string }>({
             </tr>
           </thead>
           <tbody className="divide-y">
-            {store.items.map((item) => {
+            {(store.items ?? []).map((item) => {
               const id = (item as any).id
               return (
                 <tr
@@ -165,11 +165,10 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
 
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const hasFetched = useRef(false)
   const currentOrgId = useOrganizationStore((s) => s.currentOrg?.id)
 
   useEffect(() => {
-    store.fetch().then(() => { hasFetched.current = true })
+    if (currentOrgId) store.fetch()
   }, [currentOrgId])
 
   const navigateToList = () => { window.location.hash = basePath }
@@ -201,10 +200,46 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
     const item = store.getById(id)
     viewKey = `edit-${id}`
 
-    if (!item && store.loading) {
+    if (!item && store.items === null) {
       content = (
-        <div className="flex items-center justify-center py-12">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        <div className="space-y-6 animate-pulse">
+          {/* Breadcrumb skeleton */}
+          <div className="flex items-center gap-1.5">
+            <div className="h-4 w-20 rounded bg-muted" />
+            <span className="text-muted-foreground">/</span>
+            <div className="h-4 w-28 rounded bg-muted" />
+          </div>
+          {/* Hero skeleton */}
+          <div className="flex items-start gap-5">
+            <div className="h-20 w-20 shrink-0 rounded-2xl bg-muted" />
+            <div className="flex-1 space-y-2 pt-1">
+              <div className="h-7 w-48 rounded bg-muted" />
+              <div className="h-4 w-32 rounded bg-muted" />
+              <div className="h-5 w-16 rounded-full bg-muted mt-1" />
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <div className="h-9 w-20 rounded-md bg-muted" />
+              <div className="h-9 w-9 rounded-md bg-muted" />
+            </div>
+          </div>
+          {/* Separator */}
+          <div className="h-px bg-border" />
+          {/* Tabs skeleton */}
+          <div className="flex gap-2">
+            <div className="h-8 w-20 rounded bg-muted" />
+            <div className="h-8 w-24 rounded bg-muted" />
+          </div>
+          {/* Field rows skeleton */}
+          <Card>
+            <div className="divide-y">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="grid grid-cols-3 gap-4 px-5 py-3">
+                  <div className="h-4 w-20 rounded bg-muted" />
+                  <div className="col-span-2 h-4 w-32 rounded bg-muted" />
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       )
     } else if (!item) {
@@ -245,10 +280,46 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
     const item = store.getById(id)
     viewKey = `detail-${id}`
 
-    if (!item && store.loading) {
+    if (!item && store.items === null) {
       content = (
-        <div className="flex items-center justify-center py-12">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        <div className="space-y-6 animate-pulse">
+          {/* Breadcrumb skeleton */}
+          <div className="flex items-center gap-1.5">
+            <div className="h-4 w-20 rounded bg-muted" />
+            <span className="text-muted-foreground">/</span>
+            <div className="h-4 w-28 rounded bg-muted" />
+          </div>
+          {/* Hero skeleton */}
+          <div className="flex items-start gap-5">
+            <div className="h-20 w-20 shrink-0 rounded-2xl bg-muted" />
+            <div className="flex-1 space-y-2 pt-1">
+              <div className="h-7 w-48 rounded bg-muted" />
+              <div className="h-4 w-32 rounded bg-muted" />
+              <div className="h-5 w-16 rounded-full bg-muted mt-1" />
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <div className="h-9 w-20 rounded-md bg-muted" />
+              <div className="h-9 w-9 rounded-md bg-muted" />
+            </div>
+          </div>
+          {/* Separator */}
+          <div className="h-px bg-border" />
+          {/* Tabs skeleton */}
+          <div className="flex gap-2">
+            <div className="h-8 w-20 rounded bg-muted" />
+            <div className="h-8 w-24 rounded bg-muted" />
+          </div>
+          {/* Field rows skeleton */}
+          <Card>
+            <div className="divide-y">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="grid grid-cols-3 gap-4 px-5 py-3">
+                  <div className="h-4 w-20 rounded bg-muted" />
+                  <div className="col-span-2 h-4 w-32 rounded bg-muted" />
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       )
     } else if (!item) {
@@ -289,8 +360,8 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
       }, 350)
     }
 
-    const isInitialLoad = (!hasFetched.current || store.loading) && store.items.length === 0
-    const isEmpty = store.items.length === 0 && !store.loading && hasFetched.current
+    const isInitialLoad = store.items === null
+    const isEmpty = store.items !== null && store.items.length === 0
     const columns = fieldToColumns(entityDef.fields)
 
     content = (
@@ -376,15 +447,42 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
             </Card>
           )
         ) : isEmpty ? (
-          <Card>
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-muted-foreground mb-4">No {namePlural.toLowerCase()} yet</p>
-              {!readOnly && <Button onClick={() => { window.location.hash = `${basePath}/new` }}>Add your first {entityDef.name.toLowerCase()}</Button>}
-            </div>
-          </Card>
+          display === 'cards' ? (
+            <Card>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-muted-foreground mb-4">No {namePlural.toLowerCase()} yet</p>
+                {!readOnly && <button type="button" onClick={() => { window.location.hash = `${basePath}/new` }} className="text-sm font-medium text-primary hover:underline">Add your first {entityDef.name.toLowerCase()}</button>}
+              </div>
+            </Card>
+          ) : (
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      {columns.map((col) => (
+                        <th key={col.key} className="text-left p-4 text-sm font-medium text-muted-foreground">{col.label}</th>
+                      ))}
+                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colSpan={columns.length + 1}>
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                          <p className="text-muted-foreground mb-4">No {namePlural.toLowerCase()} yet</p>
+                          {!readOnly && <button type="button" onClick={() => { window.location.hash = `${basePath}/new` }} className="text-sm font-medium text-primary hover:underline">Add your first {entityDef.name.toLowerCase()}</button>}
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )
         ) : display === 'cards' ? (
           <CrudCardGrid
-            items={store.items}
+            items={store.items ?? []}
             entityDef={entityDef as EntityDef<any>}
             onEdit={(item) => { window.location.hash = `${basePath}/${(item as any).id}` }}
             onDelete={(item) => setDeleteItem(item)}

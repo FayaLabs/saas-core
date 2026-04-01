@@ -9,7 +9,7 @@ import { agendaRegistries } from './registries'
 import { PluginSettingsPanel } from '../../components/plugins/PluginSettingsPanel'
 import { AgendaGeneralSettings } from './components/AgendaGeneralSettings'
 import { ConnectedHolidaysSettings } from '../../components/settings/ConnectedHolidaysSettings'
-import { setScheduleBlockConfig } from '../../lib/schedule-config'
+import { setScheduleBlockConfig, getScheduleBlockConfig } from '../../lib/schedule-config'
 
 // ---------------------------------------------------------------------------
 // Factory
@@ -26,6 +26,17 @@ export function createAgendaPlugin(options?: AgendaPluginOptions): PluginManifes
     showServices: !!config.serviceLookup,
     showConcurrent: true,
     showBookingWindow: true,
+    showLocations: config.modules.locationSelection,
+    locations: config.locations.map((l) => ({ id: l.id, name: l.name })),
+    // Lazy fetcher — called by ScheduleEditor when locations are needed but empty
+    fetchLocations: config.modules.locationSelection && provider.getLocations
+      ? async () => {
+          const locations = await provider.getLocations!()
+          const current = getScheduleBlockConfig()
+          if (current) setScheduleBlockConfig({ ...current, locations })
+          return locations
+        }
+      : undefined,
   })
 
   const PageComponent: React.FC<any> = () =>

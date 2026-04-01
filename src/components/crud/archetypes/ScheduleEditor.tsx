@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useCallback, useRef, useSyncExternalStore } from 'react'
 import { Clock, Plus, Trash2, Copy, Save, CalendarOff, CalendarPlus, Check, Settings, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -9,7 +9,7 @@ import {
   parseBlockSettings,
 } from '../../../lib/schedule-service'
 import type { ScheduleRecord, BlockSettings } from '../../../lib/schedule-service'
-import { getScheduleBlockConfig } from '../../../lib/schedule-config'
+import { getScheduleBlockConfig, subscribeScheduleBlockConfig } from '../../../lib/schedule-config'
 import type { ScheduleBlockConfig } from '../../../lib/schedule-config'
 import { BlockSettingsPopover } from './BlockSettingsPopover'
 import { Card, CardContent } from '../../ui/card'
@@ -152,7 +152,7 @@ function PeriodRow({
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex items-center gap-2 group">
+      <div className="flex items-center gap-1.5 group">
         {/* Label */}
         {period.settings?.label && (
           <span className="text-[10px] font-medium text-primary bg-primary/10 rounded-full px-2 py-0.5 shrink-0">
@@ -161,9 +161,9 @@ function PeriodRow({
         )}
 
         {/* Time range */}
-        <TimePicker value={period.startsAt} onChange={(v) => onUpdateTime('startsAt', v)} interval={30} className="w-[120px]" />
+        <TimePicker value={period.startsAt} onChange={(v) => onUpdateTime('startsAt', v)} interval={30} className="w-[90px]" />
         <span className="text-xs text-muted-foreground/50">-</span>
-        <TimePicker value={period.endsAt} onChange={(v) => onUpdateTime('endsAt', v)} interval={30} min={period.startsAt} className="w-[120px]" />
+        <TimePicker value={period.endsAt} onChange={(v) => onUpdateTime('endsAt', v)} interval={30} min={period.startsAt} className="w-[90px]" />
 
         {/* Buffer pill */}
         <Tooltip>
@@ -184,7 +184,7 @@ function PeriodRow({
         </Tooltip>
 
         {/* Actions */}
-        <div className="flex items-center gap-0.5 shrink-0">
+        <div className="flex items-center gap-0.5 shrink-0 ml-auto">
           <Tooltip>
             <TooltipTrigger asChild>
               <button type="button" onClick={onRemove}
@@ -262,9 +262,16 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showAddException, setShowAddException] = useState(false)
-  const [blockConfig] = useState<ScheduleBlockConfig | null>(() => getScheduleBlockConfig())
+  const blockConfig = useSyncExternalStore(subscribeScheduleBlockConfig, getScheduleBlockConfig)
   const [settingsPopover, setSettingsPopover] = useState<{ dayOfWeek: number; idx: number } | null>(null)
   const [weekDirty, setWeekDirty] = useState(false)
+
+  // Lazy-fetch locations when showLocations is enabled but locations aren't loaded yet
+  useEffect(() => {
+    if (blockConfig?.showLocations && (!blockConfig.locations || blockConfig.locations.length === 0) && blockConfig.fetchLocations) {
+      blockConfig.fetchLocations().catch(() => {})
+    }
+  }, [blockConfig?.showLocations, blockConfig?.locations?.length])
 
   // New exception form state
   const [newExStartDate, setNewExStartDate] = useState('')

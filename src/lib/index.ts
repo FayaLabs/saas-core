@@ -43,5 +43,5 @@ export {
 } from './schedule-service'
 export type { ScheduleRecord, SaveScheduleInput, BlockSettings } from './schedule-service'
 export { parseBlockSettings, mergeBlockSettings } from './schedule-service'
-export { setScheduleBlockConfig, getScheduleBlockConfig } from './schedule-config'
+export { setScheduleBlockConfig, getScheduleBlockConfig, subscribeScheduleBlockConfig } from './schedule-config'
 export type { ScheduleBlockConfig } from './schedule-config'

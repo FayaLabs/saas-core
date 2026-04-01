@@ -25,6 +25,9 @@ export interface AgendaDataProvider {
   // --- Professionals (resources) ---
   getProfessionals(): Promise<Professional[]>
 
+  // --- Locations ---
+  getLocations?(): Promise<Array<{ id: string; name: string }>>
+
   // --- Confirmations ---
   getConfirmationsPending(daysAhead?: number): Promise<CalendarBooking[]>
   sendConfirmation(bookingId: string, channel: string): Promise<void>

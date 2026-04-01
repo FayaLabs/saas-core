@@ -59,6 +59,7 @@ export function BlockSettingsPopover({
   const showServices = config.showServices !== false && config.services && config.services.length > 0
   const showConcurrent = config.showConcurrent !== false
   const showBookingWindow = config.showBookingWindow !== false
+  const showLocations = config.showLocations === true && config.locations && config.locations.length > 0
 
   function update(patch: Partial<BlockSettings>) {
     onChange({ ...settings, ...patch })
@@ -79,6 +80,15 @@ export function BlockSettingsPopover({
       </div>
 
       <div className="p-3 space-y-3">
+        {/* Location select */}
+        {showLocations && (
+          <LocationSelect
+            locations={config.locations!}
+            value={settings.locationId}
+            onChange={(id) => update({ locationId: id || undefined })}
+          />
+        )}
+
         {/* Services multi-select */}
         {showServices && (
           <ServiceSelect
@@ -160,6 +170,72 @@ export function BlockSettingsPopover({
       </div>
     </div>,
     document.body,
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Service multi-select (simple dropdown with checkboxes)
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Location select (custom dropdown)
+// ---------------------------------------------------------------------------
+
+function LocationSelect({
+  locations,
+  value,
+  onChange,
+}: {
+  locations: { id: string; name: string }[]
+  value: string | undefined
+  onChange: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const current = value ? locations.find((l) => l.id === value) : null
+  const label = current ? current.name : 'No location'
+
+  return (
+    <div ref={ref} className="relative">
+      <label className="text-[11px] font-medium text-muted-foreground">Location</label>
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="mt-1 flex items-center justify-between w-full rounded-md border bg-background px-2 py-1.5 text-xs hover:bg-muted/30 transition-colors"
+      >
+        <span className={current ? '' : 'text-muted-foreground'}>{label}</span>
+        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 z-10 mt-1 w-full max-h-40 overflow-y-auto rounded-lg border bg-popover shadow-lg py-1">
+          <button
+            type="button"
+            onClick={() => { onChange(''); setOpen(false) }}
+            className={`block w-full px-2.5 py-1.5 text-xs text-left transition-colors ${!value ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted/50'}`}
+          >
+            No location
+          </button>
+          {locations.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              onClick={() => { onChange(l.id); setOpen(false) }}
+              className={`block w-full px-2.5 py-1.5 text-xs text-left transition-colors ${l.id === value ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted/50'}`}
+            >
+              {l.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

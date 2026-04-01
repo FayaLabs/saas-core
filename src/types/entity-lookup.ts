@@ -20,4 +20,4 @@ export interface EntityLookup {
 
 export type EntityLookupMap = Record<string, EntityLookup>
 
-export type ArchetypeType = 'person' | 'product' | 'service'
+export type ArchetypeType = 'person' | 'product' | 'service' | 'location'

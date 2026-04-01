@@ -12,6 +12,7 @@ const ARCHETYPE_DISPLAY: Record<ArchetypeType, {
   person: { table: 'persons', labelField: 'name', subtitleFields: ['email', 'phone'], groupField: 'kind' },
   product: { table: 'products', labelField: 'name', subtitleFields: ['sku', 'description'], priceField: 'price' },
   service: { table: 'services', labelField: 'name', subtitleFields: ['duration_minutes', 'description'], priceField: 'price' },
+  location: { table: 'locations', labelField: 'name', subtitleFields: ['city', 'address'], groupField: 'kind' },
 }
 
 interface ArchetypeLookupConfig {

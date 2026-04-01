@@ -10,6 +10,10 @@ export function AgendaGeneralSettings() {
         <ToggleRow label="Auto-create service order" description="Create a financial record when booking is completed" checked={true} onChange={() => {}} />
       </SettingsGroup>
 
+      <SettingsGroup title="Locations" description="Room and location assignment for schedules and bookings">
+        <ToggleRow label="Enable location selection" description="Assign locations to schedules and bookings" checked={false} onChange={() => {}} />
+      </SettingsGroup>
+
       <SettingsGroup title="Working Hours" description="Staff schedule and availability">
         <ToggleRow label="Enable working hours" description="Manage staff availability and show non-working hours on calendar" checked={true} onChange={() => {}} />
         <ToggleRow label="Block outside hours" description="Prevent booking outside of defined working hours" checked={false} onChange={() => {}} />
