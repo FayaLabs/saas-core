@@ -32,11 +32,20 @@ export function createSupabaseClient(url?: string, anonKey?: string): SupabaseCl
   return client
 }
 
-/** Get the Supabase client — throws if not initialized */
+/** Get the Supabase client — throws if not initialized (unless mock mode) */
 export function getSupabaseClient(): SupabaseClient {
   if (!client) {
     throw new Error('Supabase client not initialized. Call createSupabaseClient() first.')
   }
+  return client
+}
+
+/**
+ * Safe getter — returns the client or null.
+ * Use this in components/hooks that may render before Supabase is initialized
+ * or when running in mock/offline mode.
+ */
+export function getSupabaseClientSafe(): SupabaseClient | null {
   return client
 }
 

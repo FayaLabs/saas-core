@@ -425,6 +425,7 @@ function resolveAuthAdapter(config: SaasAppConfig): AuthAdapter | null {
   if (typeof config.auth.adapter === 'object') return config.auth.adapter
   if (config.auth.adapter === 'mock') return createMockAuthAdapter()
   if (config.auth.adapter === 'supabase') {
+    if (!getSupabaseClientOptional()) return createMockAuthAdapter()
     return createSupabaseAuthAdapter()
   }
   return null
@@ -440,6 +441,7 @@ function resolveOrgAdapter(config: SaasAppConfig): OrgAdapter | null {
     return createMockOrgAdapter(config.permissions?.defaultProfiles)
   }
   if (config.organization.adapter === 'supabase') {
+    if (!getSupabaseClientOptional()) return createMockOrgAdapter(config.permissions?.defaultProfiles)
     return createSupabaseOrgAdapter()
   }
   return null

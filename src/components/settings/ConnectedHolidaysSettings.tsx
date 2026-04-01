@@ -3,7 +3,7 @@ import { HolidaysSettings, type Holiday } from './HolidaysSettings'
 import { usePermission } from '../../hooks/usePermission'
 import { useOrganizationStore } from '../../stores/organization.store'
 import { toast } from '../notifications/ToastProvider'
-import { getSupabaseClient } from '../../lib/supabase'
+import { getSupabaseClientOptional } from '../../lib/supabase'
 
 const TABLE = 'holidays'
 const SCHEMA = 'saas_core'
@@ -15,7 +15,7 @@ export function ConnectedHolidaysSettings() {
   const [loading, setLoading] = React.useState(true)
 
   const canManage = true // User is already in settings — allow managing
-  const supabase = getSupabaseClient()
+  const supabase = getSupabaseClientOptional()
 
   const fetchHolidays = React.useCallback(async () => {
     if (!supabase || !currentOrg) return
