@@ -1671,6 +1671,13 @@ export const defaultTranslations: Record<string, string> = {
   'registry.lead-sources': 'Lead Source',
   'registry.tags': 'Tag',
   'registry.activity-types': 'Activity Type',
+
+  // ---------------------------------------------------------------------------
+  // org.connectionError.*
+  // ---------------------------------------------------------------------------
+  'org.connectionError.title': 'Connection failed',
+  'org.connectionError.description': 'Unable to connect to the server. Please check your internet connection and try again.',
+  'org.connectionError.retry': 'Try again',
 }
 
 // ---------------------------------------------------------------------------
@@ -3370,5 +3377,10 @@ export const builtInLocales: Record<string, Record<string, string>> = {
     'registry.lead-sources': 'Origem de Lead',
     'registry.tags': 'Tag',
     'registry.activity-types': 'Tipo de Atividade',
+
+    // org.connectionError
+    'org.connectionError.title': 'Falha na conexão',
+    'org.connectionError.description': 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.',
+    'org.connectionError.retry': 'Tentar novamente',
   },
 }

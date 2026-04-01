@@ -244,10 +244,7 @@ export function createSupabaseOrgAdapter(): OrgAdapter {
           .select('tenant_id, role, tenant:tenants(id, name, slug, logo_url)')
           .eq('user_id', userId)
 
-        if (error) {
-          console.warn('[saas-core] listUserOrgs error:', error.message)
-          return []
-        }
+        if (error) throw error
 
         return (data ?? []).map((row: any) => ({
           orgId: row.tenant_id,

@@ -2,6 +2,7 @@ import * as React from 'react'
 import { MessageCircle, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useChatStore } from '../../stores/chat.store'
+import { useOrganizationStore } from '../../stores/organization.store'
 
 interface ChatFabProps {
   className?: string
@@ -9,6 +10,10 @@ interface ChatFabProps {
 
 export function ChatFab({ className }: ChatFabProps) {
   const { isOpen, toggleOpen } = useChatStore()
+  const currentOrg = useOrganizationStore((s) => s.currentOrg)
+
+  // Hide when no org is loaded (connection error, onboarding)
+  if (!currentOrg) return null
 
   return (
     <button
