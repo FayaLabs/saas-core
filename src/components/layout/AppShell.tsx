@@ -16,6 +16,7 @@ interface NavigationItem {
   route: string
   section: 'main' | 'secondary' | 'settings'
   badge?: string | number
+  children?: NavigationItem[]
 }
 
 interface AppShellUser {
@@ -44,6 +45,7 @@ interface AppShellProps {
   topbarEnd?: React.ReactNode
   sidebarTopContent?: React.ReactNode
   sidebarFooterContent?: React.ReactNode
+  bottomNav?: Array<{ label: string; icon: string; route: string }>
 }
 
 function TopbarActions({
@@ -131,6 +133,7 @@ export function AppShell({
   topbarEnd,
   sidebarTopContent,
   sidebarFooterContent,
+  bottomNav,
 }: AppShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
@@ -172,6 +175,7 @@ export function AppShell({
           sidebarTopContent={sidebarTopContent}
           sidebarFooterContent={sidebarFooterContent}
           frame={sidebarFrame}
+          bottomNavItems={bottomNav}
         >
           {children}
           {/* Mobile drawer */}
@@ -197,7 +201,13 @@ export function AppShell({
           logo={logo}
           user={user}
           onNavigate={onNavigate}
+          onSignOut={onSignOut}
+          onProfile={onProfile}
+          onSettings={onSettings}
+          onBilling={onBilling}
+          userMenuExtras={userMenuExtras}
           frame={sidebarFrame}
+          bottomNavItems={bottomNav}
           leftContent={topbarStart}
           rightContent={
             <div className="flex items-center gap-1">

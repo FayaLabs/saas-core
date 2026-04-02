@@ -103,6 +103,9 @@ export interface FinancialPluginOptions {
 
   /** Contact/person lookup for "Pay to" / "Receive from" fields. Queries persons archetype. */
   contactLookup?: import('../../types/entity-lookup').EntityLookup
+
+  /** Callback when user clicks a booking link on an invoice. Receives the order ID. */
+  onBookingClick?: (orderId: string) => void
 }
 
 // ---------------------------------------------------------------------------
@@ -163,6 +166,7 @@ function resolveConfig(options?: FinancialPluginOptions): ResolvedFinancialConfi
     locations: options?.locations ?? [],
     entityLookups: options?.entityLookups ?? {},
     contactLookup: options?.contactLookup,
+    onBookingClick: options?.onBookingClick,
   }
 }
 
@@ -294,6 +298,7 @@ export function createFinancialPlugin(options?: FinancialPluginOptions): PluginM
   }
 }
 
-// Re-export types for consumers
+// Re-export types and factories for consumers
 export type { FinancialDataProvider } from './data/types'
 export type { ResolvedFinancialConfig } from './FinancialContext'
+export { createSafeFinancialProvider }

@@ -339,6 +339,8 @@ export function CalendarView() {
   // Double-click → open edit directly
   // Right-click → context menu
   const handleEventDidMount = useCallback((arg: { event: any; el: HTMLElement }) => {
+    const booking = arg.event.extendedProps?.booking as CalendarBooking | undefined
+    if (booking) arg.el.setAttribute('data-booking-id', booking.id)
     arg.el.addEventListener('dblclick', (e) => {
       e.preventDefault()
       e.stopPropagation()
@@ -524,6 +526,16 @@ export function CalendarView() {
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [applyResourceStriping, currentView, visibleRange, bookings])
 
+  // Listen for cross-plugin booking open requests (e.g., from financial invoice detail)
+  useEffect(() => {
+    function handleOpenBooking(e: Event) {
+      const bookingId = (e as CustomEvent).detail?.bookingId
+      if (bookingId) openModal('edit', { bookingId })
+    }
+    window.addEventListener('agenda:open-booking', handleOpenBooking)
+    return () => window.removeEventListener('agenda:open-booking', handleOpenBooking)
+  }, [openModal])
+
   const resourceLabelContent = useCallback((arg: any) => {
     const { id, title, extendedProps } = arg.resource
     const initials = title.split(' ').map((n: string) => n[0]).join('').slice(0, 2)
@@ -548,10 +560,17 @@ export function CalendarView() {
       )
     }
     const serviceNames = arg.event.extendedProps?.serviceNames
+    const start = arg.event.start
+    const end = arg.event.end
+    const fmt = (d: Date) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    const timeRange = start && end ? `${fmt(start)} – ${fmt(end)}` : start ? fmt(start) : ''
     return (
-      <div className="px-1.5 py-0.5 overflow-hidden leading-tight">
-        <p className="text-[11px] font-semibold truncate">{arg.event.title}</p>
-        {serviceNames && <p className="text-[10px] opacity-70 truncate">{serviceNames}</p>}
+      <div className="px-1.5 py-0.5 overflow-hidden leading-tight h-full">
+        <div className="flex items-start justify-between gap-1">
+          <p className="text-[11px] font-semibold truncate">{arg.event.title}</p>
+          {serviceNames && <p className="text-[10px] opacity-60 truncate shrink-0 max-w-[45%] text-right">{serviceNames}</p>}
+        </div>
+        {timeRange && <p className="text-[9px] opacity-50">{timeRange}</p>}
       </div>
     )
   }, [])
@@ -762,7 +781,28 @@ export function CalendarView() {
         mode={modalState.mode}
         bookingId={modalState.bookingId}
         prefill={modalState.prefill}
-        onClose={closeModal} />
+        initialTab={modalState.initialTab}
+        onClose={closeModal}
+        onCreated={(newId) => {
+          // After a short delay (let calendar re-render), find the event and show popover
+          setTimeout(() => {
+            const booking = bookings.find((b: CalendarBooking) => b.id === newId)
+            if (!booking) return
+            const el = document.querySelector(`[data-booking-id="${newId}"]`) as HTMLElement | null
+            if (el) {
+              const rect = el.getBoundingClientRect()
+              const popW = 320, popH = 340
+              let x = rect.right + 8
+              let y = rect.top + rect.height / 2 - popH / 2
+              if (x + popW > window.innerWidth - 16) x = rect.left - popW - 8
+              if (y + popH > window.innerHeight - 16) y = window.innerHeight - popH - 16
+              if (y < 16) y = 16
+              setSelectedBooking(booking)
+              setPopoverAnchor({ x, y })
+              setPopoverVisible(true)
+            }
+          }, 400)
+        }} />
     </div>
   )
 }

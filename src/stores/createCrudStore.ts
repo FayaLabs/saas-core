@@ -8,9 +8,19 @@ export interface CrudState<T> {
   query: CrudQuery
 }
 
+export interface ImportBatchResult<T> {
+  item?: T
+  error?: string
+}
+
 export interface CrudActions<T> {
   fetch: () => Promise<void>
   create: (data: any) => Promise<T>
+  /** Batch create without per-item list refetch. Calls onProgress after each batch. Single fetch at the end. */
+  createMany: (
+    rows: any[],
+    options?: { batchSize?: number; onProgress?: (processed: number, total: number) => void },
+  ) => Promise<{ success: number; results: ImportBatchResult<T>[] }>
   update: (id: string, data: Partial<T>) => Promise<T>
   remove: (id: string) => Promise<void>
   setQuery: (query: Partial<CrudQuery>) => void
@@ -68,6 +78,37 @@ export function createCrudStore<T extends { id: string }>(
       lastQueryKey = ''
       await get().fetch()
       return item
+    },
+
+    async createMany(rows, options) {
+      const batchSize = options?.batchSize ?? 10
+      let success = 0
+      const results: ImportBatchResult<T>[] = new Array(rows.length)
+
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const batch = rows.slice(i, i + batchSize)
+        const settled = await Promise.allSettled(
+          batch.map((row) => dataProvider.create(row)),
+        )
+        for (let j = 0; j < settled.length; j++) {
+          const r = settled[j]
+          if (r.status === 'fulfilled' && r.value?.id) {
+            success++
+            results[i + j] = { item: r.value }
+          } else {
+            const msg = r.status === 'rejected' ? (r.reason?.message ?? 'Error') : 'No record returned'
+            results[i + j] = { error: msg }
+          }
+        }
+        options?.onProgress?.(Math.min(i + batch.length, rows.length), rows.length)
+      }
+
+      // Single list refresh after all inserts
+      inflightFetch = null
+      lastQueryKey = ''
+      await get().fetch()
+
+      return { success, results }
     },
 
     async update(id, data) {

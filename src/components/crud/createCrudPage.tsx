@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { CrudPage } from './CrudPage'
 import { createCrudStore } from '../../stores/createCrudStore'
 import { resolveDataProvider } from '../../lib/data-providers/resolve'
+import { registerEntity, deriveEntityKey } from '../../lib/entity-registry'
 import type { EntityDef } from '../../types/crud'
 import type { DataProvider } from '../../lib/data-providers/types'
 
@@ -49,5 +50,16 @@ export function createCrudPage<T extends { id: string }>(
   GeneratedCrudPage.displayName = `CrudPage(${entityDef.name})`
   ;(GeneratedCrudPage as any).__isCrudPage = true
   ;(GeneratedCrudPage as any).__entityDef = entityDef
+
+  registerEntity({
+    entityKey: deriveEntityKey(entityDef),
+    label: entityDef.name,
+    labelPlural: entityDef.namePlural ?? entityDef.name,
+    icon: entityDef.icon,
+    fields: entityDef.fields,
+    source: 'page',
+    archetype: entityDef.data?.archetype,
+  })
+
   return GeneratedCrudPage
 }

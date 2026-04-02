@@ -1,10 +1,18 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Clock, AlertTriangle, X, User, Briefcase, FileText, CircleDot, Plus, MapPin } from 'lucide-react'
+import { Clock, AlertTriangle, X, User, Briefcase, FileText, CircleDot, Plus, MapPin, Calendar, DollarSign, CheckSquare, Ban, Check, HandCoins } from 'lucide-react'
+
+const BOOKING_TYPE_ICONS: Record<string, React.ElementType> = {
+  Calendar, CheckSquare, Ban,
+}
 import {
   Modal, ModalContent, ModalTitle,
 } from '../../../components/ui/modal'
 import { SearchCombobox, type ComboboxOption } from './SearchCombobox'
+import { PersonLink } from '../../../components/shared/PersonLink'
+import { BookingPaymentPanel } from './BookingPaymentPanel'
+import { CrudDetailPage } from '../../../components/crud/CrudDetailPage'
+import { CrudFormPage } from '../../../components/crud/CrudFormPage'
 import { useAgendaConfig, useAgendaProvider, useAgendaStore } from '../AgendaContext'
 import { useTranslation } from '../../../hooks/useTranslation'
 import { useLocaleStore } from '../../../stores/locale.store'
@@ -39,11 +47,17 @@ function StatusSelect({ value, onChange, statuses, bookingDate }: {
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const current = statuses.find((s) => s.value === value)
 
   useEffect(() => {
     if (!open) return
-    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node
+      if (ref.current?.contains(target)) return
+      if (dropdownRef.current?.contains(target)) return
+      setOpen(false)
+    }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
@@ -69,7 +83,7 @@ function StatusSelect({ value, onChange, statuses, bookingDate }: {
         </svg>
       </button>
       {open && dropRect && createPortal(
-        <div data-modal-passthrough style={{ position: 'fixed', left: dropRect.left, top: dropRect.bottom + 4, width: dropRect.width, zIndex: 9999, pointerEvents: 'auto' }}
+        <div ref={dropdownRef} data-modal-passthrough style={{ position: 'fixed', left: dropRect.left, top: dropRect.bottom + 4, width: dropRect.width, zIndex: 9999, pointerEvents: 'auto' }}
           className="rounded-lg border bg-popover shadow-lg py-1 animate-in fade-in zoom-in-95 duration-100">
           {statuses.map((s) => {
             const available = !bookingDate || isStatusAvailable(s as any, bookingDate)
@@ -196,14 +210,17 @@ interface Props {
   mode: 'create' | 'edit'
   bookingId?: string
   prefill?: Partial<CreateBookingInput> & { endsAt?: string }
+  initialTab?: string
   onClose: () => void
+  onCreated?: (bookingId: string) => void
 }
 
-export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Props) {
+export function AppointmentModal({ open, mode, bookingId, prefill, initialTab, onClose, onCreated }: Props) {
   const { t } = useTranslation()
   const locale = useLocaleStore((s) => s.locale)
   const config = useAgendaConfig()
   const provider = useAgendaProvider()
+  const initialSnapshot = useRef<string>('')
   const createBooking = useAgendaStore((s) => s.createBooking)
   const updateBooking = useAgendaStore((s) => s.updateBooking)
   const deleteBooking = useAgendaStore((s) => s.deleteBooking)
@@ -215,6 +232,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
   const [bookingType, setBookingType] = useState<BookingTypeId>(prefill?.kind ?? 'appointment')
   const [clientId, setClientId] = useState(prefill?.clientId ?? '')
   const [clientSearch, setClientSearch] = useState('')
+  const [clientPhone, setClientPhone] = useState('')
   const [professionalId, setProfessionalId] = useState(prefill?.professionalId ?? '')
   const [locationId, setLocationId] = useState(prefill?.locationId ?? '')
   const [services, setServices] = useState<ServiceItem[]>([])
@@ -241,9 +259,21 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
   const [newClientEmail, setNewClientEmail] = useState('')
   const [creatingClient, setCreatingClient] = useState(false)
   const [clientOptions, setClientOptions] = useState<ComboboxOption[]>([])
+  const [clientSearching, setClientSearching] = useState(false)
   const [serviceOptions, setServiceOptions] = useState<ComboboxOption[]>([])
+  const [initialServiceOptions, setInitialServiceOptions] = useState<ComboboxOption[]>([])
   const [editingDate, setEditingDate] = useState(false)
   const [editingTime, setEditingTime] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [editOrderId, setEditOrderId] = useState<string | null>(null)
+  const [editOrderTotal, setEditOrderTotal] = useState(0)
+  const [editPaymentStatus, setEditPaymentStatus] = useState<import('../financial-bridge').BookingPaymentStatus>('none')
+  const [paymentStatusLoading, setPaymentStatusLoading] = useState(false)
+  const [modalTab, setModalTab] = useState<'appointment' | 'client' | 'financial'>('appointment')
+  const [clientData, setClientData] = useState<Record<string, any> | null>(null)
+  const [clientDataLoading, setClientDataLoading] = useState(false)
+  const [clientEditing, setClientEditing] = useState(false)
 
   // Active booking type config
   const activeType = config.bookingTypes.find((bt) => bt.id === bookingType) ?? config.bookingTypes[0]
@@ -251,13 +281,16 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
   // Reset form when modal opens
   useEffect(() => {
     if (!open) return
-    setClientId(prefill?.clientId ?? ''); setClientSearch('')
+    setClientId(prefill?.clientId ?? ''); setClientSearch(''); setClientPhone('')
     setProfessionalId(prefill?.professionalId ?? ''); setLocationId(prefill?.locationId ?? ''); setServices([])
     setServiceSearch(''); setNotes(''); setStatus('scheduled'); setShowNotes(false)
     setConflict(false); setLoading(mode === 'edit')
     setQuickCreate(false); setNewClientName(''); setNewClientPhone(''); setNewClientEmail(''); setCreatingClient(false)
     setBookingType(prefill?.kind ?? 'appointment')
-    setEditingDate(false); setEditingTime(false)
+    setEditingDate(false); setEditingTime(false); setConfirmingDelete(false); setDeleting(false)
+    setEditOrderId(null); setEditOrderTotal(0); setEditPaymentStatus('none'); setPaymentStatusLoading(false)
+    setClientData(null); setClientDataLoading(false); setClientEditing(false)
+    setModalTab((initialTab as 'appointment' | 'client' | 'financial') || 'appointment')
     if (!prefill?.professionalId && professionals.length === 1) setProfessionalId(professionals[0].id)
     setDate(() => {
       if (prefill?.startsAt) return prefill.startsAt.slice(0, 10)
@@ -289,15 +322,63 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
       if (b.services) setServices(b.services.map((s) => ({
         serviceId: s.serviceId ?? '', name: s.name, durationMinutes: s.durationMinutes, price: s.price,
       })))
+      setEditOrderId(b.orderId ?? null)
+      setEditOrderTotal(b.orderTotal ?? 0)
+      setEditPaymentStatus(b.paymentStatus ?? 'none')
+      // Save initial snapshot for dirty check
+      const svcIds = b.services ? b.services.map((s) => s.serviceId ?? '') : []
+      initialSnapshot.current = JSON.stringify({
+        clientId: b.clientId ?? '', professionalId: b.professionalId ?? '', locationId: b.locationId ?? '',
+        date: b.startsAt.slice(0, 10),
+        startTime: `${String(new Date(b.startsAt).getHours()).padStart(2, '0')}:${String(new Date(b.startsAt).getMinutes()).padStart(2, '0')}`,
+        status: b.status, notes: b.notes ?? '', services: svcIds,
+      })
       setLoading(false)
+      // Resolve payment status from bridge if available
+      if (b.orderId && config.financialBridge) {
+        setPaymentStatusLoading(true)
+        config.financialBridge.resolvePaymentStatuses([b.orderId]).then((map) => {
+          const summary = map.get(b.orderId!)
+          if (summary) {
+            setEditPaymentStatus(summary.status)
+            setEditOrderTotal(summary.totalAmount)
+          }
+        }).catch(() => {}).finally(() => setPaymentStatusLoading(false))
+      }
     }).catch(() => setLoading(false))
   }, [open, mode, bookingId])
 
+  // Fetch client data when client tab is opened
+  useEffect(() => {
+    if (modalTab !== 'client' || !clientId || !config.contactLookup || clientData) return
+    setClientDataLoading(true)
+    config.contactLookup.getById(clientId).then((result) => {
+      setClientData(result?.data ?? null)
+      setClientDataLoading(false)
+    }).catch(() => setClientDataLoading(false))
+  }, [modalTab, clientId])
+
+  // Fetch initial service list when modal opens
+  useEffect(() => {
+    if (!open || !config.serviceLookup) return
+    const lookup = config.serviceLookup
+    const fetch = lookup.list ? () => lookup.list!() : () => lookup.search('')
+    fetch().then((results) => {
+      const opts = results.map((r) => ({ id: r.id, label: r.label, subtitle: r.subtitle, price: r.price, data: r.data }))
+      setInitialServiceOptions(opts)
+    }).catch(() => setInitialServiceOptions([]))
+  }, [open])
+
   // Search effects
   useEffect(() => {
-    if (!config.contactLookup || clientSearch.length < 1 || clientId) { setClientOptions([]); return }
+    if (!config.contactLookup || clientSearch.length < 1 || clientId) { setClientOptions([]); setClientSearching(false); return }
+    setClientSearching(true)
     const timer = setTimeout(async () => {
-      try { setClientOptions(await config.contactLookup!.search(clientSearch)) } catch { setClientOptions([]) }
+      try {
+        const results = await config.contactLookup!.search(clientSearch)
+        setClientOptions(results.map((r) => ({ id: r.id, label: r.label, subtitle: r.subtitle, price: r.price, data: r.data })))
+      } catch { setClientOptions([]) }
+      setClientSearching(false)
     }, 250)
     return () => clearTimeout(timer)
   }, [clientSearch, clientId])
@@ -305,7 +386,10 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
   useEffect(() => {
     if (!config.serviceLookup || serviceSearch.length < 1) { setServiceOptions([]); return }
     const timer = setTimeout(async () => {
-      try { setServiceOptions(await config.serviceLookup!.search(serviceSearch)) } catch { setServiceOptions([]) }
+      try {
+        const results = await config.serviceLookup!.search(serviceSearch)
+        setServiceOptions(results.map((r) => ({ id: r.id, label: r.label, subtitle: r.subtitle, price: r.price, data: r.data })))
+      } catch { setServiceOptions([]) }
     }, 250)
     return () => clearTimeout(timer)
   }, [serviceSearch])
@@ -337,9 +421,13 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
     return () => clearTimeout(timer)
   }, [professionalId, date, startTime, endTime, bookingId])
 
-  function selectClient(opt: ComboboxOption) { setClientId(opt.id); setClientSearch(opt.label); setClientOptions([]) }
+  function selectClient(opt: ComboboxOption) {
+    setClientId(opt.id); setClientSearch(opt.label); setClientOptions([])
+    setClientPhone((opt.data?.phone as string) ?? '')
+  }
   function addService(opt: ComboboxOption) {
-    setServices((p) => [...p, { serviceId: opt.id, name: opt.label, durationMinutes: 60, price: opt.price ?? 0 }])
+    const duration = (opt.data?.duration_minutes as number) || 60
+    setServices((p) => [...p, { serviceId: opt.id, name: opt.label, durationMinutes: duration, price: opt.price ?? 0 }])
     setServiceSearch(''); setServiceOptions([])
   }
   function removeService(idx: number) { setServices((p) => p.filter((_, i) => i !== idx)) }
@@ -351,20 +439,33 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
     try {
       const startsAt = new Date(`${date}T${startTime}:00`).toISOString()
       if (mode === 'create') {
-        await createBooking({ kind: bookingType, clientId, professionalId, locationId: locationId || undefined, startsAt, notes: notes || undefined,
+        const newBooking = await createBooking({ kind: bookingType, clientId, professionalId, locationId: locationId || undefined, startsAt, notes: notes || undefined,
           services: services.map((s) => ({ serviceId: s.serviceId, name: s.name, durationMinutes: s.durationMinutes, price: s.price })) })
+        onClose()
+        onCreated?.(newBooking.id)
       } else if (bookingId) {
         await updateBooking(bookingId, { clientId, professionalId, locationId: locationId || undefined, startsAt, notes: notes || undefined, status: status as any })
+        onClose()
       }
-      onClose()
     } catch { /* toast */ }
     setSaving(false)
   }
 
   async function handleDelete() {
-    if (!bookingId || !confirm(t('agenda.appointment.deleteConfirm'))) return
-    await deleteBooking(bookingId); onClose()
+    if (!bookingId) return
+    setDeleting(true)
+    try { await deleteBooking(bookingId); onClose() } catch { /* toast */ }
+    setDeleting(false)
   }
+
+  const isPaidBooking = editPaymentStatus === 'paid'
+
+  // Dirty check — only enable Update when something changed
+  const formSnapshot = useMemo(() =>
+    JSON.stringify({ clientId, professionalId, locationId, date, startTime, status, notes, services: services.map((s) => s.serviceId) }),
+    [clientId, professionalId, locationId, date, startTime, status, notes, services]
+  )
+  const isDirty = mode === 'create' || formSnapshot !== initialSnapshot.current
 
   const canSubmit = (
     (!activeType.requiresClient || clientId) &&
@@ -385,17 +486,19 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
             {mode === 'create' ? t('agenda.appointment.new') : t('agenda.appointment.edit')}
           </ModalTitle>
 
-          {/* Booking type — tabs in create mode, title in edit mode */}
+          {/* Booking type tabs (create) or section tabs (edit) */}
           {showTabs && mode === 'create' ? (
-            <div className="flex gap-4 border-b">
+            <div className="flex gap-1 border-b">
               {config.bookingTypes.map((bt) => {
                 const label = t(`agenda.bookingType.${bt.id}`) || bt.label
                 const isActive = bookingType === bt.id
+                const BtIcon = BOOKING_TYPE_ICONS[bt.icon] ?? Calendar
                 return (
                   <button key={bt.id} type="button" onClick={() => setBookingType(bt.id)}
-                    className={`relative pb-2 text-xs font-medium transition-colors ${
+                    className={`relative flex items-center gap-1.5 pb-2 px-2 text-xs font-medium transition-colors ${
                       isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
                     }`}>
+                    <BtIcon className="h-3.5 w-3.5" />
                     {label}
                     {isActive && (
                       <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-foreground" />
@@ -405,59 +508,167 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
               })}
             </div>
           ) : mode === 'edit' && (
-            <h2 className="text-sm font-semibold">
-              {t(`agenda.bookingType.${bookingType}`) || activeType.label}
-            </h2>
+            (config.clientEntityDef && clientId) || (config.modules.financial && editOrderId) ? (
+              <div className="flex gap-1 border-b">
+                {([
+                  { id: 'appointment' as const, label: t(`agenda.bookingType.${bookingType}`) || activeType.label, icon: Calendar, show: true },
+                  { id: 'client' as const, label: t('agenda.appointment.clientTab'), icon: User, show: !!config.clientEntityDef && !!clientId },
+                  { id: 'financial' as const, label: t('agenda.payment.title'), icon: DollarSign, show: config.modules.financial && !!editOrderId },
+                ]).filter((tab) => tab.show).map((tab) => {
+                  const isActive = modalTab === tab.id
+                  return (
+                    <button key={tab.id} type="button" onClick={() => setModalTab(tab.id)}
+                      className={`relative flex items-center gap-1.5 pb-2 px-2 text-xs font-medium transition-colors ${
+                        isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                      }`}>
+                      <tab.icon className="h-3.5 w-3.5" />
+                      {tab.label}
+                      {tab.id === 'financial' && editPaymentStatus === 'paid' && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      )}
+                      {tab.id === 'financial' && editPaymentStatus !== 'paid' && (
+                        (editPaymentStatus !== 'none' || (totalPrice > 0 && date <= new Date().toISOString().slice(0, 10)))
+                      ) && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      )}
+                      {isActive && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-foreground" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <h2 className="text-sm font-semibold">
+                {t(`agenda.bookingType.${bookingType}`) || activeType.label}
+              </h2>
+            )
           )}
 
-          {/* Date/time + professional row */}
-          <div className="flex items-center gap-3">
-            <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-            <div className="flex items-center gap-1.5 text-sm flex-1 min-w-0">
-              {editingDate ? (
-                <input type="date" value={date} autoFocus
-                  onChange={(e) => { setDate(e.target.value); setEditingDate(false) }}
-                  onBlur={() => setEditingDate(false)}
-                  className="bg-transparent text-sm font-medium focus:outline-none border-b border-foreground w-auto shrink-0" />
-              ) : (
-                <button type="button" onClick={() => setEditingDate(true)}
-                  className="px-0.5 py-0.5 font-medium border-b border-transparent hover:border-foreground transition-colors shrink-0">
-                  {formatCompactDate(date, locale)}
-                </button>
-              )}
-              {editingTime ? (
-                <input type="time" value={startTime} autoFocus
-                  onChange={(e) => { if (e.target.value) { setStartTime(e.target.value); setEditingTime(false) } }}
-                  onBlur={() => setEditingTime(false)}
-                  className="bg-transparent text-xs text-muted-foreground focus:outline-none border-b border-foreground w-auto shrink-0" />
-              ) : (
-                <button type="button" onClick={() => setEditingTime(true)}
-                  className="px-0.5 py-0.5 text-xs text-muted-foreground border-b border-transparent hover:border-foreground transition-colors shrink-0">
-                  {startTime}
-                </button>
-              )}
-              <span className="text-[11px] text-muted-foreground/60">—</span>
-              <span className="text-[11px] text-muted-foreground/60">{endTime}</span>
+          {/* Date/time + professional row — hidden on financial tab */}
+          {modalTab === 'appointment' && (
+            <>
+              <div className="flex items-center gap-3">
+                <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex items-center gap-1.5 text-sm flex-1 min-w-0">
+                  {editingDate ? (
+                    <input type="date" value={date} autoFocus
+                      onChange={(e) => { setDate(e.target.value); setEditingDate(false) }}
+                      onBlur={() => setEditingDate(false)}
+                      className="bg-transparent text-sm font-medium focus:outline-none border-b border-foreground w-auto shrink-0" />
+                  ) : (
+                    <button type="button" onClick={() => setEditingDate(true)}
+                      className="px-0.5 py-0.5 font-medium border-b border-transparent hover:border-foreground transition-colors shrink-0">
+                      {formatCompactDate(date, locale)}
+                    </button>
+                  )}
+                  {editingTime ? (
+                    <input type="time" value={startTime} autoFocus
+                      onChange={(e) => { if (e.target.value) { setStartTime(e.target.value); setEditingTime(false) } }}
+                      onBlur={() => setEditingTime(false)}
+                      className="bg-transparent text-xs text-muted-foreground focus:outline-none border-b border-foreground w-auto shrink-0" />
+                  ) : (
+                    <button type="button" onClick={() => setEditingTime(true)}
+                      className="px-0.5 py-0.5 text-xs text-muted-foreground border-b border-transparent hover:border-foreground transition-colors shrink-0">
+                      {startTime}
+                    </button>
+                  )}
+                  <span className="text-[11px] text-muted-foreground/60">—</span>
+                  <span className="text-[11px] text-muted-foreground/60">{endTime}</span>
 
-              {/* Professional — right-aligned on the same row */}
-              {activeType.fields.professional && (
-                <div className="ml-auto shrink-0">
-                  <ProfessionalSelect value={professionalId} onChange={setProfessionalId} professionals={professionals} />
+                  {/* Professional — right-aligned on the same row */}
+                  {activeType.fields.professional && (
+                    <div className="ml-auto shrink-0">
+                      <ProfessionalSelect value={professionalId} onChange={setProfessionalId} professionals={professionals} />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {conflict && (
+                <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-1.5 text-xs text-destructive">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  {t('agenda.appointment.conflict')}
                 </div>
               )}
-            </div>
-          </div>
-
-          {conflict && (
-            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-1.5 text-xs text-destructive">
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              {t('agenda.appointment.conflict')}
-            </div>
+            </>
           )}
         </div>
 
-        {/* ═══ BODY — compact form rows ═══ */}
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        {/* ═══ BODY ═══ */}
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+
+          {/* Client tab content — reuses the same CrudDetailPage as /clients/:id */}
+          {modalTab === 'client' && clientId && config.clientEntityDef && (
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {clientDataLoading ? (
+                <div className="space-y-3 py-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-8 rounded-lg bg-muted animate-pulse" />
+                  ))}
+                </div>
+              ) : clientData ? (
+                clientEditing ? (
+                  <CrudFormPage
+                    embedded
+                    entityDef={config.clientEntityDef}
+                    mode="edit"
+                    initialData={clientData}
+                    namePlural=""
+                    onCancel={() => setClientEditing(false)}
+                    onSubmit={async (data) => {
+                      try {
+                        const { getSupabaseClientOptional } = await import('../../../lib/supabase')
+                        const supabase = getSupabaseClientOptional()
+                        if (!supabase) return
+                        const dbData: Record<string, unknown> = {}
+                        for (const [k, v] of Object.entries(data)) {
+                          dbData[k.replace(/[A-Z]/g, (m) => '_' + m.toLowerCase())] = v
+                        }
+                        await supabase.schema('saas_core').from('persons').update(dbData).eq('id', clientId)
+                        setClientData({ ...clientData, ...data })
+                        setClientEditing(false)
+                      } catch { /* toast */ }
+                    }}
+                  />
+                ) : (
+                  <CrudDetailPage
+                    embedded
+                    entityDef={config.clientEntityDef}
+                    item={clientData}
+                    namePlural=""
+                    basePath=""
+                    onBack={() => setModalTab('appointment')}
+                    onEdit={() => setClientEditing(true)}
+                  />
+                )
+              ) : (
+                <p className="text-sm text-muted-foreground py-4 text-center">{t('agenda.appointment.noClientData')}</p>
+              )}
+            </div>
+          )}
+
+          {/* Financial tab content */}
+          {modalTab === 'financial' && editOrderId && config.financialBridge && (
+            <div className="flex-1 overflow-y-auto">
+              <BookingPaymentPanel
+                orderId={editOrderId}
+                orderTotal={editOrderTotal}
+                services={services.map((s) => ({ name: s.name, price: s.price, durationMinutes: s.durationMinutes }))}
+                formatCurrency={(v) => fmtCurrency(v, currency.locale, currency.code)}
+                inline
+                onClose={() => setModalTab('appointment')}
+                onPaymentChange={() => {
+                  config.financialBridge!.getPaymentDetail(editOrderId).then((d) => {
+                    if (d) { setEditPaymentStatus(d.status); setEditOrderTotal(d.totalAmount) }
+                  }).catch(() => {})
+                }}
+              />
+            </div>
+          )}
+
+          {/* Appointment tab content */}
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden" style={{ display: modalTab === 'appointment' ? undefined : 'none' }}>
           <div className="border-t px-5 py-3 space-y-1 flex-1 overflow-y-auto">
 
             {/* Loading skeleton */}
@@ -479,12 +690,24 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
               <div className="flex items-center gap-3 py-1">
                 <User className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="flex-1">
-                  {!quickCreate ? (
+                  {clientId && !quickCreate ? (
+                    <div className="flex items-center gap-2 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm">
+                      <PersonLink personId={clientId} name={clientSearch} size="default" className="flex-1 min-w-0" />
+                      {clientPhone && <span className="text-[10px] text-muted-foreground shrink-0">{clientPhone}</span>}
+                      {!isPaidBooking && (
+                        <button type="button" onClick={() => { setClientId(''); setClientSearch(''); setClientPhone('') }}
+                          className="p-0.5 text-muted-foreground hover:text-destructive shrink-0">
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ) : !quickCreate ? (
                     <SearchCombobox
                       value={clientSearch}
                       onChange={(v) => { setClientSearch(v); setClientId('') }}
                       onSelect={selectClient}
                       options={clientOptions}
+                      loading={clientSearching}
                       placeholder={t('agenda.appointment.searchClient')}
                       allowCreate
                       createLabel={t('agenda.appointment.newClient')}
@@ -515,12 +738,25 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
                             const supabase = getSupabaseClientOptional()
                             const tenantId = useOrganizationStore.getState().currentOrg?.id
                             if (!supabase || !tenantId) throw new Error('Not initialized')
-                            const { data, error } = await supabase.schema('saas_core').from('persons').insert({
+
+                            // 1. Insert into saas_core.persons (archetype table)
+                            const { data: personRow, error: personError } = await supabase.schema('saas_core').from('persons').insert({
                               tenant_id: tenantId, kind: config.clientKind, name: newClientName.trim(),
                               phone: newClientPhone.trim() || null, email: newClientEmail.trim() || null,
                             }).select('id, name').single()
-                            if (error) throw error
-                            setClientId(data.id); setClientSearch(data.name); setQuickCreate(false)
+                            if (personError) throw personError
+
+                            // 2. Insert into public.clients (project extension table)
+                            const { error: clientError } = await supabase.from('clients').insert({
+                              person_id: personRow.id, tenant_id: tenantId,
+                            })
+                            if (clientError) {
+                              // Rollback person if extension insert fails
+                              await supabase.schema('saas_core').from('persons').delete().eq('id', personRow.id)
+                              throw clientError
+                            }
+
+                            setClientId(personRow.id); setClientSearch(personRow.name); setQuickCreate(false)
                           } catch (err: any) {
                             const { toast } = await import('sonner')
                             toast.error(t('agenda.appointment.createClientFailed'), { description: err?.message })
@@ -560,28 +796,40 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
                           <span className="flex-1 truncate">{svc.name}</span>
                           <span className="text-[10px] text-muted-foreground shrink-0">{svc.durationMinutes}min</span>
                           <span className="text-[10px] text-muted-foreground shrink-0">{fmtCurrency(svc.price, currency.locale, currency.code)}</span>
-                          <button type="button" onClick={() => removeService(idx)} className="p-0.5 text-muted-foreground hover:text-destructive shrink-0">
-                            <X className="h-3 w-3" />
-                          </button>
+                          {!isPaidBooking && (
+                            <button type="button" onClick={() => removeService(idx)} className="p-0.5 text-muted-foreground hover:text-destructive shrink-0">
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
                   )}
 
-                  <SearchCombobox
+                  {!isPaidBooking && <SearchCombobox
                     value={serviceSearch}
                     onChange={setServiceSearch}
                     onSelect={addService}
                     options={serviceOptions}
                     placeholder={t('agenda.appointment.searchService')}
                     onBlurEmpty={() => {}}
-                    renderRight={(opt) => opt.price != null ? (
-                      <span className="text-muted-foreground text-xs">{fmtCurrency(opt.price, currency.locale, currency.code)}</span>
-                    ) : null}
+                    onFocus={() => { if (!serviceSearch && serviceOptions.length === 0) setServiceOptions(initialServiceOptions) }}
+                    renderRight={(opt) => {
+                      const dur = (opt.data?.duration_minutes as number) || 0
+                      const hasPrice = opt.price != null
+                      if (!hasPrice && !dur) return null
+                      return (
+                        <span className="text-muted-foreground text-xs whitespace-nowrap">
+                          {hasPrice && fmtCurrency(opt.price!, currency.locale, currency.code)}
+                          {hasPrice && dur > 0 && ' · '}
+                          {dur > 0 && `${dur}min`}
+                        </span>
+                      )
+                    }}
                     minimal
                     inlineLabel={services.length > 0 ? t('agenda.appointment.addService') : t('agenda.appointment.addServiceFirst')}
                     inlineIcon={services.length > 0 ? 'plus' : 'search'}
-                  />
+                  />}
                 </div>
               </div>
             )}
@@ -615,30 +863,84 @@ export function AppointmentModal({ open, mode, bookingId, prefill, onClose }: Pr
             </>}
           </div>
 
-          {/* ═══ FOOTER ═══ */}
-          <div className="px-5 py-2.5 border-t bg-card flex items-center justify-between shrink-0 sm:rounded-b-2xl">
-            <div className="flex items-center gap-3">
-              {mode === 'edit' && (
-                <button type="button" onClick={handleDelete} className="text-xs text-destructive font-medium hover:underline">{t('agenda.appointment.delete')}</button>
-              )}
-              {services.length > 0 && (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  {totalDuration}min &middot; {fmtCurrency(totalPrice, currency.locale, currency.code)}
-                </span>
+          {/* Appointment footer — inside form for submit */}
+          {modalTab === 'appointment' && !clientEditing && (
+            <div className="px-5 py-2.5 border-t bg-card shrink-0 sm:rounded-b-2xl">
+              {confirmingDelete ? (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-destructive font-medium">{t('agenda.appointment.deleteConfirm')}</span>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => setConfirmingDelete(false)}
+                      className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">{t('agenda.appointment.cancel')}</button>
+                    <button type="button" onClick={handleDelete} disabled={deleting}
+                      className="rounded-lg bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-40 transition-colors">
+                      {deleting ? t('agenda.appointment.deleting') : t('agenda.appointment.confirmDelete')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {mode === 'edit' && (
+                      <button type="button" onClick={() => setConfirmingDelete(true)} className="text-xs text-destructive font-medium hover:underline">{t('agenda.appointment.delete')}</button>
+                    )}
+                    {services.length > 0 && (
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {totalDuration}min
+                        {config.modules.financial && totalPrice > 0 && mode === 'edit' ? (
+                          paymentStatusLoading ? (
+                            <span className="h-4 w-16 rounded-full bg-muted animate-pulse" />
+                          ) : isPaidBooking ? (
+                            <button type="button" onClick={(e) => { e.stopPropagation(); setModalTab('financial') }}
+                              className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 hover:bg-emerald-500/20 transition-colors">
+                              <Check className="h-2.5 w-2.5" />
+                              {fmtCurrency(totalPrice, currency.locale, currency.code)} &middot; {t('agenda.payment.paid')}
+                            </button>
+                          ) : date <= new Date().toISOString().slice(0, 10) ? (
+                            <button type="button" onClick={(e) => { e.stopPropagation(); setModalTab('financial') }}
+                              className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 hover:bg-amber-500/20 transition-colors">
+                              <HandCoins className="h-3 w-3" />
+                              {fmtCurrency(totalPrice, currency.locale, currency.code)} &middot; {t('agenda.payment.collect')}
+                            </button>
+                          ) : (
+                            <span>&middot; {fmtCurrency(totalPrice, currency.locale, currency.code)}</span>
+                          )
+                        ) : (
+                          <span>&middot; {fmtCurrency(totalPrice, currency.locale, currency.code)}</span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={onClose}
+                      className="hidden sm:inline-flex rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">{t('agenda.appointment.cancel')}</button>
+                    <button type="submit" disabled={!canSubmit || !isDirty}
+                      className="rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-colors">
+                      {saving ? t('agenda.appointment.saving') : mode === 'create' ? t('agenda.appointment.save') : t('agenda.appointment.update')}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={onClose}
-                className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">{t('agenda.appointment.cancel')}</button>
-              <button type="submit" disabled={!canSubmit}
-                className="rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-colors">
-                {saving ? t('agenda.appointment.saving') : mode === 'create' ? t('agenda.appointment.save') : t('agenda.appointment.update')}
-              </button>
-            </div>
-          </div>
+          )}
         </form>
+
+          {/* Non-appointment tab footer — outside form */}
+          {modalTab !== 'appointment' && !clientEditing && (
+            <div className="px-5 py-2.5 border-t bg-card shrink-0 sm:rounded-b-2xl">
+              <div className="flex items-center">
+                <button type="button" onClick={() => { setModalTab('appointment'); setClientEditing(false) }}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                  <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  {t('agenda.payment.backToAppointment')}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </ModalContent>
+
     </Modal>
   )
 }

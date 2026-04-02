@@ -26,6 +26,8 @@ interface UserMenuProps {
   collapsed?: boolean
   /** Which side the dropdown opens on (default: bottom) */
   side?: 'bottom' | 'right' | 'top' | 'left'
+  /** Custom trigger element — replaces the default avatar button */
+  children?: React.ReactNode
 }
 
 function getInitials(name: string): string {
@@ -47,6 +49,7 @@ export function UserMenu({
   className,
   collapsed,
   side,
+  children,
 }: UserMenuProps) {
   const mode = useThemeStore((s) => s.mode)
   const setMode = useThemeStore((s) => s.setMode)
@@ -62,26 +65,28 @@ export function UserMenu({
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button
-          className={cn(
-            'inline-flex shrink-0 items-center justify-center rounded-md p-1.5 hover:bg-sidebar-accent/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-            className
-          )}
-          aria-label="User menu"
-        >
-          <Avatar.Root className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sidebar-accent border border-sidebar-border/30">
-            {user.avatarUrl && (
-              <Avatar.Image
-                src={user.avatarUrl}
-                alt={user.fullName}
-                className="h-full w-full object-cover"
-              />
+        {children ?? (
+          <button
+            className={cn(
+              'inline-flex shrink-0 items-center justify-center rounded-md p-1.5 hover:bg-sidebar-accent/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              className
             )}
-            <Avatar.Fallback className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-sidebar-accent-foreground">
-              {getInitials(user.fullName)}
-            </Avatar.Fallback>
-          </Avatar.Root>
-        </button>
+            aria-label="User menu"
+          >
+            <Avatar.Root className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sidebar-accent border border-sidebar-border/30">
+              {user.avatarUrl && (
+                <Avatar.Image
+                  src={user.avatarUrl}
+                  alt={user.fullName}
+                  className="h-full w-full object-cover"
+                />
+              )}
+              <Avatar.Fallback className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-sidebar-accent-foreground">
+                {getInitials(user.fullName)}
+              </Avatar.Fallback>
+            </Avatar.Root>
+          </button>
+        )}
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>

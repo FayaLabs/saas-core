@@ -43,6 +43,8 @@ export interface SearchSelectProps {
   onCreate?: (query: string) => void | Promise<void>
   /** Custom render for each option */
   renderOption?: (option: SearchSelectOption) => React.ReactNode
+  /** Load initial results when dropdown opens (calls onSearch('')) */
+  loadOnOpen?: boolean
   /** Additional className for the container */
   className?: string
   /** Disabled state */
@@ -67,6 +69,7 @@ export function SearchSelect({
   createLabel = 'Add',
   onCreate,
   renderOption,
+  loadOnOpen,
   className,
   disabled,
 }: SearchSelectProps) {
@@ -96,11 +99,19 @@ export function SearchSelect({
     if (displayValue !== undefined) setSelectedLabel(displayValue)
   }, [displayValue])
 
+  // Load initial results when dropdown opens with empty query
+  React.useEffect(() => {
+    if (open && loadOnOpen && query.length === 0 && results.length === 0 && !loading) {
+      setLoading(true)
+      Promise.resolve(onSearch('')).then(setResults).catch(() => setResults([])).finally(() => setLoading(false))
+    }
+  }, [open, loadOnOpen])
+
   function handleQueryChange(q: string) {
     setQuery(q)
     if (timerRef.current) clearTimeout(timerRef.current)
 
-    if (q.length < minChars) {
+    if (q.length < minChars && !(loadOnOpen && q.length === 0)) {
       setResults([])
       setLoading(false)
       return

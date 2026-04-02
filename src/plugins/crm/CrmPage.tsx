@@ -123,7 +123,7 @@ export function CrmPage({ config, provider, store, registries }: {
       case 'quotes-new': {
         const hashParams = new URLSearchParams(window.location.hash.split('?')[1] ?? '')
         const lid = hashParams.get('leadId') ?? undefined
-        return <QuoteFormView leadId={lid} onSaved={() => lid ? navigate(`leads-detail:${lid}`) : navigate('quotes-list')} />
+        return <QuoteFormView leadId={lid} onSaved={(id) => id ? navigate(`quotes-detail:${id}`) : navigate('quotes-list')} />
       }
       case 'quotes-list': return <QuoteListView onNew={() => navigate('quotes-new')} onEdit={(id) => navigate(`quotes-detail:${id}`)} onEditQuote={(id) => navigate(`quotes-edit:${id}`)} />
       case 'activities': return <ActivityListView />
@@ -134,7 +134,12 @@ export function CrmPage({ config, provider, store, registries }: {
         }
         if (view.startsWith('quotes-detail:')) {
           const id = view.slice('quotes-detail:'.length)
-          return <QuoteDetailView quoteId={id} onBack={() => navigate('quotes-list')} onEdit={() => navigate(`quotes-edit:${id}`)} />
+          return <QuoteDetailView
+            quoteId={id}
+            onBack={() => navigate('quotes-list')}
+            onEdit={() => navigate(`quotes-edit:${id}`)}
+            onInvoiceCreated={(invoiceId) => { window.location.hash = `/financial/receivables/detail/${invoiceId}` }}
+          />
         }
         if (view.startsWith('quotes-edit:')) {
           const id = view.slice('quotes-edit:'.length)

@@ -25,7 +25,6 @@ import { agendaRegistries } from './registries'
 import { PluginSettingsPanel } from '../../components/plugins/PluginSettingsPanel'
 import { AgendaGeneralSettings } from './components/AgendaGeneralSettings'
 import { agendaLocales } from './locales'
-import { ConnectedHolidaysSettings } from '../../components/settings/ConnectedHolidaysSettings'
 import { setScheduleBlockConfig, getScheduleBlockConfig } from '../../lib/schedule-config'
 
 // ---------------------------------------------------------------------------
@@ -35,7 +34,7 @@ import { setScheduleBlockConfig, getScheduleBlockConfig } from '../../lib/schedu
 export function createAgendaPlugin(options?: AgendaPluginOptions): PluginManifest {
   const config = resolveConfig(options)
   const provider = options?.dataProvider ?? createSafeAgendaProvider()
-  const store = createAgendaStore(provider)
+  const store = createAgendaStore(provider, options?.financialBridge)
 
   // Register schedule block config globally so ScheduleEditor can read it
   setScheduleBlockConfig({
@@ -172,9 +171,6 @@ export function createAgendaPlugin(options?: AgendaPluginOptions): PluginManifes
               title: 'Agenda Settings',
               subtitle: 'Working hours, scheduling preferences, and confirmations',
               generalSettings: React.createElement(AgendaGeneralSettings),
-              customTabs: [
-                { id: 'holidays', label: 'Holidays', icon: 'TreePalm', content: React.createElement(ConnectedHolidaysSettings) },
-              ],
               registries: agendaRegistries,
               routeBase: '/settings/agenda',
             })
@@ -193,3 +189,5 @@ export function createAgendaPlugin(options?: AgendaPluginOptions): PluginManifes
 export type { AgendaPluginOptions } from './config'
 export type { ResolvedAgendaConfig } from './config'
 export type { AgendaDataProvider } from './data/types'
+export type { AgendaFinancialBridge, BookingPaymentStatus, BookingPaymentSummary, BookingPaymentDetail } from './financial-bridge'
+export { createFinancialBridge } from './bridges/create-financial-bridge'

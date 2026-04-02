@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import { Mail, Phone, ExternalLink, Cake, Calendar } from 'lucide-react'
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover'
 import { createArchetypeLookup } from '../../lib/archetype-lookup'
@@ -38,9 +38,11 @@ export function PersonLink({ personId, name, profileHref, tab, size = 'default',
   const [person, setPerson] = useState<EntityLookupResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [fetched, setFetched] = useState(false)
+  const [open, setOpen] = useState(false)
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const handleOpen = useCallback((open: boolean) => {
-    if (open && !fetched && personId) {
+  const fetchPerson = useCallback(() => {
+    if (!fetched && personId) {
       setLoading(true)
       personLookup.getById(personId).then((result) => {
         setPerson(result)
@@ -52,6 +54,19 @@ export function PersonLink({ personId, name, profileHref, tab, size = 'default',
       })
     }
   }, [personId, fetched])
+
+  const handleOpenChange = useCallback((v: boolean) => {
+    setOpen(v)
+    if (v) fetchPerson()
+  }, [fetchPerson])
+
+  function handleMouseEnter() {
+    hoverTimer.current = setTimeout(() => { setOpen(true); fetchPerson() }, 800)
+  }
+
+  function handleMouseLeave() {
+    if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null }
+  }
 
   // If no personId, just render the name as plain text
   if (!personId) {
@@ -72,11 +87,13 @@ export function PersonLink({ personId, name, profileHref, tab, size = 'default',
   const resolvedHref = profileHref ?? (personId ? '#' + resolveEntityHref(personId, 'person', kind ?? undefined, tab) : undefined)
 
   return (
-    <Popover onOpenChange={handleOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <button
           type="button"
           onClick={(e) => e.stopPropagation()}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           className={cn(
             'font-medium text-foreground underline decoration-dashed decoration-muted-foreground/40 underline-offset-2 hover:decoration-primary hover:text-primary transition-colors truncate text-left',
             size === 'sm' ? 'text-xs' : 'text-sm',

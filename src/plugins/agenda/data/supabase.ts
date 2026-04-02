@@ -84,26 +84,40 @@ export function createSupabaseAgendaProvider(): AgendaDataProvider {
       const totalDuration = input.services.reduce((sum, s) => sum + s.durationMinutes, 0)
       const totalPrice = input.services.reduce((sum, s) => sum + s.price, 0)
       const endsAt = addMinutes(input.startsAt, totalDuration || 30)
+      const serviceNames = input.services.map((s) => s.name).join(', ')
 
-      let orderId: string | null = null
+      // Resolve client name for metadata (used by financial detail view)
+      let contactName: string | undefined
+      if (input.clientId) {
+        const { data: person } = await core.from('persons').select('name').eq('id', input.clientId).single()
+        contactName = person?.name as string | undefined
+      }
 
-      // Create order only when services exist (appointments with services)
+      // Single order row — unified model (no separate bookings table)
+      const { data: order, error: orderErr } = await core.from('orders').insert({
+        tenant_id: tenantId,
+        kind: input.kind ?? 'appointment',
+        stage: 'booked',
+        status: 'scheduled',
+        direction: hasServices ? 'credit' : null,
+        party_id: input.clientId || null,
+        assignee_id: input.professionalId,
+        location_id: input.locationId ?? null,
+        starts_at: input.startsAt,
+        ends_at: endsAt,
+        subtotal: totalPrice,
+        total: totalPrice,
+        notes: input.notes ?? null,
+        metadata: {
+          source: 'agenda',
+          ...(serviceNames ? { serviceNames, itemsSummary: serviceNames } : {}),
+          ...(contactName ? { contactName } : {}),
+        },
+      }).select('id').single()
+      if (orderErr) throw orderErr
+
+      // Create order items with duration + per-item assignee
       if (hasServices) {
-        const { data: order, error: orderErr } = await core.from('orders').insert({
-          tenant_id: tenantId,
-          kind: 'service_order',
-          party_id: input.clientId,
-          assignee_id: input.professionalId,
-          location_id: input.locationId ?? null,
-          status: 'draft',
-          subtotal: totalPrice,
-          total: totalPrice,
-          notes: 'Appointment',
-          metadata: { source: 'agenda' },
-        }).select('id').single()
-        if (orderErr) throw orderErr
-        orderId = order.id
-
         const orderItems = input.services.map((s, i) => ({
           order_id: order.id,
           service_id: s.serviceId,
@@ -112,45 +126,15 @@ export function createSupabaseAgendaProvider(): AgendaDataProvider {
           unit_price: s.price,
           total: s.price,
           sort_order: i,
-          metadata: { duration_minutes: s.durationMinutes },
+          duration_minutes: s.durationMinutes,
+          assignee_id: s.assigneeId ?? input.professionalId,
         }))
         const { error: oiErr } = await core.from('order_items').insert(orderItems)
         if (oiErr) throw oiErr
       }
 
-      // Create booking (time reservation)
-      const { data: booking, error: bkErr } = await core.from('bookings').insert({
-        tenant_id: tenantId,
-        kind: input.kind ?? 'appointment',
-        party_id: input.clientId || null,
-        assignee_id: input.professionalId,
-        location_id: input.locationId ?? null,
-        order_id: orderId,
-        starts_at: input.startsAt,
-        ends_at: endsAt,
-        status: 'scheduled',
-        notes: input.notes ?? null,
-        metadata: {},
-      }).select('id').single()
-      if (bkErr) throw bkErr
-
-      // Create booking items (only when services exist)
-      if (hasServices) {
-        const bookingItems = input.services.map((s, i) => ({
-          booking_id: booking.id,
-          service_id: s.serviceId,
-          assignee_id: s.assigneeId ?? input.professionalId,
-          name: s.name,
-          duration_minutes: s.durationMinutes,
-          price: s.price,
-          sort_order: i,
-        }))
-        const { error: biErr } = await core.from('booking_items').insert(bookingItems)
-        if (biErr) throw biErr
-      }
-
       // Return the full booking from the view
-      return (await this.getBookingById(booking.id))!
+      return (await this.getBookingById(order.id))!
     },
 
     async updateBooking(id: string, data: UpdateBookingInput): Promise<CalendarBooking> {
@@ -158,24 +142,34 @@ export function createSupabaseAgendaProvider(): AgendaDataProvider {
       const updates: Record<string, unknown> = {}
       if (data.startsAt) updates.starts_at = data.startsAt
       if (data.endsAt) updates.ends_at = data.endsAt
-      if (data.status) updates.status = data.status
+      if (data.status) {
+        // Only update the agenda status — never touch the financial stage
+        updates.status = data.status
+      }
       if (data.notes !== undefined) updates.notes = data.notes
       if (data.professionalId) updates.assignee_id = data.professionalId
       if (data.clientId) updates.party_id = data.clientId
       if (data.locationId) updates.location_id = data.locationId
 
-      const { error } = await core.from('bookings').update(updates).eq('id', id)
+      const { error } = await core.from('orders').update(updates).eq('id', id)
       if (error) throw error
       return (await this.getBookingById(id))!
     },
 
     async deleteBooking(id: string): Promise<void> {
-      const { core } = getClients()
-      const { data: booking } = await core.from('bookings').select('order_id').eq('id', id).single()
-      const { error } = await core.from('bookings').delete().eq('id', id)
-      if (error) throw error
-      if (booking?.order_id) {
-        await core.from('orders').delete().eq('id', booking.order_id)
+      const { core, pub } = getClients()
+      // Check stage — if already invoiced or paid, cancel instead of delete
+      const { data: order } = await core.from('orders').select('stage').eq('id', id).single()
+      const stage = order?.stage as string | undefined
+      if (stage && ['invoiced', 'paid', 'partial', 'overdue'].includes(stage)) {
+        // Cancel movements + order (don't delete financial records)
+        await pub.from('financial_movements').update({ status: 'cancelled' }).eq('invoice_id', id)
+        await core.from('orders').update({ status: 'cancelled', stage: 'cancelled' }).eq('id', id)
+      } else {
+        // Safe to delete — remove any movements first (FK constraint)
+        await pub.from('financial_movements').delete().eq('invoice_id', id)
+        const { error } = await core.from('orders').delete().eq('id', id)
+        if (error) throw error
       }
     },
 
@@ -185,9 +179,11 @@ export function createSupabaseAgendaProvider(): AgendaDataProvider {
 
     async checkConflict(params: ConflictCheckParams): Promise<boolean> {
       const { core } = getClients()
-      let q = core.from('bookings').select('id', { count: 'exact', head: true })
+      let q = core.from('orders').select('id', { count: 'exact', head: true })
         .eq('assignee_id', params.assigneeId)
-        .not('status', 'in', '("cancelled","no_show")')
+        .eq('kind', 'appointment')
+        .not('stage', 'in', '("cancelled","no_show")')
+        .not('starts_at', 'is', null)
         .lt('starts_at', params.endsAt)
         .gt('ends_at', params.startsAt)
 
@@ -291,23 +287,23 @@ export function createSupabaseAgendaProvider(): AgendaDataProvider {
 
     async sendConfirmation(bookingId: string, channel: string): Promise<void> {
       const { core } = getClients()
-      const { data: booking } = await core.from('bookings').select('metadata').eq('id', bookingId).single()
-      const metadata = (booking?.metadata ?? {}) as Record<string, unknown>
+      const { data: order } = await core.from('orders').select('metadata').eq('id', bookingId).single()
+      const metadata = (order?.metadata ?? {}) as Record<string, unknown>
       const confirmations = (metadata.confirmations as any[] ?? [])
       confirmations.push({ channel, sentAt: new Date().toISOString(), status: 'sent' })
-      await core.from('bookings').update({ metadata: { ...metadata, confirmations } }).eq('id', bookingId)
+      await core.from('orders').update({ metadata: { ...metadata, confirmations } }).eq('id', bookingId)
     },
 
     async completeBooking(bookingId: string): Promise<{ booking: CalendarBooking; orderId: string }> {
       const { core } = getClients()
-      const { error: bkErr } = await core.from('bookings').update({ status: 'completed' }).eq('id', bookingId)
-      if (bkErr) throw bkErr
+      // In unified model, the booking IS the order — just update stage
+      const { error } = await core.from('orders')
+        .update({ status: 'completed', stage: 'completed' })
+        .eq('id', bookingId)
+      if (error) throw error
       const booking = await this.getBookingById(bookingId)
       if (!booking) throw new Error('Booking not found')
-      if (booking.orderId) {
-        await core.from('orders').update({ status: 'completed' }).eq('id', booking.orderId)
-      }
-      return { booking, orderId: booking.orderId ?? '' }
+      return { booking, orderId: bookingId }
     },
   }
 }

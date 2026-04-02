@@ -7,6 +7,7 @@ export type FieldType =
   | 'select' | 'multiselect'
   | 'date' | 'datetime' | 'time'
   | 'boolean' | 'textarea'
+  | 'color'
 
 export interface FieldDef {
   key: string
@@ -30,6 +31,8 @@ export interface FieldDef {
   group?: string
   /** Column span in two-column layout: 1 (half) or 2 (full width). Default: 1 */
   span?: 1 | 2
+  /** For boolean fields: render as inline toggle in the table, allowing direct toggling without editing */
+  inlineToggle?: boolean
 }
 
 export interface FieldGroup {
@@ -44,10 +47,12 @@ export interface DetailTab {
   id: string
   label: string
   icon?: string
-  /** React component to render as tab content. Receives { item, entityDef } props */
-  component?: React.ComponentType<{ item: any; entityDef: EntityDef }>
+  /** React component to render as tab content. Receives { item, entityDef, ...props } */
+  component?: React.ComponentType<{ item: any; entityDef: EntityDef; [key: string]: any }>
   /** Restrict tab visibility to specific archetypeKind values. If omitted, tab shows for all. */
   visibleFor?: string[]
+  /** Extra props passed through to the tab component */
+  props?: Record<string, unknown>
 }
 
 export type FormLayout = 'person' | 'product' | 'service' | 'location' | 'order' | 'subject' | 'generic'
@@ -90,3 +95,21 @@ export interface EntityDef<T = Record<string, any>> {
   /** Field key containing an image URL — shown as hero image on card layout and detail avatar */
   imageField?: string
 }
+
+// ---------------------------------------------------------------------------
+// Tenant-level field rule overrides
+// ---------------------------------------------------------------------------
+
+/** Per-field override configured by tenant admin */
+export interface FieldRuleOverride {
+  required?: boolean
+  showInForm?: boolean
+  showInTable?: boolean
+  showInDetail?: boolean
+}
+
+/** Field overrides for a single register type, keyed by field.key */
+export type EntityFieldRules = Record<string, FieldRuleOverride>
+
+/** All field rules for a tenant, keyed by entityKey (e.g. "person:client", "product") */
+export type TenantFieldRules = Record<string, EntityFieldRules>

@@ -94,6 +94,7 @@ function QuoteItemRow({ item, index, itemTypes, currency, expanded, onToggle, on
                   label="Item"
                   value={item._id}
                   displayValue={item.description}
+                  loadOnOpen
                   onChange={(id, opt) => {
                     onUpdate({
                       description: opt?.label ?? '',
@@ -187,7 +188,7 @@ function AddItemStep({ itemTypes, onSelect, onCancel }: {
 // Quote form (create + edit)
 // ---------------------------------------------------------------------------
 
-export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; leadId?: string; onSaved?: () => void }) {
+export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; leadId?: string; onSaved?: (savedId?: string) => void }) {
   const { t } = useTranslation()
   const config = useCrmConfig()
   const provider = useCrmProvider()
@@ -302,10 +303,11 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
       }
       if (isEdit) {
         await updateQuote(quoteId!, input)
+        onSaved?.(quoteId)
       } else {
-        await createQuote(input)
+        const created = await createQuote(input)
+        onSaved?.(created?.id)
       }
-      onSaved?.()
     } finally { setSaving(false) }
   }
 
@@ -342,12 +344,12 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
       <SubpageHeader
         title={isEdit ? t('crm.quoteForm.editTitle') : t('crm.quoteForm.newTitle')}
         subtitle={isEdit ? t('crm.quoteForm.editSubtitle') : t('crm.quoteForm.newSubtitle')}
-        onBack={onSaved}
+        onBack={() => onSaved?.()}
         parentLabel={t('crm.quotes.title')}
         actions={
           <div className="flex items-center gap-2">
             {onSaved && (
-              <button onClick={onSaved} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+              <button onClick={() => onSaved()} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
                 <X className="h-3 w-3" /> {t('crm.quoteForm.cancel')}
               </button>
             )}
@@ -385,6 +387,13 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
             label={t('crm.quoteForm.client')}
             required
             placeholder={t('crm.quoteForm.searchClient')}
+            allowCreate
+            createLabel={t('crm.quoteForm.addAsLead')}
+            onCreate={async (name) => {
+              const lead = await provider.createLead({ name })
+              setContactId(lead.id)
+              setContactName(lead.name)
+            }}
           />
 
           <div>

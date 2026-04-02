@@ -302,6 +302,7 @@ export function Sidebar({
   return (
     <Tooltip.Provider>
       <aside
+        data-print="hide"
         className={cn(
           'flex h-full flex-col bg-sidebar text-sidebar-foreground transition-all duration-200',
           !borderless && 'border-r border-sidebar-border',

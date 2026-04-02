@@ -95,6 +95,8 @@ export function reportColumnsToTanstack(
               content = React.createElement(PersonLink, {
                 personId: col.idKey ? row[col.idKey] : null,
                 name: String(value),
+                size: 'sm',
+                className: 'text-xs',
               })
               break
             case 'currency':

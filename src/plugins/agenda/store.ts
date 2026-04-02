@@ -3,6 +3,7 @@ import { dedup } from '../../lib/dedup'
 import { toast } from 'sonner'
 import { getScheduleBlockConfig, setScheduleBlockConfig } from '../../lib/schedule-config'
 import type { AgendaDataProvider } from './data/types'
+import type { AgendaFinancialBridge } from './financial-bridge'
 import type {
   CalendarBooking, Professional, Schedule,
   CreateBookingInput, UpdateBookingInput, BookingQuery,
@@ -46,6 +47,7 @@ export interface AgendaUIState {
     mode: 'create' | 'edit'
     bookingId?: string
     prefill?: Partial<CreateBookingInput> & { endsAt?: string }
+    initialTab?: string
   }
 
   // Actions
@@ -62,7 +64,7 @@ export interface AgendaUIState {
   setFilters(filters: Partial<{ professionalIds: string[]; locationId: string | null; statuses: string[] }>): void
   setView(view: string): void
   setSelectedDate(date: string): void
-  openAppointmentModal(mode: 'create' | 'edit', options?: { bookingId?: string; prefill?: Partial<CreateBookingInput> & { endsAt?: string } }): void
+  openAppointmentModal(mode: 'create' | 'edit', options?: { bookingId?: string; prefill?: Partial<CreateBookingInput> & { endsAt?: string }; initialTab?: string }): void
   closeAppointmentModal(): void
 }
 
@@ -70,7 +72,7 @@ export interface AgendaUIState {
 // Store factory
 // ---------------------------------------------------------------------------
 
-export function createAgendaStore(provider: AgendaDataProvider): StoreApi<AgendaUIState> {
+export function createAgendaStore(provider: AgendaDataProvider, financialBridge?: AgendaFinancialBridge): StoreApi<AgendaUIState> {
   return createStore<AgendaUIState>((set, get) => ({
     bookings: [],
     bookingsLoading: false,
@@ -83,7 +85,7 @@ export function createAgendaStore(provider: AgendaDataProvider): StoreApi<Agenda
 
     selectedProfessionalIds: [],
     selectedLocationId: null,
-    selectedStatuses: [],
+    selectedStatuses: ['scheduled', 'confirmed', 'in_progress', 'completed'],
 
     locations: [],
 
@@ -106,7 +108,23 @@ export function createAgendaStore(provider: AgendaDataProvider): StoreApi<Agenda
           locationId: state.selectedLocationId ?? undefined,
           statuses: state.selectedStatuses.length ? state.selectedStatuses : undefined,
         }
-        const bookings = await provider.getBookings(query)
+        let bookings = await provider.getBookings(query)
+
+        // Enrich with payment status if financial bridge is available
+        if (financialBridge) {
+          const orderIds = bookings.map((b) => b.orderId).filter((id): id is string => !!id)
+          if (orderIds.length > 0) {
+            try {
+              const statuses = await financialBridge.resolvePaymentStatuses(orderIds)
+              bookings = bookings.map((b) => {
+                if (!b.orderId) return b
+                const summary = statuses.get(b.orderId)
+                return summary ? { ...b, paymentStatus: summary.status } : b
+              })
+            } catch { /* non-blocking */ }
+          }
+        }
+
         set({ bookings, bookingsLoading: false })
       })
     },
@@ -270,7 +288,7 @@ export function createAgendaStore(provider: AgendaDataProvider): StoreApi<Agenda
     setSelectedDate(date) { set({ selectedDate: date }) },
 
     openAppointmentModal(mode, options) {
-      set({ appointmentModal: { open: true, mode, bookingId: options?.bookingId, prefill: options?.prefill } })
+      set({ appointmentModal: { open: true, mode, bookingId: options?.bookingId, prefill: options?.prefill, initialTab: options?.initialTab } })
     },
 
     closeAppointmentModal() {

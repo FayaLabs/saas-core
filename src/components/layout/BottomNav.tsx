@@ -46,6 +46,8 @@ interface BottomNavProps {
   activeRoute: string
   onNavigate: (route: string) => void
   showChat?: boolean
+  /** Custom items override — when provided, uses these instead of auto-picking from navigation */
+  customItems?: Array<{ label: string; icon: string; route: string }>
 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -55,14 +57,23 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Percent, Tag, Camera, UtensilsCrossed, Search,
 }
 
-export function BottomNav({ navigation, activeRoute, onNavigate, showChat = true }: BottomNavProps) {
+export function BottomNav({ navigation, activeRoute, onNavigate, showChat = true, customItems }: BottomNavProps) {
   const { t } = useTranslation()
+  const { isOpen, setOpen, toggleOpen } = useChatStore()
+
+  const handleNavigate = (route: string) => {
+    if (isOpen) setOpen(false)
+    onNavigate(route)
+  }
+
+  // Use custom items if provided, otherwise auto-pick from navigation
   const maxItems = showChat ? 4 : 5
-  const items = navigation.filter((n) => n.section === 'main').slice(0, maxItems)
-  const { isOpen, toggleOpen } = useChatStore()
+  const items: Array<{ id: string; label: string; icon: string; route: string; badge?: string | number }> = customItems
+    ? customItems.slice(0, maxItems).map((ci) => ({ id: ci.route, label: ci.label, icon: ci.icon, route: ci.route }))
+    : navigation.filter((n) => n.section === 'main').slice(0, maxItems)
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-center justify-around border-t border-border bg-background px-2 md:hidden">
+    <nav data-print="hide" className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-center justify-around border-t border-border bg-background px-2 md:hidden">
       {items.map((item) => {
         const Icon = ICON_MAP[item.icon] ?? Home
         const isActive =
@@ -71,7 +82,7 @@ export function BottomNav({ navigation, activeRoute, onNavigate, showChat = true
         return (
           <button
             key={item.id}
-            onClick={() => onNavigate(item.route)}
+            onClick={() => handleNavigate(item.route)}
             className={cn(
               'relative flex flex-1 flex-col items-center gap-1 py-1 text-xs font-medium transition-colors',
               isActive

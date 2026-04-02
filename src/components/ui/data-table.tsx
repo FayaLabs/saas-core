@@ -21,6 +21,8 @@ interface DataTableProps<TData, TValue> {
   onRowClick?: (row: TData) => void
   /** Visual variant: 'card' (white bg, card wrapper — default) or 'flat' (transparent bg) */
   variant?: 'card' | 'flat'
+  /** Compact mode: smaller padding and font size */
+  compact?: boolean
 }
 
 function DataTable<TData, TValue>({
@@ -31,10 +33,14 @@ function DataTable<TData, TValue>({
   emptyMessage = 'No results.',
   onRowClick,
   variant = 'card',
+  compact = false,
 }: DataTableProps<TData, TValue>) {
   const isCard = variant === 'card'
-  const wrapperCls = isCard ? 'rounded-lg border bg-card shadow-sm overflow-hidden' : 'rounded-lg border overflow-hidden'
+  const wrapperCls = isCard ? 'rounded-lg border bg-card shadow-sm overflow-x-auto' : 'rounded-lg border overflow-x-auto'
   const headerCls = isCard ? 'border-b bg-muted/50' : 'border-b bg-muted/30'
+  const thCls = compact ? 'px-3 py-1.5 text-left text-[11px] font-medium text-muted-foreground' : 'px-4 py-2.5 text-left font-medium text-muted-foreground'
+  const tdCls = compact ? 'px-3 py-1.5 align-middle text-xs' : 'px-4 py-3 align-middle'
+  const tableCls = compact ? 'w-full text-xs min-w-max' : 'w-full text-sm min-w-max'
   const rowHoverCls = isCard ? 'hover:bg-muted/30' : 'hover:bg-muted/20'
   const [sorting, setSorting] = React.useState<SortingState>([])
 
@@ -50,11 +56,11 @@ function DataTable<TData, TValue>({
   if (loading) {
     return (
       <div className={wrapperCls}>
-        <table className="w-full text-sm">
+        <table className={tableCls}>
           <thead>
             <tr className={headerCls}>
               {columns.map((_, i) => (
-                <th key={i} className="px-4 py-2.5 text-left font-medium text-muted-foreground">
+                <th key={i} className={thCls}>
                   <Skeleton className="h-3.5 w-20" />
                 </th>
               ))}
@@ -64,7 +70,7 @@ function DataTable<TData, TValue>({
             {Array.from({ length: skeletonRows }).map((_, i) => (
               <tr key={i} className="border-b last:border-0">
                 {columns.map((_, j) => (
-                  <td key={j} className="px-4 py-3">
+                  <td key={j} className={tdCls}>
                     <Skeleton className="h-3.5 w-full" />
                   </td>
                 ))}
@@ -78,7 +84,7 @@ function DataTable<TData, TValue>({
 
   return (
     <div className={wrapperCls}>
-      <table className="w-full text-sm">
+      <table className={tableCls}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id} className={headerCls}>
@@ -87,7 +93,7 @@ function DataTable<TData, TValue>({
                 return (
                   <th
                     key={header.id}
-                    className="px-4 py-2.5 text-left font-medium text-muted-foreground"
+                    className={thCls}
                   >
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <button
@@ -124,7 +130,7 @@ function DataTable<TData, TValue>({
                 onClick={() => onRowClick?.(row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3 align-middle">
+                  <td key={cell.id} className={tdCls}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

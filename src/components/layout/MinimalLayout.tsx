@@ -2,6 +2,7 @@ import * as React from 'react'
 import * as Avatar from '@radix-ui/react-avatar'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { LogOut, User, Settings } from 'lucide-react'
+import { PrintHeader, PrintFooter } from './PrintChrome'
 
 interface MinimalLayoutProps {
   logo?: React.ReactNode
@@ -21,8 +22,8 @@ function getInitials(name: string): string {
 
 export function MinimalLayout({ logo, children, user, headerEnd }: MinimalLayoutProps) {
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
-      <header className="flex h-14 items-center justify-between border-b border-border px-4 md:px-6">
+    <div className="flex h-screen flex-col overflow-hidden bg-background print-root">
+      <header data-print="hide" className="flex h-14 items-center justify-between border-b border-border px-4 md:px-6">
         <div className="flex items-center">
           {logo ?? <span className="text-lg font-bold">App</span>}
         </div>
@@ -86,7 +87,9 @@ export function MinimalLayout({ logo, children, user, headerEnd }: MinimalLayout
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <PrintHeader />
+      <main className="flex-1 overflow-y-auto print-content">{children}</main>
+      <PrintFooter />
     </div>
   )
 }

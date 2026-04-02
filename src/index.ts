@@ -31,7 +31,8 @@ import { TeamTab } from './components/organization/TeamTab'
 import { PermissionProfilesTab } from './components/organization/PermissionProfilesTab'
 import { ConnectedLocationsOverview } from './components/settings/ConnectedLocationsOverview'
 import { ConnectedHolidaysSettings } from './components/settings/ConnectedHolidaysSettings'
-import { Users, ShieldCheck, MapPin, CalendarOff, Puzzle } from 'lucide-react'
+import { ConnectedFieldRulesSettings } from './components/settings/ConnectedFieldRulesSettings'
+import { Users, ShieldCheck, MapPin, CalendarOff, SlidersHorizontal, Puzzle } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
 import { resolvePluginRuntime, PluginRuntimeProvider } from './lib/plugins'
 import type { AuthAdapter } from './types/auth-adapter'
@@ -170,6 +171,8 @@ export interface SaasAppConfig {
   showSettings?: boolean
   /** Set to false to hide built-in Billing page (default: true when plans provided) */
   showBilling?: boolean
+  /** Custom mobile bottom nav items (max 5). If omitted, auto-picks first main items. */
+  bottomNav?: Array<{ label: string; icon: string; route: string }>
 }
 
 // ---------------------------------------------------------------------------
@@ -460,6 +463,7 @@ function buildSettingsTabs(
       { id: 'team', label: t('settings.team'), icon: React.createElement(Users, { className: 'h-4 w-4' }), component: React.createElement(TeamTab) },
       { id: 'permissions', label: t('settings.permissions'), icon: React.createElement(ShieldCheck, { className: 'h-4 w-4' }), component: React.createElement(PermissionProfilesTab) },
       { id: 'locations', label: t('settings.locations'), icon: React.createElement(MapPin, { className: 'h-4 w-4' }), component: React.createElement(ConnectedLocationsOverview) },
+      { id: 'field-rules', label: t('settings.fieldRules'), icon: React.createElement(SlidersHorizontal, { className: 'h-4 w-4' }), component: React.createElement(ConnectedFieldRulesSettings) },
     )
   }
 
@@ -750,6 +754,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
               className: 'space-y-2',
               contextOverrides: { matchedPath },
             }),
+            bottomNav: config.bottomNav,
           },
           pageElement,
         ),
@@ -888,6 +893,7 @@ export * from './types'
 export * from './config'
 export * from './lib'
 export { createCrudPage } from './components/crud/createCrudPage'
+export { ClientOrdersTab } from './components/crud/archetypes/ClientOrdersTab'
 export { createCrudStore } from './stores/createCrudStore'
 export { PermissionGate } from './components/organization/PermissionGate'
 export { usePermission } from './hooks/usePermission'

@@ -9,7 +9,7 @@ const ARCHETYPE_DISPLAY: Record<ArchetypeType, {
   priceField?: string
   groupField?: string
 }> = {
-  person: { table: 'persons', labelField: 'name', subtitleFields: ['email', 'phone'], groupField: 'kind' },
+  person: { table: 'persons', labelField: 'name', subtitleFields: ['phone'], groupField: 'kind' },
   product: { table: 'products', labelField: 'name', subtitleFields: ['sku', 'description'], priceField: 'price' },
   service: { table: 'services', labelField: 'name', subtitleFields: ['duration_minutes', 'description'], priceField: 'price' },
   location: { table: 'locations', labelField: 'name', subtitleFields: ['city', 'address'], groupField: 'kind' },
@@ -20,6 +20,8 @@ interface ArchetypeLookupConfig {
   kind?: string | string[]
   kindLabels?: Record<string, string>
   limit?: number
+  /** Override which fields appear in the subtitle (default: from ARCHETYPE_DISPLAY) */
+  subtitleFields?: string[]
 }
 
 function toResult(
@@ -63,9 +65,18 @@ function toResult(
  * createArchetypeLookup({ archetype: 'service' })
  */
 export function createArchetypeLookup(config: ArchetypeLookupConfig): EntityLookup {
-  const display = ARCHETYPE_DISPLAY[config.archetype]
+  const baseDisplay = ARCHETYPE_DISPLAY[config.archetype]
+  const display = config.subtitleFields
+    ? { ...baseDisplay, subtitleFields: config.subtitleFields }
+    : baseDisplay
   const limit = config.limit ?? 20
   const kinds = config.kind ? (Array.isArray(config.kind) ? config.kind : [config.kind]) : undefined
+
+  function applyKindFilter(qb: any) {
+    if (kinds && kinds.length === 1) return qb.eq('kind', kinds[0])
+    if (kinds && kinds.length > 1) return qb.in('kind', kinds)
+    return qb
+  }
 
   return {
     async search(query: string) {
@@ -76,12 +87,30 @@ export function createArchetypeLookup(config: ArchetypeLookupConfig): EntityLook
         .schema('saas_core')
         .from(display.table)
         .select('*')
-        .ilike(display.labelField, `%${query}%`)
         .eq('is_active', true)
+        .order(display.labelField, { ascending: true })
         .limit(limit)
 
-      if (kinds && kinds.length === 1) qb = qb.eq('kind', kinds[0])
-      if (kinds && kinds.length > 1) qb = qb.in('kind', kinds)
+      if (query) qb = qb.ilike(display.labelField, `%${query}%`)
+      qb = applyKindFilter(qb)
+
+      const { data } = await qb
+      return (data ?? []).map((row: Record<string, unknown>) => toResult(row, display, config.kindLabels))
+    },
+
+    async list() {
+      const supabase = getSupabaseClientOptional()
+      if (!supabase) return []
+
+      let qb = supabase
+        .schema('saas_core')
+        .from(display.table)
+        .select('*')
+        .eq('is_active', true)
+        .order(display.labelField, { ascending: true })
+        .limit(limit)
+
+      qb = applyKindFilter(qb)
 
       const { data } = await qb
       return (data ?? []).map((row: Record<string, unknown>) => toResult(row, display, config.kindLabels))

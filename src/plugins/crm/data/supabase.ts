@@ -27,7 +27,9 @@ function getClients() {
   return { core: supabase.schema('saas_core'), pub: supabase }
 }
 
-export function createSupabaseCrmProvider(): CrmDataProvider {
+export function createSupabaseCrmProvider(options?: {
+  clientConversion?: { archetypeKind: string; extensionTable: string; fkColumn: string }
+}): CrmDataProvider {
   const provider: CrmDataProvider = {
     // --- Pipelines (public.pipelines + pipeline_stages) ---
     async getPipelines(): Promise<Pipeline[]> {
@@ -330,14 +332,20 @@ export function createSupabaseCrmProvider(): CrmDataProvider {
       const pageSize = query.pageSize ?? 50
       qb = qb.range((page - 1) * pageSize, page * pageSize - 1).order('created_at', { ascending: false })
       const { data, count } = await qb
-      const quotes: Quote[] = (data ?? []).map((r: any) => ({
-        id: r.id, quoteNumber: r.reference_number ?? '', quoteDate: r.created_at?.slice(0, 10) ?? '',
-        validUntil: r.due_at?.slice(0, 10) ?? '', status: r.status ?? 'draft',
-        totalAmount: r.total ?? 0, contactId: r.party_id,
-        contactName: r.metadata?.contactName, observations: r.notes,
-        dealId: r.metadata?.dealId, leadId: r.metadata?.leadId, convertedInvoiceId: r.metadata?.convertedInvoiceId,
-        items: [], tenantId: r.tenant_id, createdAt: r.created_at, updatedAt: r.updated_at,
-      } as Quote))
+      const quotes: Quote[] = (data ?? []).map((r: any) => {
+        // Show financial stage as status when quote has been promoted
+        const stage = r.stage as string | undefined
+        const financialStages = ['invoiced', 'paid', 'partial', 'overdue']
+        const displayStatus = stage && financialStages.includes(stage) ? stage : (r.status ?? 'draft')
+        return {
+          id: r.id, quoteNumber: r.metadata?.quoteNumber ?? r.reference_number ?? '', quoteDate: r.created_at?.slice(0, 10) ?? '',
+          validUntil: r.due_at?.slice(0, 10) ?? '', status: displayStatus,
+          totalAmount: r.total ?? 0, contactId: r.party_id,
+          contactName: r.metadata?.contactName, observations: r.notes,
+          dealId: r.metadata?.dealId, leadId: r.metadata?.leadId, convertedInvoiceId: r.metadata?.convertedInvoiceId,
+          items: [], tenantId: r.tenant_id, createdAt: r.created_at, updatedAt: r.updated_at,
+        } as Quote
+      })
       return { data: quotes, total: count ?? 0 }
     },
 
@@ -346,9 +354,12 @@ export function createSupabaseCrmProvider(): CrmDataProvider {
       const { data: order } = await core.from('orders').select('*').eq('id', id).eq('kind', 'quote').single()
       if (!order) return null
       const { data: items } = await core.from('order_items').select('*').eq('order_id', id).order('sort_order')
+      const stage = order.stage as string | undefined
+      const financialStages = ['invoiced', 'paid', 'partial', 'overdue']
+      const displayStatus = stage && financialStages.includes(stage) ? stage : (order.status ?? 'draft')
       return {
-        id: order.id, quoteNumber: order.reference_number ?? '', quoteDate: order.created_at?.slice(0, 10) ?? '',
-        validUntil: order.due_at?.slice(0, 10) ?? '', status: order.status ?? 'draft',
+        id: order.id, quoteNumber: order.metadata?.quoteNumber ?? order.reference_number ?? '', quoteDate: order.created_at?.slice(0, 10) ?? '',
+        validUntil: order.due_at?.slice(0, 10) ?? '', status: displayStatus,
         totalAmount: order.total ?? 0, contactId: order.party_id,
         contactName: order.metadata?.contactName, observations: order.notes,
         dealId: order.metadata?.dealId, leadId: order.metadata?.leadId, convertedInvoiceId: order.metadata?.convertedInvoiceId,
@@ -434,77 +445,107 @@ export function createSupabaseCrmProvider(): CrmDataProvider {
     async sendQuote(id: string): Promise<Quote> {
       const { core } = getClients()
       await core.from('orders').update({ status: 'sent' }).eq('id', id)
+
+      // Move deal to Negotiation stage (only forward, never backward)
+      try {
+        const quote = await provider.getQuoteById(id)
+        if (quote?.dealId) {
+          const deal = await provider.getDealById(quote.dealId)
+          if (deal) {
+            const stages = await provider.getPipelineStages(deal.pipelineId)
+            const negotiationStage = stages.find((s) => s.name === 'Negotiation')
+              ?? stages.filter((s) => !s.isWon && !s.isLost).sort((a, b) => b.order - a.order)[0]
+            const currentStage = stages.find((s) => s.id === deal.stageId)
+            if (negotiationStage && currentStage && negotiationStage.order > currentStage.order) {
+              await provider.moveDealToStage(deal.id, negotiationStage.id)
+            }
+          }
+        }
+      } catch { /* non-blocking */ }
+
       return (await provider.getQuoteById(id))!
     },
 
     async approveQuote(id: string): Promise<Quote> {
       const { core, pub } = getClients()
       const tenantId = getTenantId()
-      const { error } = await core.from('orders').update({ status: 'approved' }).eq('id', id)
-      if (error) throw new Error(error.message)
 
-      // Cascade: move deal to Won stage
       const quote = await provider.getQuoteById(id)
-      if (quote?.dealId) {
-        const deal = await provider.getDealById(quote.dealId)
-        if (deal) {
-          const stages = await provider.getPipelineStages(deal.pipelineId)
-          const wonStage = stages.find((s) => s.isWon)
-          if (wonStage) await provider.moveDealToStage(deal.id, wonStage.id)
-        }
+      if (!quote) throw new Error('Quote not found')
+
+      // 1. Read existing order + items
+      const { data: quoteOrder } = await core.from('orders').select('*').eq('id', id).single()
+      const { data: quoteItems } = await core.from('order_items').select('name').eq('order_id', id).order('sort_order')
+      const itemsSummary = (quoteItems ?? []).map((i: any) => i.name).filter(Boolean).join(', ')
+      const existingMeta = (quoteOrder?.metadata as Record<string, unknown>) ?? {}
+
+      // 2. Generate invoice reference number
+      let referenceNumber: string | undefined
+      try {
+        const { data: seq } = await core.rpc('next_sequence', { p_tenant_id: tenantId, p_kind: 'invoice_receivable' })
+        if (seq) referenceNumber = `REC-${String(seq).padStart(5, '0')}`
+      } catch { /* sequence might not exist */ }
+
+      // 3. Promote the quote IN-PLACE: same row, stage advances
+      await core.from('orders').update({
+        status: 'approved',
+        stage: 'invoiced',
+        direction: 'credit',
+        reference_number: referenceNumber ?? quoteOrder?.reference_number,
+        metadata: {
+          ...existingMeta,
+          itemsSummary,
+          installmentCount: 1,
+          quoteNumber: quoteOrder?.reference_number,  // preserve original quote number
+        },
+      }).eq('id', id)
+
+      // 4. Create financial movement on the SAME order (no separate invoice row)
+      await pub.from('financial_movements').insert({
+        tenant_id: tenantId, invoice_id: id,
+        direction: 'credit', movement_kind: 'bill',
+        amount: quote.totalAmount, paid_amount: 0, status: 'pending',
+        due_date: quote.validUntil ?? new Date().toISOString().slice(0, 10),
+        installment_number: 1,
+      })
+
+      // 5. Cascade: move deal to Won stage
+      if (quote.dealId) {
+        try {
+          const deal = await provider.getDealById(quote.dealId)
+          if (deal) {
+            const stages = await provider.getPipelineStages(deal.pipelineId)
+            const wonStage = stages.find((s) => s.isWon)
+            if (wonStage) await provider.moveDealToStage(deal.id, wonStage.id)
+          }
+        } catch { /* non-blocking */ }
       }
 
-      // Create invoice from quote (cross-plugin: writes to same orders table)
-      if (quote) {
-        const quoteOrder = await core.from('orders').select('*').eq('id', id).single()
-        const { data: quoteItems } = await core.from('order_items').select('*').eq('order_id', id).order('sort_order')
-        const itemsSummary = (quoteItems ?? []).map((i: any) => i.name).filter(Boolean).join(', ')
+      // 6. Convert lead to client — use leadId or fall back to contactId (party_id)
+      const personToConvert = quote.leadId ?? quote.contactId
+      if (personToConvert) {
+        const clientKind = options?.clientConversion?.archetypeKind ?? 'client'
+        const { data: person } = await core.from('persons')
+          .select('kind, name, email, phone, tenant_id, metadata')
+          .eq('id', personToConvert).single()
 
-        const { data: invoice } = await core.from('orders').insert({
-          tenant_id: tenantId, kind: 'invoice_receivable', status: 'open',
-          total: quote.totalAmount, party_id: quote.contactId,
-          due_at: quote.validUntil ? new Date(quote.validUntil).toISOString() : null,
-          currency: 'BRL',
-          metadata: { contactName: quote.contactName, itemsSummary, installmentCount: 1, sourceQuoteId: id },
-        }).select().single()
-
-        if (invoice) {
-          // Copy items
-          if (quoteItems && quoteItems.length > 0) {
-            await core.from('order_items').insert(
-              quoteItems.map((item: any, i: number) => ({
-                order_id: invoice.id, name: item.name,
-                quantity: item.quantity, unit_price: item.unit_price,
-                discount: item.discount ?? 0, total: item.total,
-                sort_order: i, metadata: item.metadata,
-              }))
-            )
-          }
-
-          // Create a single payment movement
-          await pub.from('financial_movements').insert({
-            tenant_id: tenantId, invoice_id: invoice.id,
-            direction: 'credit', movement_kind: 'bill',
-            amount: quote.totalAmount, paid_amount: 0, status: 'pending',
-            due_date: quote.validUntil ?? new Date().toISOString().slice(0, 10),
-            installment_number: 1,
-          })
-
-          // Update quote with invoice reference (merge metadata)
-          const existingMeta = (quoteOrder?.data as any)?.metadata ?? {}
-          await core.from('orders').update({
-            metadata: { ...existingMeta, convertedInvoiceId: invoice.id },
-          }).eq('id', id)
-        }
-
-        // Convert lead to client
-        if (quote.leadId) {
-          const { data: person } = await core.from('persons').select('metadata').eq('id', quote.leadId).single()
-          const existingMeta = (person as any)?.metadata ?? {}
+        // Only convert if they're actually a lead (not already a client/staff/etc.)
+        const personKind = (person as any)?.kind as string | undefined
+        if (person && (personKind === 'lead' || personKind === 'contact')) {
+          const personMeta = (person as any)?.metadata ?? {}
           await core.from('persons').update({
-            kind: 'client',
-            metadata: { ...existingMeta, convertedFromLead: true },
-          }).eq('id', quote.leadId)
+            kind: clientKind,
+            metadata: { ...personMeta, convertedFromLead: true },
+          }).eq('id', personToConvert)
+
+          // Create extension table record
+          if (options?.clientConversion) {
+            const { extensionTable, fkColumn } = options.clientConversion
+            await pub.from(extensionTable).upsert({
+              [fkColumn]: personToConvert,
+              tenant_id: (person as any).tenant_id,
+            }, { onConflict: fkColumn })
+          }
         }
       }
 

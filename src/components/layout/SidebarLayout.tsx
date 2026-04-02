@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
+import { PrintHeader, PrintFooter } from './PrintChrome'
 import { useLayout } from '../../hooks/useLayout'
 import { useRouter } from '../../lib/router'
 import { cn } from '../../lib/cn'
@@ -12,6 +13,7 @@ interface NavigationItem {
   route: string
   section: 'main' | 'secondary' | 'settings'
   badge?: string | number
+  children?: NavigationItem[]
 }
 
 interface SidebarLayoutProps {
@@ -32,6 +34,7 @@ interface SidebarLayoutProps {
   sidebarFooterContent?: React.ReactNode
   /** When true, content floats in a rounded frame over the sidebar background */
   frame?: boolean
+  bottomNavItems?: Array<{ label: string; icon: string; route: string }>
 }
 
 export function SidebarLayout({
@@ -51,6 +54,7 @@ export function SidebarLayout({
   sidebarTopContent,
   sidebarFooterContent,
   frame,
+  bottomNavItems,
 }: SidebarLayoutProps) {
   const { sidebarCollapsed, setSidebarCollapsed, isMobile } = useLayout()
   const router = useRouter()
@@ -66,7 +70,7 @@ export function SidebarLayout({
   }
 
   return (
-    <div className={cn('flex h-screen overflow-hidden', isMobile || !frame ? 'bg-content' : 'bg-sidebar')}>
+    <div id="saas-shell" className={cn('flex h-screen overflow-hidden print-root', isMobile || !frame ? 'bg-content' : 'bg-sidebar')}>
       {/* Desktop Sidebar */}
       {!isMobile && (
         <Sidebar
@@ -90,16 +94,18 @@ export function SidebarLayout({
       )}
 
       {/* Main Content */}
-      <div className={cn('flex flex-1 flex-col overflow-hidden', frame && !isMobile && 'p-3')}>
-        <div className={cn('flex flex-1 flex-col overflow-hidden bg-content', frame && !isMobile && 'rounded-[1.25rem]')}>
+      <div id="saas-content-wrap" className={cn('flex flex-1 flex-col overflow-hidden', frame && !isMobile && 'p-3')}>
+        <div id="saas-content-inner" className={cn('flex flex-1 flex-col overflow-hidden bg-content', frame && !isMobile && 'rounded-[1.25rem]')}>
           {/* Optional topbar content (page title, etc.) */}
           {topbarContent && (
-            <header className={cn('flex h-12 items-center justify-between px-6', !frame && 'border-b border-border/50')}>
+            <header className={cn('flex h-12 items-center justify-between px-6', !frame && 'border-b border-border/50')} data-print="hide">
               {topbarContent}
             </header>
           )}
 
+          <PrintHeader />
           <main
+            id="saas-main"
             className={cn(
               'flex-1 overflow-y-auto p-6',
               isMobile && 'pb-16'
@@ -107,6 +113,7 @@ export function SidebarLayout({
           >
             {children}
           </main>
+          <PrintFooter />
         </div>
       </div>
 
@@ -116,6 +123,7 @@ export function SidebarLayout({
           navigation={navigation}
           activeRoute={currentPath}
           onNavigate={handleNavigate}
+          customItems={bottomNavItems}
         />
       )}
     </div>

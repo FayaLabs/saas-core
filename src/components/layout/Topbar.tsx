@@ -175,7 +175,7 @@ export function Topbar({ navigation, logo, onMenuClick, leftContent, rightConten
   const allNav = [...mainNav, ...secondaryNav]
 
   return (
-    <header className="sticky top-0 z-50 w-full shrink-0">
+    <header data-print="hide" className="sticky top-0 z-50 w-full shrink-0">
       {/* Row 1: Logo + Search + Actions — lighter brand */}
       <div className="bg-sidebar-accent text-sidebar-foreground backdrop-blur-xl">
         <div className="flex h-14 w-full items-center justify-between px-4 md:px-6">
@@ -215,8 +215,8 @@ export function Topbar({ navigation, logo, onMenuClick, leftContent, rightConten
         </div>
       </div>
 
-      {/* Row 2: Navigation — scrollable on mobile, auto-scrolls to active */}
-      <div className="bg-sidebar">
+      {/* Row 2: Navigation — desktop only (mobile uses BottomNav) */}
+      <div className="hidden md:block bg-sidebar">
         <div className="flex h-11 w-full items-center px-4 md:px-6">
           <nav ref={(el) => {
             if (!el) return

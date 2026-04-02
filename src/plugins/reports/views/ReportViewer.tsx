@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { ArrowLeft, Play, SlidersHorizontal, Construction, Loader2 } from 'lucide-react'
+import { ArrowLeft, Play, SlidersHorizontal, Construction, Loader2, Printer } from 'lucide-react'
 import { Button } from '../../../components/ui/button'
 import { DataTable } from '../../../components/ui/data-table'
 import { useTranslation } from '../../../hooks/useTranslation'
@@ -43,39 +43,28 @@ export function ReportViewer({ report, onBack }: ReportViewerProps) {
 
   return (
     <div className="space-y-4">
-      {/* Breadcrumb */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-sm">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            {t('reports.pageTitle')}
-          </button>
-          <span className="text-muted-foreground">/</span>
-          <span className="font-medium">{report.name}</span>
-        </div>
-        {generated && (
-          <ExportDropdown
-            columns={report.columns}
-            data={data}
-            filename={report.id}
-            currency={config.currency.code}
-            title={report.name}
-          />
-        )}
+      {/* Breadcrumb — hidden in print */}
+      <div className="flex items-center gap-1.5 text-sm no-print">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          {t('reports.pageTitle')}
+        </button>
+        <span className="text-muted-foreground">/</span>
+        <span className="font-medium">{report.name}</span>
       </div>
 
       <div>
-        <h2 className="text-xl font-bold">{report.name}</h2>
+        <h2 className="text-lg font-bold">{report.name}</h2>
         {report.description && (
-          <p className="text-sm text-muted-foreground mt-0.5">{report.description}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{report.description}</p>
         )}
       </div>
 
-      {/* Filters + Generate */}
-      <div className="flex flex-wrap items-end gap-3">
+      {/* Filters + Generate — hidden in print */}
+      <div className="flex flex-wrap items-end gap-3 no-print">
         <ReportFilterBar
           dateRange={query.dateRange}
           onDateRangeChange={setDateRange}
@@ -90,7 +79,40 @@ export function ReportViewer({ report, onBack }: ReportViewerProps) {
           }
           {t('reports.generate')}
         </Button>
+        {generated && (
+          <>
+            <ExportDropdown
+              columns={report.columns}
+              data={data}
+              filename={report.id}
+              currency={config.currency.code}
+              title={report.name}
+            />
+            <Button variant="outline" size="sm" className="h-9" onClick={() => window.print()}>
+              <Printer className="h-3.5 w-3.5 mr-1.5" />
+              {t('reports.print')}
+            </Button>
+          </>
+        )}
       </div>
+
+      {/* Print-only: compact filter summary as document header */}
+      {generated && (
+        <div className="print-only hidden text-[10px] border-b pb-2 mb-2">
+          <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+            {query.dateRange.from && (
+              <span><strong>{t('reports.filterFrom')}:</strong> {new Date(query.dateRange.from + 'T12:00').toLocaleDateString()}</span>
+            )}
+            {query.dateRange.to && (
+              <span><strong>{t('reports.filterTo')}:</strong> {new Date(query.dateRange.to + 'T12:00').toLocaleDateString()}</span>
+            )}
+            {Object.entries(query.filters).map(([key, value]) =>
+              value ? <span key={key}><strong>{key}:</strong> {String(value)}</span> : null
+            )}
+            <span><strong>{t('reports.filterResults')}:</strong> {total}</span>
+          </div>
+        </div>
+      )}
 
       {/* Error */}
       {error && (
@@ -132,6 +154,7 @@ export function ReportViewer({ report, onBack }: ReportViewerProps) {
             skeletonRows={5}
             emptyMessage={t('reports.noResults')}
             variant="card"
+            compact
           />
 
           {report.showSummary && !loading && (
@@ -143,13 +166,15 @@ export function ReportViewer({ report, onBack }: ReportViewerProps) {
           )}
 
           {!loading && (
-            <ReportPagination
-              page={query.page}
-              pageSize={query.pageSize}
-              total={total}
-              onPageChange={setPage}
-              onPageSizeChange={setPageSize}
-            />
+            <div className="no-print">
+              <ReportPagination
+                page={query.page}
+                pageSize={query.pageSize}
+                total={total}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+              />
+            </div>
           )}
         </>
       )}

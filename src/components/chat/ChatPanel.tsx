@@ -58,9 +58,11 @@ export function ChatPanel({
   return (
     <div
       className={cn(
-        'fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-2xl',
-        'inset-x-3 bottom-16 top-16',
-        'md:inset-auto md:bottom-16 md:right-4 md:w-[22rem] md:max-h-[min(70vh,520px)]',
+        'fixed z-40 flex flex-col overflow-hidden bg-card shadow-2xl',
+        // Mobile: below header, above bottom nav
+        'inset-x-0 top-12 bottom-16 rounded-none border-0',
+        // Desktop: floating card
+        'md:inset-auto md:bottom-16 md:right-4 md:w-[22rem] md:max-h-[min(70vh,520px)] md:rounded-2xl md:border md:border-border/50',
         'animate-in slide-in-from-bottom-2 fade-in-0 duration-150',
         className
       )}

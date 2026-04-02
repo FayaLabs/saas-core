@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { X, Pencil, Trash2, Clock, MapPin, User, FileText } from 'lucide-react'
+import { X, Pencil, Trash2, Clock, MapPin, User, FileText, DollarSign, Check, AlertTriangle, HandCoins } from 'lucide-react'
 import { PersonLink } from '../../../components/shared/PersonLink'
 import { FloatingPanel, type FloatingPanelRef } from './FloatingPanel'
 import { useAgendaConfig, useAgendaStore } from '../AgendaContext'
@@ -77,33 +77,48 @@ export function AppointmentPopover({ booking, position, onClose, onEdit }: Props
   const config = useAgendaConfig()
   const deleteBooking = useAgendaStore((s) => s.deleteBooking)
   const updateStatus = useAgendaStore((s) => s.updateBookingStatus)
+  const openModal = useAgendaStore((s) => s.openAppointmentModal)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const statusConfig = config.statuses.find((s) => s.value === booking.status)
   const color = statusConfig?.color ?? '#6b7280'
   const timeRange = `${fmtTime(booking.startsAt)}${booking.endsAt ? ' – ' + fmtTime(booking.endsAt) : ''}`
 
-  async function handleDelete(panel: FloatingPanelRef) {
-    if (!confirm(t('agenda.appointment.deleteConfirm'))) return
-    await deleteBooking(booking.id)
-    onClose()
+  async function handleDelete() {
+    setDeleting(true)
+    try { await deleteBooking(booking.id); onClose() } catch { setDeleting(false) }
   }
 
   return (
+    <>
     <FloatingPanel position={position} width={320} height={340} onClose={onClose}>
       {(panel) => (
         <>
           {/* Action bar */}
           <div className="flex items-center justify-end gap-0.5 px-3 pt-3 pb-1">
-            <button onClick={() => panel.expandThen(() => onEdit(booking.id))}
-              className="p-1.5 rounded-full hover:bg-muted transition-colors" title={t('common.edit')}>
-              <Pencil className="h-4 w-4 text-muted-foreground" />
-            </button>
-            <button onClick={() => handleDelete(panel)}
-              className="p-1.5 rounded-full hover:bg-muted transition-colors" title={t('common.delete')}>
-              <Trash2 className="h-4 w-4 text-muted-foreground" />
-            </button>
-            <button onClick={panel.dismiss} className="p-1.5 rounded-full hover:bg-muted transition-colors">
-              <X className="h-4 w-4 text-muted-foreground" />
-            </button>
+            {confirmingDelete ? (
+              <>
+                <span className="text-xs text-destructive font-medium mr-auto pl-1">{t('agenda.appointment.deleteConfirm')}</span>
+                <button onClick={() => setConfirmingDelete(false)}
+                  className="rounded px-2 py-0.5 text-[11px] font-medium hover:bg-muted/50 transition-colors">{t('agenda.appointment.cancel')}</button>
+                <button onClick={handleDelete} disabled={deleting}
+                  className="rounded bg-destructive px-2 py-0.5 text-[11px] font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-40 transition-colors">{deleting ? t('agenda.appointment.deleting') : t('agenda.appointment.confirmDelete')}</button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => panel.expandThen(() => onEdit(booking.id))}
+                  className="p-1.5 rounded-full hover:bg-muted transition-colors" title={t('common.edit')}>
+                  <Pencil className="h-4 w-4 text-muted-foreground" />
+                </button>
+                <button onClick={() => setConfirmingDelete(true)}
+                  className="p-1.5 rounded-full hover:bg-destructive/10 transition-colors" title={t('common.delete')}>
+                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                </button>
+                <button onClick={panel.dismiss} className="p-1.5 rounded-full hover:bg-muted transition-colors">
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </>
+            )}
           </div>
 
           {/* Content */}
@@ -148,12 +163,46 @@ export function AppointmentPopover({ booking, position, onClose, onEdit }: Props
               </div>
             )}
 
-            {booking.orderTotal != null && booking.orderTotal > 0 && (
-              <div className="pt-2 border-t flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{t('agenda.appointment.total')}</span>
-                <span className="font-medium">{fmtCurrency(booking.orderTotal, config.currency.locale, config.currency.code)}</span>
-              </div>
-            )}
+            {booking.orderTotal != null && booking.orderTotal > 0 && (() => {
+              const total = fmtCurrency(booking.orderTotal, config.currency.locale, config.currency.code)
+              const ps = booking.paymentStatus ?? 'none'
+              const hasFinancial = config.modules.financial && booking.orderId
+
+              // No financial module — just show total
+              if (!hasFinancial) {
+                return (
+                  <div className="pt-2 border-t flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{t('agenda.appointment.total')}</span>
+                    <span className="font-medium">{total}</span>
+                  </div>
+                )
+              }
+
+              const badgeConfig: Record<string, { icon: React.ElementType; bg: string; text: string; label: string }> = {
+                none: { icon: HandCoins, bg: 'bg-amber-500/10 hover:bg-amber-500/15', text: 'text-amber-700', label: `${total} · ${t('agenda.payment.collect')}` },
+                pending: { icon: Clock, bg: 'bg-amber-500/10 hover:bg-amber-500/15', text: 'text-amber-700', label: `${total} · ${t('agenda.payment.pending')}` },
+                partial: { icon: DollarSign, bg: 'bg-yellow-500/10 hover:bg-yellow-500/15', text: 'text-yellow-700', label: `${total} · ${t('agenda.payment.partial')}` },
+                paid: { icon: Check, bg: 'bg-emerald-500/10 hover:bg-emerald-500/15', text: 'text-emerald-700', label: `${total} · ${t('agenda.payment.paid')}` },
+                overdue: { icon: AlertTriangle, bg: 'bg-red-500/10 hover:bg-red-500/15', text: 'text-red-700', label: `${total} · ${t('agenda.payment.overdue')}` },
+                cancelled: { icon: X, bg: 'bg-muted hover:bg-muted/80', text: 'text-muted-foreground', label: `${total} · ${t('agenda.payment.cancelled')}` },
+              }
+              const cfg = badgeConfig[ps] ?? badgeConfig.none
+              const StatusIcon = cfg.icon
+
+              return (
+                <div className="pt-2 border-t flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{t('agenda.appointment.total')}</span>
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); openModal('edit', { bookingId: booking.id, initialTab: 'financial' }) }}
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${cfg.bg} ${cfg.text}`}
+                  >
+                    <StatusIcon className="h-3 w-3" />
+                    {cfg.label}
+                  </button>
+                </div>
+              )
+            })()}
 
             <div className="pt-2 border-t">
               <PopoverStatusSelect
@@ -167,5 +216,6 @@ export function AppointmentPopover({ booking, position, onClose, onEdit }: Props
         </>
       )}
     </FloatingPanel>
+    </>
   )
 }

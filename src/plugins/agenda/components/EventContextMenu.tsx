@@ -66,11 +66,12 @@ export function EventContextMenu({ booking, position, onClose, onEdit }: Props) 
   const config = useAgendaConfig()
   const updateStatus = useAgendaStore((s) => s.updateBookingStatus)
   const deleteBooking = useAgendaStore((s) => s.deleteBooking)
+  const [confirming, setConfirming] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   async function handleDelete() {
-    if (!confirm(t('agenda.appointment.deleteConfirm'))) return
-    await deleteBooking(booking.id)
-    onClose()
+    setDeleting(true)
+    try { await deleteBooking(booking.id); onClose() } catch { setDeleting(false) }
   }
 
   return (
@@ -82,10 +83,22 @@ export function EventContextMenu({ booking, position, onClose, onEdit }: Props) 
               className="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-muted/50 transition-colors">
               <Pencil className="h-4 w-4 text-muted-foreground" /> {t('agenda.contextMenu.edit')}
             </button>
-            <button onClick={handleDelete}
-              className="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-muted/50 transition-colors text-destructive">
-              <Trash2 className="h-4 w-4" /> {t('agenda.contextMenu.delete')}
-            </button>
+            {confirming ? (
+              <div className="flex items-center justify-between px-4 py-2">
+                <span className="text-xs text-destructive font-medium">{t('agenda.appointment.deleteConfirm')}</span>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => setConfirming(false)}
+                    className="rounded px-2 py-0.5 text-[11px] font-medium hover:bg-muted/50 transition-colors">{t('agenda.appointment.cancel')}</button>
+                  <button onClick={handleDelete} disabled={deleting}
+                    className="rounded bg-destructive px-2 py-0.5 text-[11px] font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-40 transition-colors">{deleting ? t('agenda.appointment.deleting') : t('agenda.appointment.confirmDelete')}</button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setConfirming(true)}
+                className="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-muted/50 transition-colors text-destructive">
+                <Trash2 className="h-4 w-4" /> {t('agenda.contextMenu.delete')}
+              </button>
+            )}
           </div>
 
           <div className="border-t px-4 py-3">

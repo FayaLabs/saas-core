@@ -16,6 +16,8 @@ export interface EntityLookupResult {
 export interface EntityLookup {
   search(query: string): Promise<EntityLookupResult[]>
   getById(id: string): Promise<EntityLookupResult | null>
+  /** Return initial items without a search filter (e.g. first N alphabetically) */
+  list?(): Promise<EntityLookupResult[]>
 }
 
 export type EntityLookupMap = Record<string, EntityLookup>

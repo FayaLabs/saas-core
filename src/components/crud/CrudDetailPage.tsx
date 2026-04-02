@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { Edit, Trash2, Eye, Shield, CalendarDays, FileText, Clock, Package, Users, DollarSign, MapPin, BarChart3, Briefcase } from 'lucide-react'
+import { Edit, Trash2, Eye, Shield, CalendarDays, FileText, Clock, Package, Users, DollarSign, MapPin, BarChart3, Briefcase, ShoppingBag } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
@@ -26,6 +26,8 @@ interface CrudDetailPageProps {
   onEdit?: () => void
   onDelete?: () => void
   feature?: string
+  /** Embedded mode — compact hero, no breadcrumb, no hash nav. For use inside modals/panels. */
+  embedded?: boolean
 }
 
 function formatValue(field: FieldDef, value: any, t?: (key: string) => string): React.ReactNode {
@@ -44,6 +46,13 @@ function formatValue(field: FieldDef, value: any, t?: (key: string) => string): 
       const num = typeof value === 'number' ? value : parseFloat(value)
       return isNaN(num) ? value : new Intl.NumberFormat('en-US', { style: 'currency', currency: field.currency ?? 'USD' }).format(num)
     }
+    case 'color':
+      return (
+        <span className="inline-flex items-center gap-2">
+          <span className="h-5 w-5 rounded-full border shrink-0" style={{ backgroundColor: String(value) }} />
+          <span className="text-xs font-mono text-muted-foreground">{String(value)}</span>
+        </span>
+      )
     case 'date':
       try { return new Date(value).toLocaleDateString() } catch { return value }
     case 'datetime':
@@ -70,11 +79,11 @@ function formatValue(field: FieldDef, value: any, t?: (key: string) => string): 
   }
 }
 
-function FieldRow({ field, value, t }: { field: FieldDef; value: any; t?: (key: string) => string }) {
+function FieldRow({ field, value, t, compact }: { field: FieldDef; value: any; t?: (key: string) => string; compact?: boolean }) {
   return (
-    <div className="grid grid-cols-3 gap-4 py-3">
-      <dt className="text-sm font-medium text-muted-foreground">{field.label}</dt>
-      <dd className="col-span-2 text-sm text-foreground">{formatValue(field, value, t)}</dd>
+    <div className={`grid grid-cols-3 gap-4 ${compact ? 'py-1.5' : 'py-3'}`}>
+      <dt className={`font-medium text-muted-foreground ${compact ? 'text-xs' : 'text-sm'}`}>{field.label}</dt>
+      <dd className={`col-span-2 text-foreground ${compact ? 'text-xs' : 'text-sm'}`}>{formatValue(field, value, t)}</dd>
     </div>
   )
 }
@@ -83,26 +92,28 @@ function FieldGroupSection({
   group,
   fields,
   item,
+  compact,
 }: {
   group: FieldGroup
   fields: FieldDef[]
   item: Record<string, any>
+  compact?: boolean
 }) {
   const { t: tFn } = useTranslation()
   const cols = group.columns ?? 2
 
   return (
     <div>
-      <h3 className="text-sm font-semibold text-foreground mb-1">{group.label}</h3>
+      <h3 className={`font-semibold text-foreground ${compact ? 'text-xs mb-0.5' : 'text-sm mb-1'}`}>{group.label}</h3>
       {group.description && (
-        <p className="text-xs text-muted-foreground mb-3">{group.description}</p>
+        <p className={`text-muted-foreground ${compact ? 'text-[10px] mb-1.5' : 'text-xs mb-3'}`}>{group.description}</p>
       )}
       <Card>
         <CardContent className="p-0">
           <dl className={`grid divide-y ${cols >= 2 ? 'md:grid-cols-2 md:divide-y-0' : ''}`}>
             {fields.map((field) => (
-              <div key={field.key} className={`px-5 ${cols >= 2 ? 'md:border-b md:last:border-b-0' : ''}`}>
-                <FieldRow field={field} value={item[field.key]} t={tFn} />
+              <div key={field.key} className={compact ? 'px-3' : 'px-5'}>
+                <FieldRow field={field} value={item[field.key]} t={tFn} compact={compact} />
               </div>
             ))}
           </dl>
@@ -115,9 +126,11 @@ function FieldGroupSection({
 function OverviewTab({
   entityDef,
   item,
+  compact,
 }: {
   entityDef: EntityDef
   item: Record<string, any>
+  compact?: boolean
 }) {
   const { t: tFn } = useTranslation()
   const detailFields = entityDef.fields.filter(
@@ -126,9 +139,6 @@ function OverviewTab({
 
   // Group fields
   const groups = entityDef.fieldGroups ?? []
-  const groupedFieldIds = new Set(
-    detailFields.filter((f) => f.group).map((f) => f.key)
-  )
   const ungroupedFields = detailFields.filter((f) => !f.group)
 
   // Build group → fields map
@@ -142,15 +152,15 @@ function OverviewTab({
   }
 
   return (
-    <div className="space-y-6">
+    <div className={compact ? 'space-y-3' : 'space-y-6'}>
       {/* Ungrouped fields */}
       {ungroupedFields.length > 0 && (
         <Card>
           <CardContent className="p-0">
             <dl className="divide-y">
               {ungroupedFields.map((field) => (
-                <div key={field.key} className="px-5">
-                  <FieldRow field={field} value={item[field.key]} t={tFn} />
+                <div key={field.key} className={compact ? 'px-3' : 'px-5'}>
+                  <FieldRow field={field} value={item[field.key]} t={tFn} compact={compact} />
                 </div>
               ))}
             </dl>
@@ -163,7 +173,7 @@ function OverviewTab({
         const fields = groupFieldMap.get(group.id)
         if (!fields || fields.length === 0) return null
         return (
-          <FieldGroupSection key={group.id} group={group} fields={fields} item={item} />
+          <FieldGroupSection key={group.id} group={group} fields={fields} item={item} compact={compact} />
         )
       })}
 
@@ -176,6 +186,7 @@ function OverviewTab({
             group={{ id: groupId, label: groupId.charAt(0).toUpperCase() + groupId.slice(1) }}
             fields={fields}
             item={item}
+            compact={compact}
           />
         )
       })}
@@ -211,7 +222,7 @@ function getArchetypeTabs(layout?: FormLayout, archetypeKind?: string): DetailTa
 }
 
 const TAB_ICONS: Record<string, LucideIcon> = {
-  Shield, CalendarDays, FileText, Clock, Package, Users, DollarSign, MapPin, BarChart3, Briefcase,
+  Shield, CalendarDays, FileText, Clock, Package, Users, DollarSign, MapPin, BarChart3, Briefcase, ShoppingBag,
 }
 
 export function CrudDetailPage({
@@ -224,6 +235,7 @@ export function CrudDetailPage({
   onEdit,
   onDelete,
   feature,
+  embedded,
 }: CrudDetailPageProps) {
   const { t } = useTranslation()
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
@@ -243,76 +255,75 @@ export function CrudDetailPage({
   const activeTab = initialTab && validTabs.includes(initialTab) ? initialTab : 'overview'
 
   const handleTabChange = useCallback((value: string) => {
+    if (embedded) return
     const detailPath = `${basePath}/${item.id}`
     const newHash = value === 'overview' ? detailPath : `${detailPath}/${value}`
     window.history.replaceState(null, '', `#${newHash}`)
-  }, [basePath, item.id])
+  }, [basePath, item.id, embedded])
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb */}
-      <Breadcrumb parent={namePlural} current={displayValue} onBack={onBack} />
+    <div className={embedded ? 'space-y-4' : 'space-y-6'}>
+      {/* Breadcrumb — hidden in embedded mode */}
+      {!embedded && <Breadcrumb parent={namePlural} current={displayValue} onBack={onBack} />}
 
       {/* Hero */}
-      <div className="flex items-start gap-5">
+      <div className={`flex items-start ${embedded ? 'gap-3' : 'gap-5'}`}>
         {/* Avatar / Image */}
         {imageValue ? (
           <img
             src={imageValue}
             alt={displayValue}
-            className="h-20 w-20 shrink-0 rounded-2xl object-cover shadow-sm"
+            className={`shrink-0 object-cover shadow-sm ${embedded ? 'h-10 w-10 rounded-xl' : 'h-20 w-20 rounded-2xl'}`}
           />
         ) : (
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary text-2xl font-bold shadow-sm">
+          <div className={`flex shrink-0 items-center justify-center bg-primary/10 text-primary font-bold shadow-sm ${embedded ? 'h-10 w-10 rounded-xl text-sm' : 'h-20 w-20 rounded-2xl text-2xl'}`}>
             {initial}
           </div>
         )}
 
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-foreground truncate">{displayValue}</h1>
-          {subtitleValue && (
-            <p className="text-muted-foreground mt-0.5">{subtitleValue}</p>
-          )}
-          {/* Quick meta */}
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2">
+            <h1 className={`font-bold text-foreground truncate ${embedded ? 'text-base' : 'text-2xl'}`}>{displayValue}</h1>
             {item.status && (
-              <Badge variant="secondary">
+              <Badge variant="secondary" className="shrink-0">
                 {typeof item.status === 'string' ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : item.status}
               </Badge>
             )}
             {item.is_active !== undefined && (
-              <Badge variant={item.is_active ? 'default' : 'secondary'}>
+              <Badge variant={item.is_active ? 'default' : 'secondary'} className="shrink-0">
                 {item.is_active ? t('common.active') : t('common.inactive')}
               </Badge>
             )}
           </div>
+          {subtitleValue && (
+            <p className={`text-muted-foreground mt-0.5 ${embedded ? 'text-xs' : ''}`}>{subtitleValue}</p>
+          )}
         </div>
 
-        {/* Actions */}
         {(onEdit || onDelete) && (
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             {onEdit && (
-              <Button variant="outline" size="sm" onClick={onEdit}>
-                <Edit className="h-4 w-4 mr-1.5" />
+              <Button variant="outline" size={embedded ? 'xs' as any : 'sm'} onClick={onEdit} className={embedded ? 'h-7 px-2 text-xs gap-1' : ''}>
+                <Edit className={embedded ? 'h-3 w-3' : 'h-4 w-4 mr-1.5'} />
                 {t('common.edit')}
               </Button>
             )}
             {onDelete && (
-              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}>
-                <Trash2 className="h-4 w-4" />
+              <Button variant="outline" size={embedded ? 'xs' as any : 'sm'} className={`text-destructive hover:text-destructive ${embedded ? 'h-7 w-7 p-0' : ''}`} onClick={onDelete}>
+                <Trash2 className={embedded ? 'h-3 w-3' : 'h-4 w-4'} />
               </Button>
             )}
           </div>
         )}
       </div>
 
-      <Separator />
+      {!embedded && <Separator />}
 
       {/* Tabs */}
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
-        <TabsList>
-          <TabsTrigger value="overview" className="gap-1.5">
-            <Eye className="h-3.5 w-3.5" />
+        <TabsList className={embedded ? 'h-8' : undefined}>
+          <TabsTrigger value="overview" className={`gap-1.5 ${embedded ? 'text-xs px-2 py-1' : ''}`}>
+            <Eye className={embedded ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
             {t('common.overview')}
           </TabsTrigger>
           {customTabs.map((tab) => {
@@ -320,22 +331,22 @@ export function CrudDetailPage({
             const label = translated.startsWith('crud.tabs.') ? tab.label : translated
             const TabIcon = tab.icon ? (TAB_ICONS[tab.icon] ?? null) : null
             return (
-              <TabsTrigger key={tab.id} value={tab.id} className="gap-1.5">
-                {TabIcon && <TabIcon className="h-3.5 w-3.5" />}
+              <TabsTrigger key={tab.id} value={tab.id} className={`gap-1.5 ${embedded ? 'text-xs px-2 py-1' : ''}`}>
+                {TabIcon && <TabIcon className={embedded ? 'h-3 w-3' : 'h-3.5 w-3.5'} />}
                 {label}
               </TabsTrigger>
             )
           })}
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4">
-          <OverviewTab entityDef={entityDef} item={item} />
+        <TabsContent value="overview" className={embedded ? 'mt-2' : 'mt-4'}>
+          <OverviewTab entityDef={entityDef} item={item} compact={embedded} />
         </TabsContent>
 
         {customTabs.map((tab) => (
           <TabsContent key={tab.id} value={tab.id} className="mt-4">
             {tab.component ? (
-              React.createElement(tab.component, { item, entityDef })
+              React.createElement(tab.component, { item, entityDef, ...(tab.props ?? {}) })
             ) : (
               <Card>
                 <CardContent className="flex items-center justify-center py-12">

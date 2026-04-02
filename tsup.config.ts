@@ -15,6 +15,7 @@ export default defineConfig({
     'plugins/crm/index': 'src/plugins/crm/index.ts',
     'plugins/agenda/index': 'src/plugins/agenda/index.ts',
     'plugins/reports/index': 'src/plugins/reports/index.ts',
+    'plugins/custom_forms/index': 'src/plugins/custom_forms/index.ts',
   },
   format: ['esm', 'cjs'],
   dts: false,

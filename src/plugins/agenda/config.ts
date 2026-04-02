@@ -2,6 +2,8 @@ import type { PluginScope, VerticalId } from '../../types/plugins'
 import type { EntityLookup } from '../../types/entity-lookup'
 import type { AgendaDataProvider } from './data/types'
 import type { StatusConfig, BookingTypeConfig } from './types'
+import type { AgendaFinancialBridge } from './financial-bridge'
+import type { EntityDef } from '../../types/crud'
 
 // ---------------------------------------------------------------------------
 // Public options interface
@@ -40,6 +42,8 @@ export interface AgendaPluginOptions {
     conflictDetection?: boolean
     dragAndDrop?: boolean
     locationSelection?: boolean
+    /** Enable financial integration (auto-enabled when financialBridge is provided) */
+    financial?: boolean
   }
   labels?: Partial<AgendaPluginLabels>
   currency?: { code?: string; locale?: string; symbol?: string }
@@ -77,6 +81,9 @@ export interface AgendaPluginOptions {
   /** Contact/client lookup */
   contactLookup?: EntityLookup
 
+  /** Client entity definition for the Client tab in booking modal */
+  clientEntityDef?: EntityDef
+
   /** Service lookup */
   serviceLookup?: EntityLookup
 
@@ -86,11 +93,17 @@ export interface AgendaPluginOptions {
   /** Location lookup */
   locationLookup?: EntityLookup
 
+  /** Called when user clicks a selected entity link (e.g. view client profile) */
+  onEntityClick?: (type: 'client' | 'service' | 'professional', id: string) => void
+
   /** Business locations for unit filtering */
   locations?: LocationOption[]
 
   /** Confirmation channel options */
   confirmationChannels?: ConfirmationChannelOption[]
+
+  /** Financial bridge for agenda × financial cross-plugin integration */
+  financialBridge?: AgendaFinancialBridge
 
   /** Data provider — defaults to Supabase, falls back to mock */
   dataProvider?: AgendaDataProvider
@@ -166,6 +179,7 @@ export interface AgendaModules {
   conflictDetection: boolean
   dragAndDrop: boolean
   locationSelection: boolean
+  financial: boolean
 }
 
 export interface AgendaCurrency {
@@ -191,9 +205,12 @@ export interface ResolvedAgendaConfig {
   locations: LocationOption[]
   confirmationChannels: ConfirmationChannelOption[]
   contactLookup?: EntityLookup
+  clientEntityDef?: EntityDef
   serviceLookup?: EntityLookup
   professionalLookup?: EntityLookup
   locationLookup?: EntityLookup
+  onEntityClick?: (type: 'client' | 'service' | 'professional', id: string) => void
+  financialBridge?: AgendaFinancialBridge
   scheduleBlockDefaults: {
     bufferMinutes: number
     maxConcurrent: number
@@ -214,6 +231,7 @@ export function resolveConfig(options?: AgendaPluginOptions): ResolvedAgendaConf
       conflictDetection: options?.modules?.conflictDetection !== false,
       dragAndDrop: options?.modules?.dragAndDrop !== false,
       locationSelection: options?.modules?.locationSelection === true,
+      financial: options?.modules?.financial ?? !!options?.financialBridge,
     },
     labels: { ...DEFAULT_LABELS, ...options?.labels },
     currency: { ...DEFAULT_CURRENCY, ...options?.currency },
@@ -230,9 +248,12 @@ export function resolveConfig(options?: AgendaPluginOptions): ResolvedAgendaConf
     locations: options?.locations ?? [],
     confirmationChannels: options?.confirmationChannels ?? [],
     contactLookup: options?.contactLookup,
+    clientEntityDef: options?.clientEntityDef,
     serviceLookup: options?.serviceLookup,
     professionalLookup: options?.professionalLookup,
     locationLookup: options?.locationLookup,
+    onEntityClick: options?.onEntityClick,
+    financialBridge: options?.financialBridge,
     scheduleBlockDefaults: {
       bufferMinutes: options?.scheduleBlockDefaults?.bufferMinutes ?? 0,
       maxConcurrent: options?.scheduleBlockDefaults?.maxConcurrent ?? 1,

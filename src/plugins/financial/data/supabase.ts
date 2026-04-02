@@ -39,6 +39,19 @@ function getClients() {
   return { core: supabase.schema('saas_core'), pub: supabase }
 }
 
+/** Map order stage to InvoiceStatus for the financial UI */
+function mapStageToInvoiceStatus(stage?: string): string {
+  switch (stage) {
+    case 'paid': return 'paid'
+    case 'partial': return 'partial'
+    case 'overdue': return 'overdue'
+    case 'cancelled': return 'cancelled'
+    case 'invoiced': return 'open'
+    case 'booked': return 'open'
+    default: return 'open'
+  }
+}
+
 let _overdueSwept = false
 
 /** Batch-mark overdue: pending/partial movements past due → 'overdue', then update parent invoices */
@@ -68,7 +81,9 @@ async function sweepOverdue() {
         const hasOverdue = movs.some((m: any) => m.status === 'overdue')
         const allPaid = movs.every((m: any) => m.status === 'paid')
         const invoiceStatus = allPaid ? 'paid' : hasOverdue ? 'overdue' : 'open'
-        await core.from('orders').update({ status: invoiceStatus }).eq('id', invId)
+        const invoiceStage = allPaid ? 'paid' : hasOverdue ? 'overdue' : 'invoiced'
+        // Only update financial stage — don't overwrite agenda status
+        await core.from('orders').update({ stage: invoiceStage }).eq('id', invId)
       }
     }
   } catch {
@@ -78,13 +93,20 @@ async function sweepOverdue() {
 
 export function createSupabaseFinancialProvider(): FinancialDataProvider {
   const provider: FinancialDataProvider = {
-    // --- Invoices (saas_core.orders kind='invoice_*') ---
+    // --- Invoices (orders at stage=invoiced/paid/partial/overdue/cancelled with direction) ---
     async getInvoices(query: InvoiceQuery): Promise<PaginatedResult<Invoice>> {
       const { core, pub } = getClients()
-      const kind = query.direction === 'debit' ? 'invoice_payable' : query.direction === 'credit' ? 'invoice_receivable' : undefined
       let qb = core.from('orders').select('*', { count: 'exact' })
-      if (kind) qb = qb.eq('kind', kind)
-      else qb = qb.in('kind', ['invoice_payable', 'invoice_receivable'])
+
+      // Show orders with financial relevance: booked (with amount) + invoiced stages
+      qb = qb.in('stage', ['booked', 'invoiced', 'paid', 'partial', 'overdue', 'cancelled'])
+      qb = qb.gt('total', 0)
+
+      // Filter by direction (credit=receivable, debit=payable)
+      if (query.direction) {
+        qb = qb.eq('direction', query.direction)
+      }
+
       if (query.status) {
         const statuses = Array.isArray(query.status) ? query.status : [query.status]
         qb = qb.in('status', statuses)
@@ -99,14 +121,16 @@ export function createSupabaseFinancialProvider(): FinancialDataProvider {
 
       const invoices: Invoice[] = (data ?? []).map((r: any) => {
         const meta = r.metadata ?? {}
+        // Resolve direction from stage model or legacy kind
+        const dir = r.direction ?? (r.kind === 'invoice_payable' ? 'debit' : 'credit')
         return {
           id: r.id,
-          direction: r.kind === 'invoice_payable' ? 'debit' : 'credit',
+          direction: dir,
           invoiceDate: r.created_at?.slice(0, 10) ?? '',
           fiscalNumber: r.reference_number,
           totalAmount: r.total ?? 0,
           paidAmount: meta.paidAmount ?? 0,
-          status: r.status ?? 'open',
+          status: mapStageToInvoiceStatus(r.stage),
           totalInstallments: meta.installmentCount ?? 1,
           contactId: r.party_id,
           contactName: meta.contactName,
@@ -134,11 +158,14 @@ export function createSupabaseFinancialProvider(): FinancialDataProvider {
       const totalPaid = (movs ?? []).reduce((sum: number, m: any) => sum + (m.paid_amount ?? 0), 0)
       return {
         id: o.id,
-        direction: o.kind === 'invoice_payable' ? 'debit' : 'credit',
+        direction: o.direction ?? (o.kind === 'invoice_payable' ? 'debit' : 'credit'),
         invoiceDate: o.createdAt?.slice(0, 10) ?? '',
-        totalAmount: o.total ?? 0, paidAmount: totalPaid, status: o.status ?? 'open',
+        fiscalNumber: o.referenceNumber,
+        totalAmount: o.total ?? 0, paidAmount: totalPaid,
+        status: mapStageToInvoiceStatus(o.stage),
         totalInstallments: (movs ?? []).length || 1, contactId: o.partyId,
         contactName: meta.contactName, itemsSummary: meta.itemsSummary,
+        bookingStartsAt: o.startsAt ?? undefined,
         observations: o.notes,
         tenantId: o.tenantId, createdAt: o.createdAt, updatedAt: o.updatedAt,
       } as Invoice
@@ -167,9 +194,19 @@ export function createSupabaseFinancialProvider(): FinancialDataProvider {
       const totalAmount = input.items.reduce((sum, item) => sum + item.quantity * item.unitPrice - (item.discount ?? 0) + (item.surcharge ?? 0), 0)
       const itemsSummary = input.items.map((i) => i.description).filter(Boolean).join(', ')
 
+      // Auto-generate reference number if not provided
+      let referenceNumber = input.fiscalNumber
+      if (!referenceNumber && tenantId) {
+        const prefix = input.direction === 'credit' ? 'REC' : 'PAG'
+        const { data: seq } = await core.rpc('next_sequence', { p_tenant_id: tenantId, p_kind: kind })
+        if (seq) referenceNumber = `${prefix}-${String(seq).padStart(5, '0')}`
+      }
+
       const { data: order } = await core.from('orders').insert({
         tenant_id: tenantId, kind, status: 'open',
-        reference_number: input.fiscalNumber,
+        stage: 'invoiced',
+        direction: input.direction,
+        reference_number: referenceNumber,
         total: totalAmount, party_id: input.contactId,
         notes: input.observations,
         currency: 'BRL',
@@ -203,6 +240,7 @@ export function createSupabaseFinancialProvider(): FinancialDataProvider {
 
       return {
         id: order!.id, direction: input.direction, invoiceDate: new Date().toISOString().slice(0, 10),
+        fiscalNumber: referenceNumber,
         totalAmount, paidAmount: 0, status: 'open', totalInstallments: input.installments.length || 1,
         contactName: input.contactName, itemsSummary,
         tenantId: tenantId!, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
@@ -273,8 +311,10 @@ export function createSupabaseFinancialProvider(): FinancialDataProvider {
         // Store paid amount in metadata (orders table has no dedicated paid column)
         const { data: order } = await core.from('orders').select('metadata').eq('id', mov.invoice_id).single()
         const meta = (order?.metadata as any) ?? {}
+        const invoiceStage = allPaid ? 'paid' : anyPaid ? 'partial' : 'invoiced'
+        // Only update financial stage — agenda status (scheduled/confirmed/etc) is independent
         await core.from('orders').update({
-          status: invoiceStatus,
+          stage: invoiceStage,
           metadata: { ...meta, paidAmount: totalPaid },
         }).eq('id', mov.invoice_id)
       }

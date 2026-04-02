@@ -17,6 +17,7 @@ import type {
   PluginRegistryDef,
   PluginAITool,
 } from '../types/plugins'
+import { registerEntity, deriveEntityKey } from './entity-registry'
 
 interface ResolvePluginRuntimeOptions {
   plugins?: PluginManifest[]
@@ -324,6 +325,21 @@ export function resolvePluginRuntime({
     aiTools.push(...plugin.resolvedAITools)
     if (plugin.resolvedRegistries.length > 0) {
       registries.set(plugin.id, plugin.resolvedRegistries)
+      for (const reg of plugin.resolvedRegistries) {
+        const entityKey = deriveEntityKey(reg.entity) || `plugin:${plugin.id}:${reg.id}`
+        registerEntity({
+          entityKey,
+          label: reg.entity.name,
+          labelPlural: reg.entity.namePlural ?? reg.entity.name,
+          icon: reg.icon ?? reg.entity.icon,
+          fields: reg.entity.fields,
+          source: 'plugin',
+          archetype: reg.entity.data?.archetype,
+          pluginId: plugin.id,
+          pluginName: plugin.name,
+          pluginIcon: plugin.icon,
+        })
+      }
     }
     widgets.push(
       ...plugin.widgets.map((widget, index) => ({

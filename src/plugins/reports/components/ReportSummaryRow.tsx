@@ -15,16 +15,16 @@ export function ReportSummaryRow({ columns, data, currency }: ReportSummaryRowPr
 
   return (
     <div className="rounded-lg border bg-muted/30 overflow-hidden">
-      <table className="w-full text-sm">
+      <table className="w-full text-xs">
         <tbody>
-          <tr className="font-medium">
+          <tr className="font-semibold">
             {visibleCols.map((col) => {
               const value = computeAggregate(col, data)
               const alignRight = col.align === 'right' || col.type === 'currency' || col.type === 'number'
               return (
                 <td
                   key={col.key}
-                  className={`px-4 py-2.5 ${alignRight ? 'text-right' : ''}`}
+                  className={`px-3 py-1.5 ${alignRight ? 'text-right' : ''}`}
                 >
                   {value != null
                     ? formatValuePlain(value, col, currency)

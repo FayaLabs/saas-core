@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Pencil, DollarSign, FileText, Calendar, Hash, User, X, MoreVertical, Ban, ChevronDown, CreditCard, Banknote, Building2, CircleDashed, CircleEllipsis, CircleCheckBig, CircleAlert } from 'lucide-react'
+import { Pencil, DollarSign, FileText, Calendar, Hash, User, X, MoreVertical, Ban, ChevronDown, CreditCard, Banknote, Building2, CircleDashed, CircleEllipsis, CircleCheckBig, CircleAlert, CalendarDays, ExternalLink } from 'lucide-react'
 import { PersonLink } from '../../../components/shared/PersonLink'
-import { useFinancialConfig, useFinancialStore, useFinancialProvider, formatCurrency } from '../FinancialContext'
+import { useFinancialConfig, useFinancialStore, useFinancialProvider, formatCurrency, type ResolvedFinancialConfig } from '../FinancialContext'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { PaymentModal } from '../components/PaymentModal'
 import { useTranslation } from '../../../hooks/useTranslation'
@@ -25,7 +25,8 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
   onEdit: () => void
 }) {
   const { t } = useTranslation()
-  const { currency } = useFinancialConfig()
+  const config = useFinancialConfig()
+  const { currency } = config
   const provider = useFinancialProvider()
   const paymentMethods = useFinancialStore((s) => s.paymentMethods)
   const paymentMethodTypes = useFinancialStore((s) => s.paymentMethodTypes)
@@ -201,7 +202,7 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
   return (
     <div className="space-y-5">
       <SubpageHeader
-        title={invoice.contactName ?? (invoice.fiscalNumber ? `#${invoice.fiscalNumber}` : invoice.invoiceDate)}
+        title={invoice.fiscalNumber ? `#${invoice.fiscalNumber}` : invoice.contactName ?? invoice.invoiceDate}
         onBack={onBack}
         parentLabel={direction === 'debit' ? t('financial.nav.payables') : t('financial.nav.receivables')}
         actions={
@@ -294,6 +295,26 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
               </div>
             </div>
           </div>
+
+          {/* Booking link — shows when this order has a scheduled time */}
+          {invoice.bookingStartsAt && (
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t">
+              <CalendarDays className="h-3.5 w-3.5 text-violet-500 shrink-0" />
+              <div className="flex items-center gap-2 min-w-0">
+                <p className="text-[10px] text-muted-foreground">{t('financial.invoice.booking')}</p>
+                <button
+                  type="button"
+                  onClick={() => config.onBookingClick?.(invoice.id)}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 dark:text-violet-400 hover:underline"
+                >
+                  {new Date(invoice.bookingStartsAt).toLocaleDateString(undefined, { weekday: 'short', day: '2-digit', month: 'short' })}
+                  {' '}
+                  {new Date(invoice.bookingStartsAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                  <ExternalLink className="h-2.5 w-2.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Items table */}

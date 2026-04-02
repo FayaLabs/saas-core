@@ -53,15 +53,20 @@ export interface BookingService {
   assigneeId: string | null
 }
 
-/** Calendar booking — the main entity rendered on the calendar (from v_bookings view) */
+/** Calendar booking — the main entity rendered on the calendar (from v_bookings view on orders) */
 export interface CalendarBooking {
   id: string
   tenantId: string
   kind: string
+  /** Lifecycle stage: booked, invoiced, paid, etc. */
+  stage?: string
+  /** Financial direction: credit, debit, null */
+  direction?: string | null
   startsAt: string
   endsAt: string | null
   status: BookingStatus
   notes: string | null
+  /** In unified model, orderId === id (the booking IS the order) */
   orderId: string | null
   locationId: string | null
   metadata: Record<string, unknown>
@@ -84,6 +89,8 @@ export interface CalendarBooking {
   // Order totals
   orderTotal: number | null
   orderStatus: string | null
+  /** Payment status from financial bridge (enriched at runtime) */
+  paymentStatus?: import('./financial-bridge').BookingPaymentStatus
 
   // Aggregated services
   services: BookingService[] | null
@@ -161,6 +168,30 @@ export function isStatusAvailable(status: StatusConfig, bookingStartsAt: string)
   if (when === 'today_or_past') return bookingDate <= today
   if (when === 'today_only') return bookingDate === today
   return true
+}
+
+// ============================================================
+// MODAL TAB EXTENSION
+// ============================================================
+
+/** Props passed to every booking modal tab component */
+export interface BookingModalTabProps {
+  bookingId?: string
+  clientId: string
+  orderId: string | null
+  services: Array<{ name: string; price: number; durationMinutes: number }>
+  formatCurrency: (amount: number) => string
+  onDataChange?: () => void
+}
+
+/** A tab registered in the booking edit modal */
+export interface BookingModalTab {
+  id: string
+  label: string
+  icon: string
+  order: number
+  component: React.ComponentType<BookingModalTabProps>
+  visible?: (ctx: { mode: 'create' | 'edit'; clientId?: string; orderId?: string }) => boolean
 }
 
 // ============================================================

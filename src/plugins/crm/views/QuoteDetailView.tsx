@@ -1,17 +1,32 @@
-import React, { useEffect, useState } from 'react'
-import { FileText, Calendar, User, Hash, Ban, Pencil, CircleCheckBig, ArrowRight } from 'lucide-react'
-import { useCrmConfig, useCrmProvider, formatCurrency } from '../CrmContext'
+import React, { useEffect, useState, useRef } from 'react'
+import { FileText, Calendar, User, Hash, Ban, Pencil, CircleCheckBig, ArrowRight, Send, Printer, Mail, MessageCircle, ChevronDown, Check, X } from 'lucide-react'
+import { useCrmConfig, useCrmStore, useCrmProvider, formatCurrency } from '../CrmContext'
 import { useTranslation } from '../../../hooks/useTranslation'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { QuoteStatusDropdown } from '../components/QuoteStatusDropdown'
 import { PersonLink } from '../../../components/shared/PersonLink'
 import type { Quote } from '../types'
-export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; onBack: () => void; onEdit?: () => void }) {
+export function QuoteDetailView({ quoteId, onBack, onEdit, onInvoiceCreated }: {
+  quoteId: string
+  onBack: () => void
+  onEdit?: () => void
+  onInvoiceCreated?: (invoiceId: string) => void
+}) {
   const { t } = useTranslation()
   const { currency } = useCrmConfig()
   const provider = useCrmProvider()
+  const sendQuote = useCrmStore((s) => s.sendQuote)
+  const approveQuote = useCrmStore((s) => s.approveQuote)
+  const rejectQuote = useCrmStore((s) => s.rejectQuote)
   const [quote, setQuote] = useState<Quote | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sendMenuOpen, setSendMenuOpen] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [approving, setApproving] = useState(false)
+  const [rejectOpen, setRejectOpen] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
+  const [rejecting, setRejecting] = useState(false)
+  const sendMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -20,6 +35,51 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
       setLoading(false)
     })
   }, [quoteId])
+
+  useEffect(() => {
+    if (!sendMenuOpen) return
+    const h = (e: MouseEvent) => { if (sendMenuRef.current && !sendMenuRef.current.contains(e.target as Node)) setSendMenuOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [sendMenuOpen])
+
+  async function handleSend(channel: string) {
+    setSending(true)
+    setSendMenuOpen(false)
+    try {
+      const updated = await sendQuote(quoteId)
+      setQuote(updated)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  async function handleApprove() {
+    setApproving(true)
+    try {
+      const updated = await approveQuote(quoteId)
+      setQuote(updated)
+      // Quote IS the invoice now (in-place promotion) — navigate to its invoice detail
+      if (onInvoiceCreated) {
+        onInvoiceCreated(quoteId)
+      }
+    } finally {
+      setApproving(false)
+    }
+  }
+
+  async function handleReject() {
+    if (!rejectReason.trim()) return
+    setRejecting(true)
+    try {
+      const updated = await rejectQuote(quoteId, rejectReason.trim())
+      setQuote(updated)
+      setRejectOpen(false)
+      setRejectReason('')
+    } finally {
+      setRejecting(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -77,11 +137,63 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
         title={`#${quote.quoteNumber}`}
         onBack={onBack}
         parentLabel={t('crm.quotes.title')}
-        actions={onEdit && quote.status !== 'approved' && quote.status !== 'rejected' && (
-          <button onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
-            <Pencil className="h-3 w-3" /> {t('crm.quoteDetail.edit')}
-          </button>
-        )}
+        actions={
+          <div className="flex items-center gap-1.5">
+            {quote.status === 'draft' && (
+              <div className="relative" ref={sendMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setSendMenuOpen((p) => !p)}
+                  disabled={sending}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  <Send className="h-3 w-3" />
+                  {sending ? t('crm.quoteDetail.sending') : t('crm.quoteDetail.send')}
+                  <ChevronDown className="h-3 w-3 opacity-60" />
+                </button>
+                {sendMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border bg-card shadow-lg z-20 py-1 animate-in fade-in zoom-in-95 duration-100">
+                    <button type="button" onClick={() => handleSend('print')} className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted/50 transition-colors">
+                      <Printer className="h-3.5 w-3.5 text-muted-foreground" /> {t('crm.quoteDetail.sendPrint')}
+                    </button>
+                    <button type="button" onClick={() => handleSend('email')} className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted/50 transition-colors">
+                      <Mail className="h-3.5 w-3.5 text-muted-foreground" /> {t('crm.quoteDetail.sendEmail')}
+                    </button>
+                    <button type="button" onClick={() => handleSend('whatsapp')} className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted/50 transition-colors">
+                      <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" /> {t('crm.quoteDetail.sendWhatsApp')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {quote.status === 'sent' && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleApprove}
+                  disabled={approving}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                >
+                  <Check className="h-3 w-3" />
+                  {approving ? t('crm.quoteDetail.approving') : t('crm.quoteDetail.approve')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRejectOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                  {t('crm.quoteDetail.reject')}
+                </button>
+              </>
+            )}
+            {onEdit && quote.status !== 'approved' && quote.status !== 'rejected' && quote.status !== 'expired' && (
+              <button type="button" onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+                <Pencil className="h-3 w-3" /> {t('crm.quoteDetail.edit')}
+              </button>
+            )}
+          </div>
+        }
       />
 
       {/* Quote document card */}
@@ -220,15 +332,15 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
         )}
       </div>
 
-      {/* Invoice link — when approved */}
-      {quote.convertedInvoiceId && (
+      {/* Invoice link — when approved (quote IS the invoice, same row) */}
+      {quote.status === 'approved' && (
         <div className="flex items-center justify-between rounded-lg border bg-emerald-500/5 px-4 py-2.5">
           <div className="flex items-center gap-2 text-xs">
             <CircleCheckBig className="h-3.5 w-3.5 text-emerald-500" />
             <span className="text-muted-foreground">{t('crm.quoteDetail.invoiceCreated')}</span>
           </div>
           <a
-            href={`#/financial/receivables/detail/${quote.convertedInvoiceId}`}
+            href={`#/financial/receivables/detail/${quote.id}`}
             className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
           >
             {t('crm.quoteDetail.viewInvoice')} <ArrowRight className="h-3 w-3" />
@@ -242,6 +354,43 @@ export function QuoteDetailView({ quoteId, onBack, onEdit }: { quoteId: string; 
           <div className="flex items-center gap-2 text-xs">
             <Ban className="h-3.5 w-3.5 text-red-500" />
             <span className="text-muted-foreground">{t('crm.quoteDetail.rejectionReason')}: <span className="font-medium text-foreground">{quote.rejectionReason}</span></span>
+          </div>
+        </div>
+      )}
+
+      {/* Reject reason dialog */}
+      {rejectOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setRejectOpen(false)}>
+          <div className="w-full max-w-sm rounded-xl border bg-card shadow-2xl mx-4 p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 shrink-0">
+                <X className="h-5 w-5 text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold">{t('crm.quoteDetail.reject')}</h3>
+                <p className="text-xs text-muted-foreground">{t('crm.quoteDetail.rejectDescription')}</p>
+              </div>
+            </div>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder={t('crm.quoteDetail.rejectReasonPlaceholder')}
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-ring"
+              autoFocus
+            />
+            <div className="flex justify-end gap-2 mt-3">
+              <button type="button" onClick={() => setRejectOpen(false)} className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleReject}
+                disabled={rejecting || !rejectReason.trim()}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                {rejecting ? t('crm.quoteDetail.rejecting') : t('crm.quoteDetail.confirmReject')}
+              </button>
+            </div>
           </div>
         </div>
       )}

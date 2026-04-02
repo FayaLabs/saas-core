@@ -25,17 +25,26 @@ export function useLayout() {
   const [currentBreakpoint, setCurrentBreakpoint] = useState<Breakpoint>('lg')
 
   useEffect(() => {
+    // Track printing state to prevent layout thrashing during Ctrl+P.
+    // The print viewport is narrow, which would flip isMobile→true,
+    // causing component unmount/remount and losing loaded data.
+    let printing = false
+    const onBeforePrint = () => { printing = true }
+    const onAfterPrint = () => { printing = false }
+    window.addEventListener('beforeprint', onBeforePrint)
+    window.addEventListener('afterprint', onAfterPrint)
+
     const mobileQuery = window.matchMedia('(max-width: 767px)')
 
     const handleMobileChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      setIsMobile(e.matches)
+      if (!printing) setIsMobile(e.matches)
     }
 
     handleMobileChange(mobileQuery)
     mobileQuery.addEventListener('change', handleMobileChange)
 
     const handleResize = () => {
-      setCurrentBreakpoint(getBreakpoint(window.innerWidth))
+      if (!printing) setCurrentBreakpoint(getBreakpoint(window.innerWidth))
     }
 
     handleResize()
@@ -44,6 +53,8 @@ export function useLayout() {
     return () => {
       mobileQuery.removeEventListener('change', handleMobileChange)
       window.removeEventListener('resize', handleResize)
+      window.removeEventListener('beforeprint', onBeforePrint)
+      window.removeEventListener('afterprint', onAfterPrint)
     }
   }, [])
 

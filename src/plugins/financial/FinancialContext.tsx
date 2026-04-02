@@ -40,6 +40,7 @@ export interface ResolvedFinancialConfig {
   locations: LocationOption[]
   entityLookups: EntityLookupMap
   contactLookup?: EntityLookup
+  onBookingClick?: (orderId: string) => void
 }
 
 // ---------------------------------------------------------------------------

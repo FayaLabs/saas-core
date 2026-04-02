@@ -190,6 +190,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
                   label={t('financial.invoiceForm.item')}
                   value={item.referenceId ?? ''}
                   displayValue={item.description}
+                  loadOnOpen
                   onChange={(id, opt) => {
                     const price = (opt?.data as any)?.price
                     onUpdate({

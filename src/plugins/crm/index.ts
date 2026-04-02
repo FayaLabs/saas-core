@@ -7,10 +7,12 @@ import type { CrmDataProvider } from './data/types'
 import { createMockCrmProvider } from './data/mock'
 import { getSupabaseClientOptional } from '../../lib/supabase'
 
-function createSafeCrmProvider(): CrmDataProvider {
+function createSafeCrmProvider(providerOptions?: {
+  clientConversion?: { archetypeKind: string; extensionTable: string; fkColumn: string }
+}): CrmDataProvider {
   let resolved: CrmDataProvider | null = null
   function get(): CrmDataProvider {
-    if (!resolved) resolved = getSupabaseClientOptional() ? createSupabaseCrmProvider() : createMockCrmProvider()
+    if (!resolved) resolved = getSupabaseClientOptional() ? createSupabaseCrmProvider(providerOptions) : createMockCrmProvider()
     return resolved
   }
   return new Proxy({} as CrmDataProvider, {
@@ -65,6 +67,17 @@ export interface CrmPluginOptions {
   entityLookups?: EntityLookupMap
   /** Contact/person lookup for client search in quotes and leads */
   contactLookup?: import('../../types/entity-lookup').EntityLookup
+  /** Client conversion config — when a lead is approved, CRM converts the person
+   *  to a client by updating `persons.kind` and creating the extension table record.
+   *  @example { archetypeKind: 'customer', extensionTable: 'clients', fkColumn: 'person_id' } */
+  clientConversion?: {
+    /** The archetype kind to set on persons.kind (e.g., 'customer') */
+    archetypeKind: string
+    /** Extension table name (e.g., 'clients') in public schema */
+    extensionTable: string
+    /** FK column pointing to persons.id (e.g., 'person_id') */
+    fkColumn: string
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -119,7 +132,7 @@ function resolveConfig(options?: CrmPluginOptions): ResolvedCrmConfig {
 
 export function createCrmPlugin(options?: CrmPluginOptions): PluginManifest {
   const config = resolveConfig(options)
-  const provider = options?.dataProvider ?? createSafeCrmProvider()
+  const provider = options?.dataProvider ?? createSafeCrmProvider({ clientConversion: options?.clientConversion })
   const store = createCrmStore(provider)
 
   const PageComponent: React.FC<any> = () =>

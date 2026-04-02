@@ -54,6 +54,8 @@ export interface Invoice {
   observations?: string
   /** Denormalized summary of item descriptions for list display */
   itemsSummary?: string
+  /** If this order has a scheduled time (booking), the start time */
+  bookingStartsAt?: string
   metadata?: Record<string, unknown>
   tenantId: string
   createdAt: string

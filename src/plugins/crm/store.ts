@@ -199,31 +199,47 @@ export function createCrmStore(provider: CrmDataProvider): StoreApi<CrmUIState> 
 
         let leadId = input.leadId
         let dealId = input.dealId
+        const contactId = input.contactId
+        const contactName = input.contactName
 
-        // Auto-create lead if no contact/lead provided (unknown client)
-        if (!leadId && !input.contactId && input.contactName) {
+        // Step 1: Resolve or create a lead
+        if (!leadId && contactId) {
+          // contactId might be a lead (e.g., from "Add as Lead" in the form)
+          // Check if this person is a lead
           try {
-            const lead = await provider.createLead({ name: input.contactName })
-            leadId = lead.id
-            // Auto-create deal for the new lead
-            const firstStage = stages.filter((s) => !s.isWon && !s.isLost).sort((a, b) => a.order - b.order)[0]
-            if (defaultPipeline && firstStage) {
-              const deal = await provider.createDeal({
-                leadId: lead.id, title: lead.name, value: 0,
-                pipelineId: defaultPipeline.id, stageId: firstStage.id, contactName: lead.name,
-              })
-              dealId = deal.id
-            }
-          } catch {
-            // Lead creation failed — continue without linking
-          }
+            const lead = await provider.getLeadById(contactId)
+            if (lead) leadId = lead.id
+          } catch { /* not a lead, that's OK */ }
         }
 
-        // Resolve deal from lead if we have a lead but no deal
+        if (!leadId && contactName) {
+          // No lead found — create one
+          try {
+            const lead = await provider.createLead({ name: contactName })
+            leadId = lead.id
+            if (!contactId) input = { ...input, contactId: lead.id }
+          } catch { /* ignore */ }
+        }
+
+        // Step 2: Resolve or create a deal for this lead
         if (leadId && !dealId) {
           try {
             const existingDeal = await provider.getDealByLeadId(leadId)
-            if (existingDeal) dealId = existingDeal.id
+            if (existingDeal) {
+              dealId = existingDeal.id
+            } else if (defaultPipeline) {
+              // No deal exists — create one
+              const firstStage = stages.filter((s) => !s.isWon && !s.isLost).sort((a, b) => a.order - b.order)[0]
+              if (firstStage) {
+                const deal = await provider.createDeal({
+                  leadId, title: contactName ?? 'Deal',
+                  value: input.items?.reduce((s, i) => s + (i.totalAmount ?? 0), 0) ?? 0,
+                  pipelineId: defaultPipeline.id, stageId: firstStage.id,
+                  contactName: contactName ?? '',
+                })
+                dealId = deal.id
+              }
+            }
           } catch { /* ignore */ }
         }
 
@@ -247,8 +263,14 @@ export function createCrmStore(provider: CrmDataProvider): StoreApi<CrmUIState> 
           } catch { /* ignore */ }
         }
 
-        // Refresh local state
+        // Refresh local state — quotes + pipeline
         set((state) => ({ quotes: [quote, ...state.quotes], quotesTotal: state.quotesTotal + 1 }))
+        if (defaultPipeline) {
+          try {
+            const dealsByStage = await provider.getDealsByStage(defaultPipeline.id)
+            set({ dealsByStage })
+          } catch { /* non-blocking */ }
+        }
         toast.success('Quote created')
         return quote
       } catch (err: any) {

@@ -1,19 +1,27 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, MoreVertical, Upload, Download } from 'lucide-react'
 import type { ColumnDef as TanStackColumnDef } from '@tanstack/react-table'
 import { useOrganizationStore } from '../../stores/organization.store'
 import { useTranslation } from '../../hooks/useTranslation'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
 import { DataTable } from '../ui/data-table'
+import { Dropdown, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/dropdown'
 import { CrudFormPage } from './CrudFormPage'
 import { CrudDetailPage } from './CrudDetailPage'
 import { CrudCardGrid } from './CrudCardGrid'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
+import { ImportWizard } from './ImportWizard'
+import { exportToCSV } from './csv-export'
 import { fieldToColumns } from './fieldToColumn'
 import { PermissionGate } from '../organization/PermissionGate'
+import { useFieldRules } from '../../hooks/useFieldRules'
+import { deriveEntityKey } from '../../lib/entity-registry'
+import { toast } from '../notifications/ToastProvider'
+import { getSupabaseClientOptional } from '../../lib/supabase'
 import type { EntityDef } from '../../types/crud'
 import type { CrudStore } from '../../stores/createCrudStore'
+import type { ImportRowError } from './ImportWizard'
 
 type CrudDisplay = 'table' | 'cards'
 
@@ -65,12 +73,13 @@ function useCrudColumns<T extends { id: string }>(
   options?: {
     basePath?: string
     onDelete?: (item: T) => void
+    onInlineUpdate?: (id: string, field: string, value: any) => void
     feature?: string
     readOnly?: boolean
   },
 ): TanStackColumnDef<T, any>[] {
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
-  const cols = fieldToColumns(entityDef.fields)
+  const cols = fieldToColumns(entityDef.fields, { onInlineUpdate: options?.onInlineUpdate })
 
   return useMemo(() => {
     const tanCols: TanStackColumnDef<T, any>[] = cols.map((col) => ({
@@ -126,18 +135,30 @@ function useCrudColumns<T extends { id: string }>(
   }, [cols, displayField, options?.basePath, options?.onDelete, options?.feature, options?.readOnly])
 }
 
-export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePath, display, feature, readOnly }: CrudPageProps<T>) {
+export function CrudPage<T extends { id: string }>({ entityDef: rawEntityDef, useStore, basePath, display, feature, readOnly }: CrudPageProps<T>) {
   const store = useStore()
   const { t } = useTranslation()
   const { sub, direction } = useSubRoute(basePath)
+
+  // Apply tenant field-rule overrides (required / visibility) before passing down
+  const entityKey = deriveEntityKey(rawEntityDef)
+  const { applyRules } = useFieldRules(entityKey)
+  const entityDef = useMemo(() => ({
+    ...rawEntityDef,
+    fields: applyRules(rawEntityDef.fields),
+  }), [rawEntityDef, applyRules]) as EntityDef<T>
   const [deleteItem, setDeleteItem] = useState<T | null>(null)
   const [searchInput, setSearchInput] = useState('')
+  const [importOpen, setImportOpen] = useState(false)
 
   const namePlural = entityDef.namePlural ?? entityDef.name + 's'
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
 
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const tanColumns = useCrudColumns(entityDef, { basePath, onDelete: readOnly ? undefined : (item) => setDeleteItem(item), feature, readOnly })
+  const handleInlineUpdate = useCallback(async (id: string, field: string, value: any) => {
+    await store.update(id, { [field]: value } as any)
+  }, [store])
+  const tanColumns = useCrudColumns(entityDef, { basePath, onDelete: readOnly ? undefined : (item) => setDeleteItem(item), onInlineUpdate: handleInlineUpdate, feature, readOnly })
   const currentOrgId = useOrganizationStore((s) => s.currentOrg?.id)
 
   useEffect(() => {
@@ -146,6 +167,46 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
 
   const navigateToList = () => { window.location.hash = basePath }
   const animClass = direction === 'forward' ? 'saas-nav-forward' : 'saas-nav-back'
+
+  const handleImport = useCallback(async (
+    rows: Record<string, any>[],
+    onProgress: (processed: number, total: number) => void,
+  ): Promise<{ success: number; errors: ImportRowError[] }> => {
+    // Guard: refuse import if not connected to Supabase (would silently go to mock)
+    if (!getSupabaseClientOptional()) {
+      return {
+        success: 0,
+        errors: [{ row: 0, message: t('crud.import.noConnection') }],
+      }
+    }
+
+    const { success, results } = await store.createMany(rows, {
+      batchSize: 10,
+      onProgress,
+    })
+
+    const errors: ImportRowError[] = []
+    for (let i = 0; i < results.length; i++) {
+      if (results[i].error) {
+        errors.push({ row: i + 2, message: results[i].error! })
+      }
+    }
+
+    if (success > 0) {
+      toast.success(t('crud.import.toastSuccess', { count: String(success) }))
+    }
+    return { success, errors }
+  }, [store, t])
+
+  const handleExport = useCallback(() => {
+    const items = store.items
+    if (!items || items.length === 0) {
+      toast.error(t('crud.export.noData'))
+      return
+    }
+    exportToCSV(items as any, entityDef)
+    toast.success(t('crud.export.toastSuccess', { count: String(items.length) }))
+  }, [store.items, entityDef, t])
 
   // Determine which view to show
   let viewKey = 'list'
@@ -354,13 +415,32 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
               <p className="text-muted-foreground">{t('crud.list.totalCount', { count: String(store.total), entities: namePlural.toLowerCase() })}</p>
             )}
           </div>
-          {!readOnly && (feature ? (
-            <PermissionGate feature={feature} action="create">
+          <div className="flex items-center gap-2">
+            {!readOnly && (feature ? (
+              <PermissionGate feature={feature} action="create">
+                <Button onClick={navigateToNew}>{t('crud.list.addEntity', { entity: entityDef.name })}</Button>
+              </PermissionGate>
+            ) : (
               <Button onClick={navigateToNew}>{t('crud.list.addEntity', { entity: entityDef.name })}</Button>
-            </PermissionGate>
-          ) : (
-            <Button onClick={navigateToNew}>+ Add {entityDef.name}</Button>
-          ))}
+            ))}
+            <Dropdown>
+              <DropdownTrigger asChild>
+                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownTrigger>
+              <DropdownContent align="end">
+                <DropdownItem onClick={() => setImportOpen(true)}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  {t('crud.import.action')}
+                </DropdownItem>
+                <DropdownItem onClick={handleExport}>
+                  <Download className="h-4 w-4 mr-2" />
+                  {t('crud.export.action')}
+                </DropdownItem>
+              </DropdownContent>
+            </Dropdown>
+          </div>
         </div>
 
         {hasSearch && (
@@ -437,6 +517,12 @@ export function CrudPage<T extends { id: string }>({ entityDef, useStore, basePa
         onConfirm={handleDeleteConfirm}
         entityName={entityDef.name}
         displayValue={deleteItem ? (deleteItem as any)[displayField] : undefined}
+      />
+      <ImportWizard
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        entityDef={entityDef as EntityDef<any>}
+        onImport={handleImport}
       />
     </>
   )

@@ -54,5 +54,11 @@ export function resolveDataProvider<T extends { id: string }>(
     }), cacheOptions)
   }
 
+  if (entityDef.data?.table) {
+    console.warn(
+      `[saas-core] resolveDataProvider: falling back to mock for "${entityDef.name}" (table: ${entityDef.data.table}). ` +
+      `Supabase client ${client ? 'available' : 'NOT initialized'}.`,
+    )
+  }
   return createMockProvider(entityDef, mockData)
 }

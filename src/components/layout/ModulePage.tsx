@@ -93,7 +93,7 @@ function MobileTabs({ nav }: { nav: ModuleNavItem[] }) {
   }, [nav])
 
   return (
-    <div className="md:hidden -mx-1 mb-4">
+    <div className="md:hidden -mx-1 mb-4 no-print">
       <div ref={scrollRef} className="flex gap-1 px-1 pb-2 overflow-x-auto scrollbar-hide">
         {nav.map((item) => {
           const Icon = item.icon ? (ICON_MAP[item.icon] ?? null) : null
@@ -185,7 +185,7 @@ export function SubpageHeader({ title, subtitle, icon, onBack, parentLabel, acti
         <>
           <div className="flex items-center justify-between gap-4">
             <Breadcrumb parent={parentLabel} current={title} onBack={onBack} />
-            {actions}
+            {actions && <div className="no-print">{actions}</div>}
           </div>
           {subtitle && <p className="text-sm text-muted-foreground -mt-2">{subtitle}</p>}
         </>
@@ -211,7 +211,7 @@ export function SubpageHeader({ title, subtitle, icon, onBack, parentLabel, acti
               {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
             </div>
           </div>
-          {actions}
+          {actions && <div className="no-print">{actions}</div>}
         </div>
       )}
     </div>
@@ -225,8 +225,8 @@ export function SubpageHeader({ title, subtitle, icon, onBack, parentLabel, acti
 export function ModulePage({ title, subtitle, nav, children, className, headerAction, showHeader = true }: ModulePageProps) {
   return (
     <div className={cn('flex gap-6 -mt-2', className)}>
-      {/* Side navigation — hidden on mobile */}
-      <div className="w-48 shrink-0 hidden md:block">
+      {/* Side navigation — hidden on mobile + print */}
+      <div className="w-48 shrink-0 hidden md:block no-print">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2.5 mb-2">{title}</p>
         <nav className="space-y-0.5">
           {nav.map((item) => (

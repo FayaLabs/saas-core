@@ -1,9 +1,36 @@
 import type { PluginRegistryDef } from '../../types/plugins'
+import type { EntityDef } from '../../types/crud'
 
 // ---------------------------------------------------------------------------
-// Agenda plugin has no CRUD registries — appointments are managed via the
-// calendar UI, not table-based CRUD pages. Working hours are managed in a
-// dedicated view. This file exports an empty array for consistency.
+// Holidays (saas_core.holidays — tenant-scoped)
 // ---------------------------------------------------------------------------
 
-export const agendaRegistries: PluginRegistryDef[] = []
+const holidayEntity: EntityDef = {
+  name: 'Holiday',
+  namePlural: 'Holidays',
+  icon: 'TreePalm',
+  displayField: 'name',
+  defaultSort: 'date',
+  defaultSortDir: 'asc',
+  fields: [
+    { key: 'name', label: 'Name', type: 'text', required: true, showInTable: true },
+    { key: 'date', label: 'Date', type: 'date', required: true, showInTable: true, sortable: true },
+    { key: 'recurring', label: 'Recurring Annually', type: 'boolean', showInTable: true, defaultValue: false },
+    { key: 'description', label: 'Description', type: 'text', showInTable: false },
+    { key: 'isActive', label: 'Active', type: 'boolean', showInTable: true, defaultValue: true },
+  ],
+  data: {
+    table: 'holidays',
+    schema: 'saas_core',
+    tenantScoped: true,
+  },
+}
+
+export const agendaRegistries: PluginRegistryDef[] = [
+  {
+    id: 'holidays',
+    entity: holidayEntity,
+    icon: 'TreePalm',
+    description: 'Non-working days and recurring holidays',
+  },
+]

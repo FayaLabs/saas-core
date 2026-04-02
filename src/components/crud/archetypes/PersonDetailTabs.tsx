@@ -5,6 +5,8 @@ import { Badge } from '../../ui/badge'
 import { ScheduleEditor } from './ScheduleEditor'
 import { AccessTab } from './AccessTab'
 import { useTranslation } from '../../../hooks/useTranslation'
+import { usePluginsOptional } from '../../../hooks/usePlugins'
+import { getWidgetsForZone } from '../../../lib/plugins'
 
 function ComingSoon({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
   const { t } = useTranslation()
@@ -35,8 +37,27 @@ export function ActivityTab() {
   )
 }
 
-export function DocumentsTab() {
+export function DocumentsTab({ item }: { item?: any }) {
   const { t } = useTranslation()
+  const runtime = usePluginsOptional()
+
+  // Check if a plugin provides a documents widget (e.g., custom_forms)
+  const widgets = runtime ? getWidgetsForZone(runtime, 'person.detail.documents') : []
+
+  if (widgets.length > 0 && item) {
+    const w = widgets[0]
+    const Widget = w.component as React.ComponentType<any>
+    return (
+      <Widget
+        item={item}
+        config={w.config}
+        runtime={runtime?.context}
+        plugin={w.plugin}
+        widget={w}
+      />
+    )
+  }
+
   return (
     <ComingSoon
       icon={FileText}

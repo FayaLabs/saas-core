@@ -13,6 +13,11 @@ const STATUS_COLORS: Record<string, string> = {
   approved: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
   rejected: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
   expired: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
+  invoiced: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
+  paid: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
+  partial: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400',
+  overdue: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+  cancelled: 'bg-muted text-muted-foreground',
 }
 
 function useQuoteColumns(currency: { code: string; locale: string; symbol: string }, onEditQuote?: (id: string) => void): ColumnDef<Quote, any>[] {

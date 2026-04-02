@@ -122,6 +122,10 @@ export interface ReportsPluginLabels {
   thisQuarter: string
   custom: string
   generate: string
+  print: string
+  filterFrom: string
+  filterTo: string
+  filterResults: string
   emptyStateTitle: string
   emptyStateDescription: string
   unavailableTitle: string

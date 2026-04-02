@@ -1,7 +1,7 @@
 PHASE 1
 - [x] Authentication
 - [x] CRUDs
-- [ ] i18n translations (IN PROGRESS — see docs/i18n-spec.md + docs/i18n-tasks.md)
+- [x] i18n translations (IN PROGRESS — see docs/i18n-spec.md + docs/i18n-tasks.md)
 - [ ] Plugins Injection Concept <-- This is critical
 - [ ] Permissions
 - [ ] Archetypes Concept

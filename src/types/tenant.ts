@@ -50,6 +50,7 @@ export interface TenantSettings {
     logoUrl?: string
     faviconUrl?: string
   }
+  fieldRules?: import('./crud').TenantFieldRules
 }
 
 export type MemberRole = 'owner' | 'admin' | 'manager' | 'staff' | 'viewer'

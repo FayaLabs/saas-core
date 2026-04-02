@@ -75,7 +75,7 @@ const css = /* css */ `
 
 /* ── Time slots — compact ── */
 .agenda-calendar .fc-timegrid-slot {
-  height: 1.25rem;
+  height: 1.5rem;
   border-bottom: 1px solid hsl(var(--border) / 0.4);
 }
 
@@ -110,6 +110,7 @@ const css = /* css */ `
   font-size: 0.7rem;
   line-height: 1.3;
   margin: 0 2px;
+  overflow: hidden;
   backdrop-filter: blur(8px) saturate(140%);
   -webkit-backdrop-filter: blur(8px) saturate(140%);
 }
@@ -117,6 +118,7 @@ const css = /* css */ `
 .agenda-calendar .fc-event .fc-event-main {
   background: inherit;
   border-radius: inherit;
+  overflow: hidden;
 }
 
 .agenda-calendar .fc-event:not(.fc-bg-event):hover {

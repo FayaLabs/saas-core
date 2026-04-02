@@ -64,10 +64,12 @@ const SheetContent = React.forwardRef<
     width?: string
     /** Hide the built-in close button */
     hideClose?: boolean
+    /** Overlay style: "blur" (default), "dim" (no blur), "none" (transparent) */
+    overlay?: 'blur' | 'dim' | 'none'
   }
->(({ className, children, width, hideClose, ...props }, ref) => (
+>(({ className, children, width, hideClose, overlay = 'blur', ...props }, ref) => (
   <SheetPortal>
-    <SheetOverlay />
+    <SheetOverlay className={overlay === 'none' ? 'bg-transparent backdrop-blur-0' : overlay === 'dim' ? 'backdrop-blur-0' : undefined} />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(

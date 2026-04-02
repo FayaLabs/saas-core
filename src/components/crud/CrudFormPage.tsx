@@ -21,6 +21,8 @@ interface CrudFormPageProps {
   onSubmit: (data: Record<string, any>) => void | Promise<void>
   onCancel: () => void
   namePlural: string
+  /** Embedded mode — no breadcrumb, compact layout. For use inside modals/panels. */
+  embedded?: boolean
 }
 
 function getDefaultValues(fields: FieldDef[]): Record<string, any> {
@@ -47,7 +49,7 @@ function getDefaultValues(fields: FieldDef[]): Record<string, any> {
 }
 
 function renderField(field: FieldDef, value: any, onChange: (val: any) => void) {
-  const baseClass = 'flex h-10 w-full rounded-input border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+  const baseClass = 'flex h-9 w-full rounded-input border border-input bg-background px-3 py-1.5 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
 
   switch (field.type) {
     case 'textarea':
@@ -57,8 +59,8 @@ function renderField(field: FieldDef, value: any, onChange: (val: any) => void) 
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
           required={field.required}
-          rows={3}
-          className={`${baseClass} min-h-[80px] py-2`}
+          rows={2}
+          className={`${baseClass} min-h-[60px] py-1.5`}
         />
       )
     case 'select': {
@@ -109,6 +111,24 @@ function renderField(field: FieldDef, value: any, onChange: (val: any) => void) 
       return <Input type="datetime-local" value={value ?? ''} onChange={(e) => onChange(e.target.value)} required={field.required} />
     case 'time':
       return <Input type="time" value={value ?? ''} onChange={(e) => onChange(e.target.value)} required={field.required} />
+    case 'color':
+      return (
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={value || '#6b7280'}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-9 w-12 rounded-md border border-input cursor-pointer p-0.5"
+          />
+          <Input
+            type="text"
+            value={value ?? ''}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="#000000"
+            className="flex-1 font-mono text-xs"
+          />
+        </div>
+      )
     default:
       return (
         <Input
@@ -124,7 +144,7 @@ function renderField(field: FieldDef, value: any, onChange: (val: any) => void) 
 
 function FormFieldItem({ field, value, onChange }: { field: FieldDef; value: any; onChange: (val: any) => void }) {
   return (
-    <div className={`grid gap-1.5 ${field.span === 2 ? 'md:col-span-2' : ''}`}>
+    <div className={`grid gap-1 ${field.span === 2 ? 'md:col-span-2' : ''}`}>
       {field.type !== 'boolean' && (
         <label className="text-sm font-medium text-foreground">
           {field.label}
@@ -156,8 +176,8 @@ function FormGroup({
         <p className="text-xs text-muted-foreground mt-0.5 mb-3">{group.description}</p>
       )}
       <Card>
-        <CardContent className="pt-5">
-          <div className={`grid gap-4 ${cols >= 2 ? 'md:grid-cols-2' : ''} ${cols >= 3 ? 'lg:grid-cols-3' : ''}`}>
+        <CardContent className="pt-4">
+          <div className={`grid gap-3 ${cols >= 2 ? 'md:grid-cols-2' : ''} ${cols >= 3 ? 'lg:grid-cols-3' : ''}`}>
             {fields.map((field) => (
               <FormFieldItem
                 key={field.key}
@@ -173,7 +193,7 @@ function FormGroup({
   )
 }
 
-export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel, namePlural }: CrudFormPageProps) {
+export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel, namePlural, embedded }: CrudFormPageProps) {
   const { t } = useTranslation()
   const formFields = entityDef.fields.filter((f) => f.showInForm !== false)
   const displayField = entityDef.displayField ?? entityDef.fields[0]?.key ?? 'id'
@@ -240,6 +260,7 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
     onChange: handleChange,
     renderField,
     entityIcon: entityDef.icon,
+    compact: embedded,
   }
 
   function renderFormBody(layout?: FormLayout) {
@@ -293,27 +314,29 @@ export function CrudFormPage({ entityDef, mode, initialData, onSubmit, onCancel,
   }
 
   return (
-    <div className="w-full flex flex-col items-center">
-      <div className="w-full max-w-3xl space-y-6">
-        {/* Breadcrumb + subtitle */}
-        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <button type="button" onClick={onCancel} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-            <ArrowLeft className="h-3.5 w-3.5" />
-            {namePlural}
-          </button>
-          <span>/</span>
-          <span className="text-foreground font-medium truncate max-w-[200px]">{breadcrumbLabel}</span>
-        </nav>
+    <div className={`w-full flex flex-col items-center ${embedded ? 'text-sm' : ''}`}>
+      <div className={`w-full ${embedded ? 'space-y-3' : 'max-w-3xl space-y-5'}`}>
+        {/* Breadcrumb + subtitle — hidden in embedded mode */}
+        {!embedded && (
+          <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <button type="button" onClick={onCancel} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {namePlural}
+            </button>
+            <span>/</span>
+            <span className="text-foreground font-medium truncate max-w-[200px]">{breadcrumbLabel}</span>
+          </nav>
+        )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className={embedded ? 'space-y-3' : 'space-y-5'}>
           {renderFormBody(entityDef.layout)}
 
           {/* Submit */}
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>{t('common.cancel')}</Button>
-            <Button type="submit" disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <div className={`flex items-center justify-end gap-2 ${embedded ? 'pt-1' : 'pt-2 gap-3'}`}>
+            <Button type="button" variant="outline" size={embedded ? 'sm' : 'default'} onClick={onCancel} disabled={saving}>{t('common.cancel')}</Button>
+            <Button type="submit" size={embedded ? 'sm' : 'default'} disabled={saving}>
+              {saving && <Loader2 className={`animate-spin ${embedded ? 'mr-1.5 h-3 w-3' : 'mr-2 h-4 w-4'}`} />}
               {saving ? t('common.saving') : mode === 'create' ? t('crud.form.addTitle', { entity: entityDef.name }) : t('crud.form.saveChanges')}
             </Button>
           </div>

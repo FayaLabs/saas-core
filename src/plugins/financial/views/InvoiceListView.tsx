@@ -31,6 +31,13 @@ function useInvoiceColumns(currency: { code: string; locale: string; symbol: str
   const { t } = useTranslation()
   return useMemo(() => [
     {
+      accessorKey: 'fiscalNumber', header: '#', size: 110,
+      cell: ({ getValue }) => {
+        const num = getValue() as string | undefined
+        return num ? <span className="text-xs font-mono text-muted-foreground">#{num}</span> : <span className="text-muted-foreground">—</span>
+      },
+    },
+    {
       accessorKey: 'invoiceDate', header: t('financial.invoice.columnDate'),
       cell: ({ getValue }) => <span className="text-muted-foreground text-xs">{getValue() as string}</span>,
     },
@@ -105,6 +112,23 @@ export function InvoiceListView({ direction, onNew, onEdit }: {
     [t],
   )
 
+  // Summary totals from currently visible data
+  const summary = useMemo(() => {
+    let totalAmount = 0
+    let paidAmount = 0
+    let openAmount = 0
+    for (const inv of filtered) {
+      if (inv.status === 'cancelled') continue
+      totalAmount += inv.totalAmount
+      paidAmount += inv.paidAmount
+    }
+    openAmount = totalAmount - paidAmount
+    return { totalAmount, paidAmount, openAmount }
+  }, [filtered])
+
+  const receivedLabel = direction === 'debit' ? t('financial.invoice.summaryPaid') : t('financial.invoice.summaryReceived')
+  const pendingLabel = direction === 'debit' ? t('financial.invoice.summaryPayable') : t('financial.invoice.summaryReceivable')
+
   return (
     <div className="space-y-4">
       <SubpageHeader
@@ -130,6 +154,24 @@ export function InvoiceListView({ direction, onNew, onEdit }: {
         emptyActionLabel={onNew ? t('financial.invoice.createFirst') : undefined}
         onEmptyAction={onNew}
       />
+      {filtered.length > 0 && !invoicesLoading && (
+        <div className="flex items-center justify-end gap-6 rounded-lg border bg-muted/30 px-5 py-3 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">{t('financial.invoice.summaryTotal')}</span>
+            <span className="font-semibold">{formatCurrency(summary.totalAmount, currency)}</span>
+          </div>
+          <div className="h-4 w-px bg-border" />
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">{receivedLabel}</span>
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(summary.paidAmount, currency)}</span>
+          </div>
+          <div className="h-4 w-px bg-border" />
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">{pendingLabel}</span>
+            <span className="font-semibold text-amber-600 dark:text-amber-400">{formatCurrency(summary.openAmount, currency)}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
