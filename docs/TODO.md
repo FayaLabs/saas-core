@@ -14,6 +14,8 @@ PHASE 2
 - [ ] Custom project plugin (allow users to create their own plugins + submit to us)
 - [ ] User onboarding (sign up)
 - [ ] AI Agent Chat
+- [ ] Audit / Logs / Deleted Records
+- [ ] Notifications
 
 PHASE 3
 - [ ] Build +5 general plugins

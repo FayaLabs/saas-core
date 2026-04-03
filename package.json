@@ -80,6 +80,16 @@
       "import": "./dist/plugins/custom_forms/index.js",
       "require": "./dist/plugins/custom_forms/index.cjs"
     },
+    "./plugins/dashboard": {
+      "types": "./dist/plugins/dashboard/index.d.ts",
+      "import": "./dist/plugins/dashboard/index.js",
+      "require": "./dist/plugins/dashboard/index.cjs"
+    },
+    "./plugins/tasks": {
+      "types": "./dist/plugins/tasks/index.d.ts",
+      "import": "./dist/plugins/tasks/index.js",
+      "require": "./dist/plugins/tasks/index.cjs"
+    },
     "./styles.css": "./src/styles.css"
   },
   "files": [

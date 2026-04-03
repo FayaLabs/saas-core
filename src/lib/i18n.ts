@@ -255,6 +255,8 @@ export const defaultTranslations: Record<string, string> = {
   'layout.userMenu.darkMode': 'Dark mode',
   'layout.userMenu.systemMode': 'System',
   'layout.userMenu.language': 'Language',
+  'layout.userMenu.selectLocation': 'Select location',
+  'layout.switchingLocation': 'Switching location…',
   'layout.userMenu.signOut': 'Sign out',
 
   // ---------------------------------------------------------------------------
@@ -610,18 +612,41 @@ export const defaultTranslations: Record<string, string> = {
   'billing.paywall.viewPlans': 'View Plans',
   'chat.defaultTitle': 'Assistant',
   'chat.tryAsking': 'Try asking',
+  'chat.fab.tryIt': 'Try it',
   'chat.messagePlaceholder': 'Message...',
   'chat.toolsAvailable': '{{count}} tools available',
-  'chat.suggestion.agenda.get-bookings.0': "What's on the agenda today?",
-  'chat.suggestion.agenda.get-bookings.1': "Show me tomorrow's appointments",
-  'chat.suggestion.agenda.create-booking.0': 'Book a haircut for Sarah tomorrow at 10am',
+  // Dashboard
+  'chat.suggestion.dashboard.kpi-summary.0': 'How is my business doing today?',
+  'chat.suggestion.dashboard.kpi-summary.1': "What's my revenue today?",
+  'chat.suggestion.dashboard.kpi-summary.2': 'Give me a summary of today',
+  // Agenda
+  'chat.suggestion.agenda.list-appointments.0': "What's on the agenda today?",
+  'chat.suggestion.agenda.list-appointments.1': "Show me tomorrow's appointments",
+  'chat.suggestion.agenda.list-appointments.2': 'Who has the most bookings this week?',
+  'chat.suggestion.agenda.create-appointment.0': 'Book a haircut for Sarah tomorrow at 10am',
   'chat.suggestion.agenda.check-availability.0': 'When is Ana available tomorrow?',
   'chat.suggestion.agenda.check-availability.1': 'Find a 90-minute slot for Carlos this week',
+  // Financial
   'chat.suggestion.financial.get-revenue.0': 'How much did we make today?',
   'chat.suggestion.financial.get-revenue.1': "What's this month's revenue?",
-  'chat.suggestion.financial.create-invoice.0': 'Create an invoice for João, R$150',
-  'chat.suggestion.financial.get-balance.0': "What's our current balance?",
-  'chat.suggestion.inventory.check-stock.0': 'Which products are low on stock?',
+  'chat.suggestion.financial.get-revenue.2': "Compare this week's revenue to last week",
+  'chat.suggestion.financial.create-invoice.0': 'Create an invoice for a new client',
+  'chat.suggestion.financial.list-payables.0': 'Show me overdue bills',
+  'chat.suggestion.financial.list-payables.1': 'What bills are due this week?',
+  // Inventory
+  'chat.suggestion.inventory.low-stock.0': 'Which products are running low?',
+  'chat.suggestion.inventory.low-stock.1': 'Show me a stock summary',
+  'chat.suggestion.inventory.low-stock.2': 'What are my most used products?',
+  // CRM
+  'chat.suggestion.crm.count-customers.0': 'How many customers do we have?',
+  'chat.suggestion.crm.count-customers.1': 'Who are my top customers?',
+  'chat.suggestion.crm.list-leads.0': 'Show new leads from this week',
+  'chat.suggestion.crm.list-leads.1': 'Which leads need follow-up?',
+  'chat.suggestion.crm.list-leads.2': "What's our conversion rate?",
+  // Custom Forms
+  'chat.suggestion.custom_forms.list-templates.0': 'What forms do we have?',
+  'chat.suggestion.custom_forms.list-templates.1': 'Show me anamnesis templates',
+  'chat.suggestion.custom_forms.list-documents.0': "Show this client's documents",
   'common.create': 'Create',
   'common.feature': 'Feature',
   'common.message': 'Message...',
@@ -2000,6 +2025,8 @@ export const builtInLocales: Record<string, Record<string, string>> = {
     'layout.userMenu.darkMode': 'Modo escuro',
     'layout.userMenu.systemMode': 'Sistema',
     'layout.userMenu.language': 'Idioma',
+    'layout.userMenu.selectLocation': 'Selecionar local',
+    'layout.switchingLocation': 'Trocando de local…',
     'layout.userMenu.signOut': 'Sair',
 
     // layout.topbar
@@ -2276,18 +2303,41 @@ export const builtInLocales: Record<string, Record<string, string>> = {
     // chat
     'chat.defaultTitle': 'Assistente',
     'chat.tryAsking': 'Experimente perguntar',
+    'chat.fab.tryIt': 'Experimente',
     'chat.messagePlaceholder': 'Mensagem...',
     'chat.toolsAvailable': '{{count}} ferramentas disponíveis',
-    'chat.suggestion.agenda.get-bookings.0': 'O que tem na agenda hoje?',
-    'chat.suggestion.agenda.get-bookings.1': 'Mostre os agendamentos de amanhã',
-    'chat.suggestion.agenda.create-booking.0': 'Agende um corte para Sarah amanhã às 10h',
+    // Dashboard
+    'chat.suggestion.dashboard.kpi-summary.0': 'Como está meu negócio hoje?',
+    'chat.suggestion.dashboard.kpi-summary.1': 'Qual o faturamento de hoje?',
+    'chat.suggestion.dashboard.kpi-summary.2': 'Me dê um resumo do dia',
+    // Agenda
+    'chat.suggestion.agenda.list-appointments.0': 'O que tem na agenda hoje?',
+    'chat.suggestion.agenda.list-appointments.1': 'Mostre os agendamentos de amanhã',
+    'chat.suggestion.agenda.list-appointments.2': 'Quem tem mais atendimentos esta semana?',
+    'chat.suggestion.agenda.create-appointment.0': 'Agende um corte para Sarah amanhã às 10h',
     'chat.suggestion.agenda.check-availability.0': 'Quando Ana está disponível amanhã?',
     'chat.suggestion.agenda.check-availability.1': 'Encontre um horário de 90 minutos para Carlos esta semana',
+    // Financial
     'chat.suggestion.financial.get-revenue.0': 'Quanto faturamos hoje?',
     'chat.suggestion.financial.get-revenue.1': 'Qual o faturamento deste mês?',
-    'chat.suggestion.financial.create-invoice.0': 'Crie uma fatura para João, R$150',
-    'chat.suggestion.financial.get-balance.0': 'Qual nosso saldo atual?',
-    'chat.suggestion.inventory.check-stock.0': 'Quais produtos estão com estoque baixo?',
+    'chat.suggestion.financial.get-revenue.2': 'Compare o faturamento desta semana com a anterior',
+    'chat.suggestion.financial.create-invoice.0': 'Crie uma fatura para um novo cliente',
+    'chat.suggestion.financial.list-payables.0': 'Mostre as contas em atraso',
+    'chat.suggestion.financial.list-payables.1': 'Quais contas vencem esta semana?',
+    // Inventory
+    'chat.suggestion.inventory.low-stock.0': 'Quais produtos estão com estoque baixo?',
+    'chat.suggestion.inventory.low-stock.1': 'Mostre um resumo do estoque',
+    'chat.suggestion.inventory.low-stock.2': 'Quais são os produtos mais usados?',
+    // CRM
+    'chat.suggestion.crm.count-customers.0': 'Quantos clientes temos?',
+    'chat.suggestion.crm.count-customers.1': 'Quem são meus melhores clientes?',
+    'chat.suggestion.crm.list-leads.0': 'Mostre os leads novos desta semana',
+    'chat.suggestion.crm.list-leads.1': 'Quais leads precisam de follow-up?',
+    'chat.suggestion.crm.list-leads.2': 'Qual nossa taxa de conversão?',
+    // Custom Forms
+    'chat.suggestion.custom_forms.list-templates.0': 'Quais formulários temos?',
+    'chat.suggestion.custom_forms.list-templates.1': 'Mostre os modelos de anamnese',
+    'chat.suggestion.custom_forms.list-documents.0': 'Mostre os documentos deste cliente',
 
     // billing (additional)
     'billing.invoice.amount': 'Valor',

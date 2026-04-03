@@ -1,12 +1,19 @@
 import * as React from 'react'
 import * as Avatar from '@radix-ui/react-avatar'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { LogOut, User, Settings, CreditCard, HelpCircle, Moon, Sun, Monitor, ChevronRight, Check } from 'lucide-react'
+import { LogOut, User, Settings, CreditCard, HelpCircle, Moon, Sun, Monitor, ChevronRight, Check, MapPin } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useThemeStore } from '../../stores/theme.store'
 import { useTranslation } from '../../hooks/useTranslation'
 import { useLocaleStore } from '../../stores/locale.store'
 import { SUPPORTED_LOCALES, getLocaleOption } from '../../lib/locale-config'
+import type { Location } from '../../types/tenant'
+
+interface LocationPickerProps {
+  locations: Location[]
+  currentLocationId: string | null
+  onSelect: (location: Location) => void
+}
 
 interface UserMenuUser {
   fullName: string
@@ -21,6 +28,8 @@ interface UserMenuProps {
   onSettings?: () => void
   onBilling?: () => void
   extraItems?: { label: string; icon?: React.ReactNode; onClick: () => void }[]
+  /** Location picker — shown when user has access to multiple locations */
+  locationPicker?: LocationPickerProps
   className?: string
   /** When true, shows only avatar (used in collapsed sidebar) */
   collapsed?: boolean
@@ -46,6 +55,7 @@ export function UserMenu({
   onSettings,
   onBilling,
   extraItems,
+  locationPicker,
   className,
   collapsed,
   side,
@@ -73,7 +83,7 @@ export function UserMenu({
             )}
             aria-label="User menu"
           >
-            <Avatar.Root className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sidebar-accent border border-sidebar-border/30">
+            <Avatar.Root className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sidebar border border-sidebar-border/30">
               {user.avatarUrl && (
                 <Avatar.Image
                   src={user.avatarUrl}
@@ -153,6 +163,44 @@ export function UserMenu({
           )}
 
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
+
+          {/* Location Picker Submenu */}
+          {locationPicker && locationPicker.locations.length > 1 && (() => {
+            const currentLoc = locationPicker.locations.find((l) => l.id === locationPicker.currentLocationId)
+            return (
+              <DropdownMenu.Sub>
+                <DropdownMenu.SubTrigger className="flex cursor-pointer items-center justify-between rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted data-[state=open]:bg-muted">
+                  <span className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    {currentLoc?.name ?? t('layout.userMenu.selectLocation')}
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                </DropdownMenu.SubTrigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.SubContent
+                    sideOffset={4}
+                    className="z-50 min-w-[200px] max-w-[280px] rounded-md border border-border bg-card p-1 shadow-md animate-in fade-in-0 zoom-in-95"
+                  >
+                    {locationPicker.locations.map((loc) => (
+                      <DropdownMenu.Item
+                        key={loc.id}
+                        className="flex cursor-pointer items-center justify-between rounded-sm px-3 py-2 text-sm outline-none hover:bg-muted focus:bg-muted"
+                        onSelect={() => locationPicker.onSelect(loc)}
+                      >
+                        <div className="flex flex-col">
+                          <span>{loc.name}</span>
+                          {loc.city && (
+                            <span className="text-[11px] text-muted-foreground">{[loc.city, loc.state].filter(Boolean).join(', ')}</span>
+                          )}
+                        </div>
+                        {locationPicker.currentLocationId === loc.id && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                      </DropdownMenu.Item>
+                    ))}
+                  </DropdownMenu.SubContent>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Sub>
+            )
+          })()}
 
           {/* Theme Submenu */}
           <DropdownMenu.Sub>

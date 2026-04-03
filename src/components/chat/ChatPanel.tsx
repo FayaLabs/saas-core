@@ -61,8 +61,8 @@ export function ChatPanel({
         'fixed z-40 flex flex-col overflow-hidden bg-card shadow-2xl',
         // Mobile: below header, above bottom nav
         'inset-x-0 top-12 bottom-16 rounded-none border-0',
-        // Desktop: floating card
-        'md:inset-auto md:bottom-16 md:right-4 md:w-[22rem] md:max-h-[min(70vh,520px)] md:rounded-2xl md:border md:border-border/50',
+        // Desktop: floating card — sits just above the FAB, touching it
+        'md:inset-auto md:bottom-[3.75rem] md:right-4 md:w-[22rem] md:max-h-[min(70vh,520px)] md:rounded-2xl md:rounded-br-none md:border md:border-border/50',
         'animate-in slide-in-from-bottom-2 fade-in-0 duration-150',
         className
       )}

@@ -56,3 +56,4 @@ export { I18nProvider, useI18nConfig, defaultTranslations, builtInLocales } from
 export { SUPPORTED_LOCALES, getLocaleOption } from './locale-config'
 export type { LocaleOption } from './locale-config'
 export { createClientOrdersProvider } from './create-client-orders-provider'
+export { useLocationStore } from '../stores/location.store'

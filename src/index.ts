@@ -30,6 +30,8 @@ import { PermissionGate } from './components/organization/PermissionGate'
 import { TeamTab } from './components/organization/TeamTab'
 import { PermissionProfilesTab } from './components/organization/PermissionProfilesTab'
 import { ConnectedLocationsOverview } from './components/settings/ConnectedLocationsOverview'
+import { LocationsCrudPage } from './components/settings/LocationsCrudPage'
+import { LocationSwitchOverlay } from './components/layout/LocationSwitchOverlay'
 import { ConnectedHolidaysSettings } from './components/settings/ConnectedHolidaysSettings'
 import { ConnectedFieldRulesSettings } from './components/settings/ConnectedFieldRulesSettings'
 import { Users, ShieldCheck, MapPin, CalendarOff, SlidersHorizontal, Puzzle } from 'lucide-react'
@@ -462,7 +464,7 @@ function buildSettingsTabs(
     settingsTabs.push(
       { id: 'team', label: t('settings.team'), icon: React.createElement(Users, { className: 'h-4 w-4' }), component: React.createElement(TeamTab) },
       { id: 'permissions', label: t('settings.permissions'), icon: React.createElement(ShieldCheck, { className: 'h-4 w-4' }), component: React.createElement(PermissionProfilesTab) },
-      { id: 'locations', label: t('settings.locations'), icon: React.createElement(MapPin, { className: 'h-4 w-4' }), component: React.createElement(ConnectedLocationsOverview) },
+      { id: 'locations', label: t('settings.locations'), icon: React.createElement(MapPin, { className: 'h-4 w-4' }), component: React.createElement(LocationsCrudPage) },
       { id: 'field-rules', label: t('settings.fieldRules'), icon: React.createElement(SlidersHorizontal, { className: 'h-4 w-4' }), component: React.createElement(ConnectedFieldRulesSettings) },
     )
   }
@@ -760,11 +762,13 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
         ),
         // Org initializer
         orgAdapter ? React.createElement(OrgInitializer, { verticalId: config.verticalId }) : null,
+        // Location switch overlay
+        React.createElement(LocationSwitchOverlay),
         // Chat
         config.chat?.enabled !== false && config.chat
           ? React.createElement(React.Fragment, null,
-              React.createElement(ChatFab),
-              React.createElement(ChatPanel, { title: config.chat.title }),
+              React.createElement(ChatFab, { apiEndpoint: config.chat.apiEndpoint, systemPrompt: config.chat.systemPrompt }),
+              React.createElement(ChatPanel, { title: config.chat.title, apiEndpoint: config.chat.apiEndpoint, systemPrompt: config.chat.systemPrompt }),
             )
           : null,
         React.createElement(WidgetSlot, {

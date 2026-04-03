@@ -50,6 +50,8 @@ function detectActivePluginId(runtime: ReturnType<typeof usePluginRuntimeOptiona
 export function useAITools(): {
   tools: PluginAITool[]
   suggestions: ResolvedSuggestion[]
+  /** Suggestions from the currently active plugin only (empty on non-plugin pages) */
+  contextualSuggestions: ResolvedSuggestion[]
   toolGroups: ResolvedToolGroup[]
 } {
   const runtime = usePluginRuntimeOptional()
@@ -100,11 +102,13 @@ export function useAITools(): {
     }
 
     // Prioritize suggestions from the active plugin's context
+    const contextualSuggestions = activePluginId
+      ? allSuggestions.filter((s) => s.toolId.startsWith(`${activePluginId}.`))
+      : []
     let suggestions: ResolvedSuggestion[]
     if (activePluginId) {
-      const contextual = allSuggestions.filter((s) => s.toolId.startsWith(`${activePluginId}.`))
       const others = allSuggestions.filter((s) => !s.toolId.startsWith(`${activePluginId}.`))
-      suggestions = [...contextual, ...others]
+      suggestions = [...contextualSuggestions, ...others]
     } else {
       suggestions = allSuggestions
     }
@@ -130,6 +134,6 @@ export function useAITools(): {
       toolGroups.push({ category, tools: groupTools })
     }
 
-    return { tools, suggestions, toolGroups }
+    return { tools, suggestions, contextualSuggestions, toolGroups }
   }, [runtime])
 }

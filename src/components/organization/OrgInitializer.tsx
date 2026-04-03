@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Loader2, WifiOff, RefreshCw } from 'lucide-react'
 import { useAuthStore } from '../../stores/auth.store'
 import { useOrganizationStore, getPersistedOrgId } from '../../stores/organization.store'
+import { useLocationStore } from '../../stores/location.store'
 import { usePermissionsStore } from '../../stores/permissions.store'
 import { useOrgAdapterOptional } from '../../lib/org-context'
 import { TenantOnboarding } from './TenantOnboarding'
@@ -64,6 +65,14 @@ export function OrgInitializer({ verticalId }: OrgInitializerProps) {
           const profile = profiles.find((p) => p.id === myMembership.profileId)
           setCurrentProfile(profile ?? null)
         }
+
+        // Load locations for location picker
+        try {
+          const locations = await adapter!.listLocations(org.id)
+          if (!cancelled) useLocationStore.getState().setLocations(locations)
+        } catch {
+          // Locations are optional — don't block init
+        }
       } catch (err) {
         console.error('[saas-core] OrgInitializer error:', err)
         if (!cancelled) setConnectionError(true)
@@ -113,6 +122,13 @@ export function OrgInitializer({ verticalId }: OrgInitializerProps) {
           if (myMembership) {
             const profile = profiles.find((p) => p.id === myMembership.profileId)
             setCurrentProfile(profile ?? null)
+          }
+          // Load locations for location picker
+          try {
+            const locations = await adapter.listLocations(org.id)
+            useLocationStore.getState().setLocations(locations)
+          } catch {
+            // Locations are optional
           }
         } catch (err) {
           console.error('[saas-core] OrgInitializer retry error:', err)

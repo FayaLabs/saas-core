@@ -6,6 +6,7 @@ import { UserMenu } from './UserMenu'
 import { NotificationBell } from '../notifications/NotificationBell'
 import { NotificationInbox } from '../notifications/NotificationInbox'
 import { useNotificationStore } from '../../stores/notifications.store'
+import { useLocationStore } from '../../stores/location.store'
 import { Menu, Search } from 'lucide-react'
 import * as Popover from '@radix-ui/react-popover'
 
@@ -64,6 +65,16 @@ function TopbarActions({
   showSearch?: boolean
 }) {
   const { notifications, unreadCount, markRead, markAllRead } = useNotificationStore()
+  const locations = useLocationStore((s) => s.locations)
+  const currentLocation = useLocationStore((s) => s.currentLocation)
+  const switchLocation = useLocationStore((s) => s.switchLocation)
+
+  const activeLocations = locations.filter((l) => l.isActive)
+  const locationPickerProp = activeLocations.length > 1 ? {
+    locations: activeLocations,
+    currentLocationId: currentLocation?.id ?? null,
+    onSelect: switchLocation,
+  } : undefined
 
   return (
     <div className="flex items-center gap-1">
@@ -106,6 +117,7 @@ function TopbarActions({
           onProfile={onProfile}
           onSettings={onSettings}
           extraItems={userMenuExtras}
+          locationPicker={locationPickerProp}
           className="text-sidebar-foreground/70 hover:bg-sidebar/30 hover:text-sidebar-foreground"
         />
       )}
