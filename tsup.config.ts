@@ -16,6 +16,8 @@ export default defineConfig({
     'plugins/agenda/index': 'src/plugins/agenda/index.ts',
     'plugins/reports/index': 'src/plugins/reports/index.ts',
     'plugins/custom_forms/index': 'src/plugins/custom_forms/index.ts',
+    'plugins/dashboard/index': 'src/plugins/dashboard/index.ts',
+    'plugins/tasks/index': 'src/plugins/tasks/index.ts',
   },
   format: ['esm', 'cjs'],
   dts: false,
