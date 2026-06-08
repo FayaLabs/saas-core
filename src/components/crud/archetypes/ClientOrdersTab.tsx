@@ -21,15 +21,15 @@ interface StageDef {
 
 const STAGE_CONFIG: Record<string, StageDef> = {
   draft:     { icon: CircleDashed, color: 'bg-muted text-muted-foreground', labelKey: 'crud.orders.stage.draft' },
-  quoted:    { icon: FileText, color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', labelKey: 'crud.orders.stage.quoted' },
-  booked:    { icon: CalendarDays, color: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400', labelKey: 'crud.orders.stage.booked' },
-  invoiced:  { icon: FileText, color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400', labelKey: 'crud.orders.stage.invoiced' },
-  paid:      { icon: CircleCheckBig, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', labelKey: 'crud.orders.stage.paid' },
-  partial:   { icon: CircleEllipsis, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400', labelKey: 'crud.orders.stage.partial' },
-  overdue:   { icon: CircleAlert, color: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400', labelKey: 'crud.orders.stage.overdue' },
+  quoted:    { icon: FileText, color: 'bg-info-soft text-info-soft-foreground', labelKey: 'crud.orders.stage.quoted' },
+  booked:    { icon: CalendarDays, color: 'bg-magic-soft text-magic-soft-foreground', labelKey: 'crud.orders.stage.booked' },
+  invoiced:  { icon: FileText, color: 'bg-warning-soft text-warning-soft-foreground', labelKey: 'crud.orders.stage.invoiced' },
+  paid:      { icon: CircleCheckBig, color: 'bg-success-soft text-success-soft-foreground', labelKey: 'crud.orders.stage.paid' },
+  partial:   { icon: CircleEllipsis, color: 'bg-warning-soft text-warning-soft-foreground', labelKey: 'crud.orders.stage.partial' },
+  overdue:   { icon: CircleAlert, color: 'bg-destructive-soft text-destructive-soft-foreground', labelKey: 'crud.orders.stage.overdue' },
   cancelled: { icon: Ban, color: 'bg-muted text-muted-foreground', labelKey: 'crud.orders.stage.cancelled' },
-  no_show:   { icon: UserX, color: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400', labelKey: 'crud.orders.stage.no_show' },
-  completed: { icon: CircleCheckBig, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', labelKey: 'crud.orders.stage.completed' },
+  no_show:   { icon: UserX, color: 'bg-destructive-soft text-destructive-soft-foreground', labelKey: 'crud.orders.stage.no_show' },
+  completed: { icon: CircleCheckBig, color: 'bg-success-soft text-success-soft-foreground', labelKey: 'crud.orders.stage.completed' },
 }
 
 // ---------------------------------------------------------------------------
@@ -57,7 +57,7 @@ function useColumns(
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onBookingClick(doc.id) }}
-              className="inline-flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 hover:underline whitespace-nowrap"
+              className="inline-flex items-center gap-1 text-xs text-magic hover:underline whitespace-nowrap"
             >
               <CalendarDays className="h-3 w-3" />
               {dateStr} {time}

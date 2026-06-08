@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Plus, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { Button } from '../ui/button'
 import { ICON_MAP } from '../layout/Topbar'
 import type { PluginQuickAction } from '../../types/plugins'
 
@@ -28,19 +29,15 @@ export function QuickActionsButton({ actions, className }: {
 
   return (
     <div ref={ref} className={cn('relative', className)}>
-      <button
+      <Button
+        variant="outline"
+        size="sm"
         onClick={() => setOpen(!open)}
-        className={cn(
-          'inline-flex items-center gap-1.5 rounded-lg border px-3 h-8 text-xs font-medium transition-all duration-150',
-          'active:scale-90',
-          open
-            ? 'bg-muted text-foreground'
-            : 'text-foreground hover:bg-muted/50',
-        )}
+        className={cn(open && 'bg-muted')}
       >
         <Plus className={cn('h-3.5 w-3.5 transition-transform duration-200', open && 'rotate-45')} />
         <span>New</span>
-      </button>
+      </Button>
 
       {open && (
         <div className="absolute top-full right-0 z-50 mt-2 w-64 rounded-xl border bg-popover shadow-lg overflow-hidden animate-in fade-in-0 zoom-in-95 origin-top-right">

@@ -69,7 +69,7 @@ export function SignupForm({
       )}
 
       {success && (
-        <div className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700">
+        <div className="rounded-md border border-success/20 bg-success/10 px-4 py-3 text-sm text-success">
           {success}
         </div>
       )}
@@ -161,7 +161,7 @@ export function SignupForm({
       <button
         type="submit"
         disabled={loading}
-        className="inline-flex items-center justify-center h-10 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+        className="inline-flex items-center justify-center h-10 px-4 py-2 rounded-md bg-primary border border-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors disabled:opacity-50 disabled:pointer-events-none"
       >
         {loading ? t('auth.signup.creating') : t('auth.signup.title')}
       </button>

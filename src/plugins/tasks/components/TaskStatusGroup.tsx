@@ -5,10 +5,10 @@ import { TaskCard } from './TaskCard'
 import type { Task, TaskStatus } from '../types'
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
-  todo: 'bg-slate-400',
-  in_progress: 'bg-blue-500',
-  done: 'bg-green-500',
-  cancelled: 'bg-gray-400',
+  todo: 'bg-muted-foreground',
+  in_progress: 'bg-info',
+  done: 'bg-success',
+  cancelled: 'bg-muted-foreground/60',
 }
 
 export function TaskStatusGroup({ status, tasks }: { status: TaskStatus; tasks: Task[] }) {

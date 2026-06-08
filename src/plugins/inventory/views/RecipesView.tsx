@@ -8,7 +8,7 @@ function RecipeSkeleton() {
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {[1, 2, 3, 4, 5, 6].map((i) => (
-        <div key={i} className="rounded-lg border bg-card p-4 space-y-3">
+        <div key={i} className="rounded-lg border bg-card shadow-sm p-4 space-y-3">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-muted/40 animate-pulse" />
             <div className="flex-1 space-y-1.5">
@@ -40,7 +40,7 @@ export function RecipesView({ onNew, onView }: { onNew?: () => void; onView?: (i
         title={t('inventory.recipes.title')}
         subtitle={t('inventory.recipes.productionFormulas', { count: String(recipes.length) })}
         actions={onNew && (
-          <button onClick={onNew} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+          <button onClick={onNew} className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors">
             <Plus className="h-3.5 w-3.5" /> {t('inventory.recipes.newRecipe')}
           </button>
         )}

@@ -2,10 +2,7 @@ import * as React from 'react'
 import { createPortal } from 'react-dom'
 import { AlertTriangle, Info, CheckCircle2, XCircle } from 'lucide-react'
 import { cn } from '../../lib/cn'
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import { Button } from './button'
 
 type ConfirmVariant = 'default' | 'destructive' | 'warning' | 'success'
 
@@ -21,40 +18,40 @@ interface ConfirmDialogProps {
   loading?: boolean
 }
 
-// ---------------------------------------------------------------------------
-// Variant config
-// ---------------------------------------------------------------------------
-
-const VARIANT_CONFIG: Record<ConfirmVariant, { icon: React.ElementType; iconBg: string; iconColor: string; buttonClass: string }> = {
+const VARIANT_CONFIG: Record<
+  ConfirmVariant,
+  {
+    icon: React.ElementType
+    iconBg: string
+    iconColor: string
+    buttonVariant: 'default' | 'destructive'
+  }
+> = {
   default: {
     icon: Info,
-    iconBg: 'bg-primary/10',
-    iconColor: 'text-primary',
-    buttonClass: 'bg-primary text-primary-foreground hover:bg-primary/90',
+    iconBg: 'bg-info/10',
+    iconColor: 'text-info',
+    buttonVariant: 'default',
   },
   destructive: {
     icon: XCircle,
-    iconBg: 'bg-red-500/10',
-    iconColor: 'text-red-500',
-    buttonClass: 'bg-red-500 text-white hover:bg-red-600',
+    iconBg: 'bg-destructive/10',
+    iconColor: 'text-destructive',
+    buttonVariant: 'destructive',
   },
   warning: {
     icon: AlertTriangle,
-    iconBg: 'bg-amber-500/10',
-    iconColor: 'text-amber-500',
-    buttonClass: 'bg-amber-500 text-white hover:bg-amber-600',
+    iconBg: 'bg-warning/10',
+    iconColor: 'text-warning',
+    buttonVariant: 'destructive',
   },
   success: {
     icon: CheckCircle2,
-    iconBg: 'bg-emerald-500/10',
-    iconColor: 'text-emerald-500',
-    buttonClass: 'bg-emerald-500 text-white hover:bg-emerald-600',
+    iconBg: 'bg-success/10',
+    iconColor: 'text-success',
+    buttonVariant: 'default',
   },
 }
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 export function ConfirmDialog({
   open,
@@ -70,7 +67,6 @@ export function ConfirmDialog({
   const config = VARIANT_CONFIG[variant]
   const Icon = config.icon
 
-  // Close on Escape
   React.useEffect(() => {
     if (!open) return
     function handleKey(e: KeyboardEvent) {
@@ -84,22 +80,19 @@ export function ConfirmDialog({
 
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-[2px] animate-fade-in"
         onClick={onCancel}
       />
 
-      {/* Dialog */}
       <div
-        className="relative z-10 w-full max-w-sm mx-4 rounded-2xl border border-border/50 bg-card shadow-2xl animate-zoom-in"
+        className="relative z-10 w-full max-w-sm mx-4 rounded-modal border border-border bg-card shadow-lg animate-zoom-in"
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
         aria-describedby={description ? 'confirm-desc' : undefined}
       >
         <div className="p-6">
-          {/* Icon + text */}
           <div className="flex gap-4">
             <div className={cn('flex h-10 w-10 items-center justify-center rounded-full shrink-0', config.iconBg)}>
               <Icon className={cn('h-5 w-5', config.iconColor)} />
@@ -116,26 +109,17 @@ export function ConfirmDialog({
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex justify-end gap-2 mt-5">
-            <button
-              onClick={onCancel}
-              disabled={loading}
-              className="rounded-lg border px-4 py-2 text-xs font-medium hover:bg-muted/50 transition-colors disabled:opacity-50"
-            >
+            <Button variant="outline" size="sm" onClick={onCancel} disabled={loading}>
               {cancelLabel}
-            </button>
-            <button
-              onClick={onConfirm}
-              disabled={loading}
-              className={cn('rounded-lg px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50', config.buttonClass)}
-            >
+            </Button>
+            <Button variant={config.buttonVariant} size="sm" onClick={onConfirm} disabled={loading}>
               {loading ? 'Processing...' : confirmLabel}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   )
 }

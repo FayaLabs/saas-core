@@ -163,7 +163,7 @@ export function DashboardSettingsTab() {
           type="button"
           onClick={handleSave}
           disabled={!dirty}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary border border-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset disabled:opacity-50 transition-colors"
         >
           {t('common.save') || 'Save'}
         </button>

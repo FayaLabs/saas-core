@@ -9,10 +9,10 @@ import { useTranslation } from '../../../hooks/useTranslation'
 import type { TransactionDirection, InvoiceStatus, Invoice } from '../types'
 
 const STATUS_OPTIONS: { value: InvoiceStatus; labelKey: string; color: string; icon: React.ElementType }[] = [
-  { value: 'open', labelKey: 'financial.invoice.statusOpen', color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', icon: CircleDashed },
-  { value: 'partial', labelKey: 'financial.invoice.statusPartial', color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400', icon: CircleEllipsis },
-  { value: 'paid', labelKey: 'financial.invoice.statusPaid', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', icon: CircleCheckBig },
-  { value: 'overdue', labelKey: 'financial.invoice.statusOverdue', color: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400', icon: CircleAlert },
+  { value: 'open', labelKey: 'financial.invoice.statusOpen', color: 'bg-info-soft text-info-soft-foreground', icon: CircleDashed },
+  { value: 'partial', labelKey: 'financial.invoice.statusPartial', color: 'bg-warning-soft text-warning-soft-foreground', icon: CircleEllipsis },
+  { value: 'paid', labelKey: 'financial.invoice.statusPaid', color: 'bg-success-soft text-success-soft-foreground', icon: CircleCheckBig },
+  { value: 'overdue', labelKey: 'financial.invoice.statusOverdue', color: 'bg-destructive-soft text-destructive-soft-foreground', icon: CircleAlert },
   { value: 'cancelled', labelKey: 'financial.invoice.statusCancelled', color: 'bg-muted text-muted-foreground', icon: Ban },
 ]
 
@@ -163,12 +163,12 @@ export function InvoiceListView({ direction, onNew, onEdit }: {
           <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">{receivedLabel}</span>
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(summary.paidAmount, currency)}</span>
+            <span className="font-semibold text-success">{formatCurrency(summary.paidAmount, currency)}</span>
           </div>
           <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">{pendingLabel}</span>
-            <span className="font-semibold text-amber-600 dark:text-amber-400">{formatCurrency(summary.openAmount, currency)}</span>
+            <span className="font-semibold text-warning">{formatCurrency(summary.openAmount, currency)}</span>
           </div>
         </div>
       )}

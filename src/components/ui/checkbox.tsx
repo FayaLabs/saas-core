@@ -15,8 +15,8 @@ interface CheckboxProps {
 
 const COLOR_CLASSES: Record<CheckboxColor, string> = {
   primary: 'border-primary bg-primary text-primary-foreground',
-  success: 'border-emerald-600 bg-emerald-600 text-white dark:border-emerald-500 dark:bg-emerald-500',
-  warning: 'border-amber-500 bg-amber-500 text-white',
+  success: 'border-success bg-success text-white dark:border-success dark:bg-success',
+  warning: 'border-warning bg-warning text-white',
   destructive: 'border-destructive bg-destructive text-destructive-foreground',
 }
 

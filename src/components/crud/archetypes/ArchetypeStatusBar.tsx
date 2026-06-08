@@ -23,7 +23,7 @@ export function ArchetypeStatusBar({ isActive, status, onActiveChange, onStatusC
           onClick={() => onActiveChange(!isActive)}
           className="flex items-center gap-2 text-sm"
         >
-          <div className={`h-2.5 w-2.5 rounded-full transition-colors ${isActive ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
+          <div className={`h-2.5 w-2.5 rounded-full transition-colors ${isActive ? 'bg-success' : 'bg-muted-foreground/40'}`} />
           <span className={`font-medium ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
             {isActive ? 'Active' : 'Inactive'}
           </span>

@@ -4,9 +4,9 @@ import type { TaskPriority } from '../types'
 
 const PRIORITY_CONFIG: Record<TaskPriority, { color: string; bg: string; icon: React.ComponentType<{ className?: string }> }> = {
   low: { color: 'text-muted-foreground', bg: 'bg-muted', icon: ArrowDown },
-  medium: { color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30', icon: Minus },
-  high: { color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/30', icon: ArrowUp },
-  urgent: { color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-950/30', icon: AlertTriangle },
+  medium: { color: 'text-info-soft-foreground', bg: 'bg-info-soft', icon: Minus },
+  high: { color: 'text-warning-soft-foreground', bg: 'bg-warning-soft', icon: ArrowUp },
+  urgent: { color: 'text-destructive-soft-foreground', bg: 'bg-destructive-soft', icon: AlertTriangle },
 }
 
 export function TaskPriorityBadge({ priority, showLabel }: { priority: TaskPriority; showLabel?: boolean }) {

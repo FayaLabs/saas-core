@@ -70,7 +70,7 @@ export function ChatPanel({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/40 px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <div className="h-1.5 w-1.5 rounded-full bg-success" />
           <span className="text-xs font-semibold text-foreground">{title}</span>
         </div>
         {totalTools > 0 && (

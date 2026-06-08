@@ -11,7 +11,7 @@ function StatCard({ label, value, subtitle, icon: Icon, color }: {
   label: string; value: string; subtitle: string; icon: React.ElementType; color: string
 }) {
   return (
-    <div className="rounded-lg border bg-card p-5">
+    <div className="rounded-lg border bg-card shadow-sm p-5">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm text-muted-foreground">{label}</span>
         <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${color}`}>
@@ -35,7 +35,7 @@ function SalesFunnel() {
 
   if (funnel.length === 0) {
     return (
-      <div className="rounded-lg border bg-card p-5">
+      <div className="rounded-lg border bg-card shadow-sm p-5">
         <h3 className="text-sm font-semibold mb-4">{t('crm.dashboard.pipelineOverview')}</h3>
         <div className="flex flex-col items-center justify-center py-10">
           <BarChart3 className="h-8 w-8 text-muted-foreground/20 mb-2" />
@@ -49,7 +49,7 @@ function SalesFunnel() {
   const maxCount = Math.max(...funnel.map((s) => s.dealCount), 1)
 
   return (
-    <div className="rounded-lg border bg-card p-5">
+    <div className="rounded-lg border bg-card shadow-sm p-5">
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-sm font-semibold">{t('crm.dashboard.pipelineOverview')}</h3>
         <span className="text-[10px] text-muted-foreground">{t('crm.dashboard.totalDeals', { count: String(funnel.reduce((s, f) => s + f.dealCount, 0)) })}</span>
@@ -98,15 +98,15 @@ function PerformanceMetrics() {
 
   const metrics = [
     { label: t('crm.dashboard.dealsWon'), value: String(summary?.wonDealsThisMonth ?? 0) },
-    { label: t('crm.dashboard.revenueWon'), value: formatCurrency(summary?.wonDealsValueThisMonth ?? 0, currency), color: 'text-emerald-600 dark:text-emerald-400' },
+    { label: t('crm.dashboard.revenueWon'), value: formatCurrency(summary?.wonDealsValueThisMonth ?? 0, currency), color: 'text-success' },
     { label: t('crm.dashboard.avgDealValue'), value: formatCurrency(summary?.averageDealValue ?? 0, currency) },
     { label: t('crm.dashboard.conversionRateLabel'), value: `${(summary?.conversionRate ?? 0).toFixed(1)}%` },
   ]
 
   return (
-    <div className="rounded-lg border bg-card p-5">
+    <div className="rounded-lg border bg-card shadow-sm p-5">
       <div className="flex items-center gap-2 mb-4">
-        <Trophy className="h-4 w-4 text-amber-500" />
+        <Trophy className="h-4 w-4 text-warning" />
         <h3 className="text-sm font-semibold">{t('crm.dashboard.performance')}</h3>
       </div>
       <div className="space-y-3">
@@ -132,7 +132,7 @@ function PipelineValueBar() {
   const totalValue = funnel.reduce((s, f) => s + f.totalValue, 0)
 
   return (
-    <div className="rounded-lg border bg-card p-5">
+    <div className="rounded-lg border bg-card shadow-sm p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Target className="h-4 w-4 text-muted-foreground" />
@@ -186,15 +186,15 @@ function RecentLeads() {
   useEffect(() => { fetchLeads({ pageSize: 5 }) }, [])
 
   const STATUS_COLORS: Record<string, string> = {
-    new: 'bg-blue-500',
-    contacted: 'bg-violet-500',
-    qualified: 'bg-emerald-500',
-    converted: 'bg-amber-500',
-    lost: 'bg-red-500',
+    new: 'bg-info',
+    contacted: 'bg-magic',
+    qualified: 'bg-success',
+    converted: 'bg-warning',
+    lost: 'bg-destructive',
   }
 
   return (
-    <div className="rounded-lg border bg-card p-5">
+    <div className="rounded-lg border bg-card shadow-sm p-5">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold">{t('crm.dashboard.recentLeads')}</h3>
         <span className="text-[10px] text-muted-foreground">{t('crm.dashboard.leadsCount', { count: String(leads.length) })}</span>
@@ -237,15 +237,15 @@ function RecentQuotes() {
   useEffect(() => { fetchQuotes({ pageSize: 5 }) }, [])
 
   const STATUS_COLORS: Record<string, string> = {
-    draft: 'bg-gray-400',
-    sent: 'bg-blue-500',
-    approved: 'bg-emerald-500',
-    rejected: 'bg-red-500',
-    expired: 'bg-amber-500',
+    draft: 'bg-muted-foreground',
+    sent: 'bg-info',
+    approved: 'bg-success',
+    rejected: 'bg-destructive',
+    expired: 'bg-warning',
   }
 
   return (
-    <div className="rounded-lg border bg-card p-5">
+    <div className="rounded-lg border bg-card shadow-sm p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-muted-foreground" />
@@ -309,21 +309,21 @@ export function DashboardView() {
           value={String(summary?.totalLeads ?? 0)}
           subtitle={t('crm.dashboard.newThisMonth', { count: String(summary?.newLeadsThisMonth ?? 0) })}
           icon={Users}
-          color="bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400"
+          color="bg-info/15 text-info dark:bg-info/20"
         />
         <StatCard
           label={t('crm.dashboard.openPipeline')}
           value={formatCurrency(summary?.openDealsValue ?? 0, currency)}
           subtitle={t('crm.dashboard.activeDeals', { count: String(summary?.totalDeals ?? 0) })}
           icon={Target}
-          color="bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400"
+          color="bg-magic/15 text-magic dark:bg-magic/20"
         />
         <StatCard
           label={t('crm.dashboard.conversionRate')}
           value={`${(summary?.conversionRate ?? 0).toFixed(1)}%`}
           subtitle={t('crm.dashboard.leadToDeal')}
           icon={TrendingUp}
-          color="bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+          color="bg-success-soft text-success-soft-foreground"
         />
         <StatCard
           label={t('crm.dashboard.pendingTasks')}
@@ -331,8 +331,8 @@ export function DashboardView() {
           subtitle={t('crm.dashboard.overdueCount', { count: String(summary?.overdueActivities ?? 0) })}
           icon={summary?.overdueActivities ? AlertTriangle : Clock}
           color={summary?.overdueActivities
-            ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400'
-            : 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'}
+            ? 'bg-destructive-soft text-destructive-soft-foreground'
+            : 'bg-warning/15 text-warning dark:bg-warning/20'}
         />
       </div>
 

@@ -25,7 +25,7 @@ export function ReportPagination({ page, pageSize, total, onPageChange, onPageSi
         <select
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
-          className="h-8 rounded-md border bg-background px-2 text-sm"
+          className="h-8 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 text-sm"
         >
           {[25, 50, 100].map((size) => (
             <option key={size} value={size}>{size} / page</option>

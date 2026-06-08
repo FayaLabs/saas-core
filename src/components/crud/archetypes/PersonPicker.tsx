@@ -160,7 +160,7 @@ export function PersonPicker({
         <button
           type="button"
           onClick={() => { setOpen(true); setQuery(''); setTimeout(() => inputRef.current?.focus(), 50) }}
-          className="flex items-center gap-3 w-full rounded-lg border px-3 py-2.5 text-left hover:bg-muted/30 transition-colors"
+          className="flex items-center gap-3 w-full rounded-lg border px-3 py-2.5 text-left hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors"
         >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <User className="h-4 w-4" />

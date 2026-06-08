@@ -718,7 +718,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
                   value={newExNotes}
                   onChange={(e) => setNewExNotes(e.target.value)}
                   placeholder={t('schedule.editor.notesPlaceholder')}
-                  className="block w-full rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                  className="block w-full rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                 />
               </div>
             </ModalBody>
@@ -749,7 +749,7 @@ export function ScheduleEditor({ assigneeId }: ScheduleEditorProps) {
                     <div className="flex items-center gap-3 min-w-0">
                       {/* Type indicator dot */}
                       <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${
-                        ex.type === 'unavailable' ? 'bg-destructive' : 'bg-emerald-500'
+                        ex.type === 'unavailable' ? 'bg-destructive' : 'bg-success'
                       }`} />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">

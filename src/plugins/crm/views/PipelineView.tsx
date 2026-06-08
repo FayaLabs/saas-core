@@ -23,7 +23,7 @@ function PipelineSkeleton() {
           </div>
           <div className="space-y-2">
             {Array.from({ length: col <= 2 ? 2 : 1 }).map((_, i) => (
-              <div key={i} className="rounded-lg border bg-card p-3 space-y-2">
+              <div key={i} className="rounded-lg border bg-card shadow-sm p-3 space-y-2">
                 <div className="h-4 w-3/4 rounded bg-muted/40 animate-pulse" />
                 <div className="h-3 w-1/2 rounded bg-muted/30 animate-pulse" />
                 <div className="flex items-center justify-between pt-1">

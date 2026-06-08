@@ -15,6 +15,7 @@ import { PersonLink } from '../../../components/shared/PersonLink'
 import { BookingPaymentPanel } from './BookingPaymentPanel'
 import { CrudDetailPage } from '../../../components/crud/CrudDetailPage'
 import { CrudFormPage } from '../../../components/crud/CrudFormPage'
+import { Button } from '../../../components/ui/button'
 import { useAgendaConfig, useAgendaProvider, useAgendaStore } from '../AgendaContext'
 import { useTranslation } from '../../../hooks/useTranslation'
 import { useLocaleStore } from '../../../stores/locale.store'
@@ -581,12 +582,12 @@ export function AppointmentModal({ open, mode, bookingId, prefill, initialTab, o
                       <tab.icon className="h-3.5 w-3.5" />
                       {tab.label}
                       {tab.id === 'financial' && editPaymentStatus === 'paid' && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-success" />
                       )}
                       {tab.id === 'financial' && editPaymentStatus !== 'paid' && (
                         (editPaymentStatus !== 'none' || (totalPrice > 0 && date <= new Date().toISOString().slice(0, 10)))
                       ) && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-warning" />
                       )}
                       {isActive && (
                         <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-foreground" />
@@ -773,18 +774,18 @@ export function AppointmentModal({ open, mode, bookingId, prefill, initialTab, o
                       inlineLabel={t('agenda.appointment.addClient')}
                     />
                   ) : (
-                    <div className="rounded-lg border bg-background p-2.5 space-y-2">
+                    <div className="rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] p-2.5 space-y-2">
                       <div className="flex items-center gap-2">
                         <input type="text" value={newClientName} onChange={(e) => setNewClientName(e.target.value)}
-                          placeholder={t('agenda.appointment.name')} className="flex-1 rounded-md border bg-background px-2.5 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring" autoFocus />
+                          placeholder={t('agenda.appointment.name')} className="flex-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2.5 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring" autoFocus />
                         <button type="button" onClick={() => setQuickCreate(false)}
                           className="p-1 text-muted-foreground hover:text-foreground shrink-0"><X className="h-3.5 w-3.5" /></button>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <input type="tel" value={newClientPhone} onChange={(e) => setNewClientPhone(e.target.value)}
-                          placeholder={t('agenda.appointment.phone')} className="rounded-md border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                          placeholder={t('agenda.appointment.phone')} className="rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                         <input type="email" value={newClientEmail} onChange={(e) => setNewClientEmail(e.target.value)}
-                          placeholder={t('agenda.appointment.emailOptional')} className="rounded-md border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                          placeholder={t('agenda.appointment.emailOptional')} className="rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                       </div>
                       <button type="button" disabled={creatingClient || !newClientName.trim()}
                         onClick={async () => {
@@ -820,7 +821,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, initialTab, o
                           }
                           setCreatingClient(false)
                         }}
-                        className="w-full rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-colors">
+                        className="w-full rounded-md bg-primary border border-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset disabled:opacity-40 transition-colors">
                         {creatingClient ? t('agenda.appointment.creating') : t('agenda.appointment.create')}
                       </button>
                     </div>
@@ -935,7 +936,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, initialTab, o
                 <FileText className="h-4 w-4 mt-2 text-muted-foreground shrink-0" />
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
                   placeholder={t('agenda.appointment.addDescription')} rows={2} autoFocus
-                  className="w-full flex-1 rounded-md border bg-background px-2.5 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring" />
+                  className="w-full flex-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2.5 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring" />
               </div>
             )}
 
@@ -949,12 +950,12 @@ export function AppointmentModal({ open, mode, bookingId, prefill, initialTab, o
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-destructive font-medium">{t('agenda.appointment.deleteConfirm')}</span>
                   <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => setConfirmingDelete(false)}
-                      className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">{t('agenda.appointment.cancel')}</button>
-                    <button type="button" onClick={handleDelete} disabled={deleting}
-                      className="rounded-lg bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-40 transition-colors">
+                    <Button type="button" variant="outline" size="sm" onClick={() => setConfirmingDelete(false)}>
+                      {t('agenda.appointment.cancel')}
+                    </Button>
+                    <Button type="button" variant="destructive" size="sm" onClick={handleDelete} disabled={deleting}>
                       {deleting ? t('agenda.appointment.deleting') : t('agenda.appointment.confirmDelete')}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
@@ -972,13 +973,13 @@ export function AppointmentModal({ open, mode, bookingId, prefill, initialTab, o
                             <span className="h-4 w-16 rounded-full bg-muted animate-pulse" />
                           ) : isPaidBooking ? (
                             <button type="button" onClick={(e) => { e.stopPropagation(); setModalTab('financial') }}
-                              className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 hover:bg-emerald-500/20 transition-colors">
+                              className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success hover:bg-success/20 transition-colors">
                               <Check className="h-2.5 w-2.5" />
                               {fmtCurrency(totalPrice, currency.locale, currency.code)} &middot; {t('agenda.payment.paid')}
                             </button>
                           ) : date <= new Date().toISOString().slice(0, 10) ? (
                             <button type="button" onClick={(e) => { e.stopPropagation(); setModalTab('financial') }}
-                              className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 hover:bg-amber-500/20 transition-colors">
+                              className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning hover:bg-warning/20 transition-colors">
                               <HandCoins className="h-3 w-3" />
                               {fmtCurrency(totalPrice, currency.locale, currency.code)} &middot; {t('agenda.payment.collect')}
                             </button>
@@ -992,12 +993,12 @@ export function AppointmentModal({ open, mode, bookingId, prefill, initialTab, o
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button type="button" onClick={onClose}
-                      className="hidden sm:inline-flex rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">{t('agenda.appointment.cancel')}</button>
-                    <button type="submit" disabled={!canSubmit || !isDirty}
-                      className="rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-colors">
+                    <Button type="button" variant="outline" size="sm" onClick={onClose} className="hidden sm:inline-flex">
+                      {t('agenda.appointment.cancel')}
+                    </Button>
+                    <Button type="submit" variant="default" size="sm" disabled={!canSubmit || !isDirty}>
                       {saving ? t('agenda.appointment.saving') : mode === 'create' ? t('agenda.appointment.save') : t('agenda.appointment.update')}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}

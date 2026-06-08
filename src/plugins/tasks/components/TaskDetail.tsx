@@ -10,10 +10,10 @@ import type { Task, TaskStatus, TaskPriority } from '../types'
 import { TASK_STATUSES, TASK_PRIORITIES } from '../types'
 
 const STATUS_DOT: Record<TaskStatus, string> = {
-  todo: 'bg-slate-400',
-  in_progress: 'bg-blue-500',
-  done: 'bg-green-500',
-  cancelled: 'bg-gray-400',
+  todo: 'bg-muted-foreground',
+  in_progress: 'bg-info',
+  done: 'bg-success',
+  cancelled: 'bg-muted-foreground/60',
 }
 
 function formatDate(iso: string): string {
@@ -145,7 +145,7 @@ export function TaskDetail({ taskId }: { taskId: string }) {
         onBlur={handleDescriptionBlur}
         placeholder={t('tasks.detail.descriptionPlaceholder')}
         rows={3}
-        className="w-full rounded-md border bg-background px-3 py-2 text-xs outline-none resize-none placeholder:text-muted-foreground/50 leading-relaxed"
+        className="w-full rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-xs outline-none resize-none placeholder:text-muted-foreground/50 leading-relaxed"
       />
 
       {/* Subtasks */}
@@ -173,7 +173,7 @@ export function TaskDetail({ taskId }: { taskId: string }) {
         <button
           type="button"
           onClick={handleDelete}
-          className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-red-600 transition-colors"
+          className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
         >
           <Trash2 className="h-3 w-3" />
           {t('tasks.detail.delete')}

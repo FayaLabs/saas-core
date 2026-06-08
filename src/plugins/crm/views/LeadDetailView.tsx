@@ -7,12 +7,12 @@ import { Breadcrumb } from '../../../components/ui/breadcrumb'
 import type { Lead, Deal, Quote } from '../types'
 
 const STATUS_COLORS: Record<string, string> = {
-  new: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
-  contacted: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400',
-  qualified: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
+  new: 'bg-info-soft text-info-soft-foreground',
+  contacted: 'bg-magic-soft text-magic-soft-foreground',
+  qualified: 'bg-success-soft text-success-soft-foreground',
   unqualified: 'bg-muted text-muted-foreground',
-  converted: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
-  lost: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+  converted: 'bg-warning-soft text-warning-soft-foreground',
+  lost: 'bg-destructive-soft text-destructive-soft-foreground',
 }
 
 
@@ -70,7 +70,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
         <div className="border-t" />
         <div className="space-y-4">
           <div className="h-4 w-36 rounded bg-muted/30 animate-pulse" />
-          <div className="rounded-xl border bg-card p-5 space-y-3">
+          <div className="rounded-xl border bg-card shadow-sm p-5 space-y-3">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="grid grid-cols-3 gap-4">
                 <div className="h-3 w-16 rounded bg-muted/30 animate-pulse" />
@@ -128,7 +128,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
         {onCreateQuote && lead.status !== 'converted' && lead.status !== 'lost' && (
           <button
             onClick={() => onCreateQuote(leadId)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors shrink-0"
           >
             <FileText className="h-3 w-3" /> {t('crm.leadDetail.createQuote')}
           </button>
@@ -141,7 +141,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
       {/* Contact Information */}
       <div>
         <h3 className="text-sm font-semibold text-foreground mb-1">{t('crm.leadDetail.contactInfo')}</h3>
-        <div className="rounded-xl border bg-card">
+        <div className="rounded-xl border bg-card shadow-sm">
           <dl className="grid divide-y md:grid-cols-2 md:divide-y-0">
             <div className="px-5 md:border-b">
               <FieldRow label={t('crm.leadDetail.email')} value={lead.email ? <a href={`mailto:${lead.email}`} className="text-primary hover:underline">{lead.email}</a> : null} />
@@ -163,7 +163,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
       {deal && (
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-1">{t('crm.leadDetail.pipeline')}</h3>
-          <div className="rounded-xl border bg-card">
+          <div className="rounded-xl border bg-card shadow-sm">
             <dl className="grid divide-y md:grid-cols-2 md:divide-y-0">
               <div className="px-5 md:border-b">
                 <FieldRow label={t('crm.leadDetail.stage')} value={deal.stageName ? (
@@ -191,7 +191,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
       {quotes.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-1">{t('crm.leadDetail.quotes')}</h3>
-          <div className="rounded-xl border bg-card divide-y">
+          <div className="rounded-xl border bg-card shadow-sm divide-y">
             {quotes.map((q) => (
               <div
                 key={q.id}
@@ -218,7 +218,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
       {/* Details */}
       <div>
         <h3 className="text-sm font-semibold text-foreground mb-1">{t('crm.leadDetail.details')}</h3>
-        <div className="rounded-xl border bg-card">
+        <div className="rounded-xl border bg-card shadow-sm">
           <dl className="grid divide-y md:grid-cols-2 md:divide-y-0">
             <div className="px-5 md:border-b">
               <FieldRow label={t('crm.leadDetail.value')} value={lead.value != null && lead.value > 0 ? lead.value : null} />
@@ -240,7 +240,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
       {lead.tags && lead.tags.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-1">{t('crm.leadDetail.tags')}</h3>
-          <div className="rounded-xl border bg-card px-5 py-4">
+          <div className="rounded-xl border bg-card shadow-sm px-5 py-4">
             <div className="flex gap-1.5 flex-wrap">
               {lead.tags.map((tag) => (
                 <span key={tag} className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground">{tag}</span>
@@ -254,7 +254,7 @@ export function LeadDetailView({ leadId, onBack, onCreateQuote, onViewQuote }: {
       {lead.notes && (
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-1">{t('crm.leadDetail.notes')}</h3>
-          <div className="rounded-xl border bg-card px-5 py-4">
+          <div className="rounded-xl border bg-card shadow-sm px-5 py-4">
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{lead.notes}</p>
           </div>
         </div>

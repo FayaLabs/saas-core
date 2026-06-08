@@ -451,7 +451,7 @@ export function CrudPage<T extends { id: string }>({ entityDef: rawEntityDef, us
               placeholder={t('crud.list.search', { entities: namePlural.toLowerCase() })}
               value={searchInput}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full rounded-lg border bg-background pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         )}

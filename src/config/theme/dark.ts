@@ -48,9 +48,9 @@ export const darkTheme: ThemeTokens = {
     fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, sans-serif',
     fontFamilyMono: 'JetBrains Mono, ui-monospace, SFMono-Regular, monospace',
     // Shadows on dark are stronger or they disappear.
-    shadowSm: '0 1px 0 rgba(0, 0, 0, 0.4)',
-    shadowMd: '0 1px 1px -1px rgba(0, 0, 0, 0.5), 0 3px 6px -3px rgba(0, 0, 0, 0.6)',
-    shadowLg: '0 4px 8px -2px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.4)',
+    shadowSm: '0 1px 0 rgba(0, 0, 0, 0.4), 0 1px 3px 0 rgba(0, 0, 0, 0.35), 0 1px 2px -1px rgba(0, 0, 0, 0.35)',
+    shadowMd: '0 1px 1px -1px rgba(0, 0, 0, 0.5), 0 4px 8px -2px rgba(0, 0, 0, 0.6)',
+    shadowLg: '0 4px 12px -2px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4)',
     // Bevels — top highlight strengthens on near-white primary; on dark default
     // buttons we lean on the inset-bottom shadow for depth.
     shadowButton:

@@ -39,13 +39,18 @@ interface UserMenuProps {
   children?: React.ReactNode
 }
 
-function getInitials(name: string): string {
-  return name
+function getInitials(name: string, email?: string): string {
+  const fromName = (name || '')
     .split(' ')
+    .filter(Boolean)
     .map((part) => part[0])
     .join('')
     .toUpperCase()
     .slice(0, 2)
+  if (fromName) return fromName
+  // Fall back to email — take first 1–2 letters of the local part.
+  const local = (email || '').split('@')[0]?.replace(/[._-]/g, '') ?? ''
+  return local.slice(0, 2).toUpperCase() || '?'
 }
 
 export function UserMenu({
@@ -83,7 +88,7 @@ export function UserMenu({
             )}
             aria-label="User menu"
           >
-            <Avatar.Root className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sidebar border border-sidebar-border/30">
+            <Avatar.Root className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-card border border-border/40 shadow-sm">
               {user.avatarUrl && (
                 <Avatar.Image
                   src={user.avatarUrl}
@@ -91,8 +96,8 @@ export function UserMenu({
                   className="h-full w-full object-cover"
                 />
               )}
-              <Avatar.Fallback className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-sidebar-accent-foreground">
-                {getInitials(user.fullName)}
+              <Avatar.Fallback delayMs={0} className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-foreground leading-none">
+                {getInitials(user.fullName, user.email)}
               </Avatar.Fallback>
             </Avatar.Root>
           </button>
@@ -108,7 +113,7 @@ export function UserMenu({
         >
           {/* User info header */}
           <div className="px-3 py-2">
-            <p className="text-sm font-medium">{user.fullName}</p>
+            <p className="text-sm font-medium">{user.fullName || user.email.split('@')[0]}</p>
             <p className="text-xs text-muted-foreground">{user.email}</p>
           </div>
           <DropdownMenu.Separator className="my-1 h-px bg-border" />

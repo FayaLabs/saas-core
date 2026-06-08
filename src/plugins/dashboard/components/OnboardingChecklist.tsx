@@ -89,7 +89,7 @@ export function OnboardingChecklist({ onNavigate }: { onNavigate?: (path: string
       {/* Steps */}
       {allDone ? (
         <div className="p-4 pt-2 text-center">
-          <p className="text-sm text-green-600 font-medium">{t('dashboard.onboarding.allDone')}</p>
+          <p className="text-sm text-success font-medium">{t('dashboard.onboarding.allDone')}</p>
         </div>
       ) : (
         <div className="px-2 pb-2">

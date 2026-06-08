@@ -155,7 +155,7 @@ export function OrgInitializer({ verticalId }: OrgInitializerProps) {
           <p className="text-sm text-muted-foreground mt-2">{t('org.connectionError.description')}</p>
           <button
             onClick={handleRetry}
-            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary border border-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors"
           >
             <RefreshCw className="h-4 w-4" />
             {t('org.connectionError.retry')}

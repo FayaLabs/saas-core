@@ -22,7 +22,7 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  info: 'text-blue-500',
+  info: 'text-info',
   success: 'text-success',
   warning: 'text-warning',
   error: 'text-destructive',

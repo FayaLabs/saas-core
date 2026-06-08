@@ -218,7 +218,7 @@ function ActivityTab({ activities, loading }: { activities: Activity[]; loading:
             <div className="flex-1 min-w-0 pt-0.5">
               <div className="flex items-center gap-1.5">
                 <p className="text-xs font-medium truncate">{a.title}</p>
-                {a.completedAt && <Check className="h-3 w-3 text-emerald-500 shrink-0" />}
+                {a.completedAt && <Check className="h-3 w-3 text-success shrink-0" />}
               </div>
               {a.description && <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{a.description}</p>}
               <p className="text-[10px] text-muted-foreground/50 mt-1 capitalize">{a.activityType} · {new Date(a.createdAt).toLocaleDateString()}</p>
@@ -402,7 +402,7 @@ export function DealSidebar({ dealId, open, onClose, onViewLead, onViewQuote }: 
           <SheetFooter>
             <button
               onClick={() => { onViewLead(lead.id); onClose() }}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium hover:bg-muted/50 transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors"
             >
               {t('crm.dealSidebar.viewLeadProfile')} <ArrowRight className="h-3 w-3" />
             </button>

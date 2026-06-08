@@ -69,7 +69,7 @@ export function ReportHub({ onSelect }: ReportHubProps) {
       {/* Categories */}
       <div className="space-y-8">
         {categories.map((category) => (
-            <div key={category.name} className="rounded-xl border bg-card p-5">
+            <div key={category.name} className="rounded-xl border bg-card shadow-sm p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold">{category.name}</h2>
                 <span className="text-sm text-muted-foreground">

@@ -5,6 +5,7 @@ import { useTranslation } from '../../../hooks/useTranslation'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { QuoteStatusDropdown } from '../components/QuoteStatusDropdown'
 import { PersonLink } from '../../../components/shared/PersonLink'
+import { Button } from '../../../components/ui/button'
 import type { Quote } from '../types'
 export function QuoteDetailView({ quoteId, onBack, onEdit, onInvoiceCreated }: {
   quoteId: string
@@ -85,7 +86,7 @@ export function QuoteDetailView({ quoteId, onBack, onEdit, onInvoiceCreated }: {
     return (
       <div className="space-y-5">
         <SubpageHeader title="" onBack={onBack} parentLabel={t('crm.quotes.title')} />
-        <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
           <div className="h-1 bg-muted animate-pulse" />
           <div className="p-5 pb-4">
             <div className="flex items-start justify-between">
@@ -145,7 +146,7 @@ export function QuoteDetailView({ quoteId, onBack, onEdit, onInvoiceCreated }: {
                   type="button"
                   onClick={() => setSendMenuOpen((p) => !p)}
                   disabled={sending}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors disabled:opacity-50"
                 >
                   <Send className="h-3 w-3" />
                   {sending ? t('crm.quoteDetail.sending') : t('crm.quoteDetail.send')}
@@ -168,27 +169,31 @@ export function QuoteDetailView({ quoteId, onBack, onEdit, onInvoiceCreated }: {
             )}
             {quote.status === 'sent' && (
               <>
-                <button
+                <Button
                   type="button"
+                  variant="default"
+                  size="sm"
                   onClick={handleApprove}
                   disabled={approving}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                  className="bg-success text-success-foreground hover:bg-success/90 border-success"
                 >
-                  <Check className="h-3 w-3" />
+                  <Check className="h-3.5 w-3.5" />
                   {approving ? t('crm.quoteDetail.approving') : t('crm.quoteDetail.approve')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setRejectOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                  className="border-destructive/30 text-destructive hover:bg-destructive/10"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-3.5 w-3.5" />
                   {t('crm.quoteDetail.reject')}
-                </button>
+                </Button>
               </>
             )}
             {onEdit && quote.status !== 'approved' && quote.status !== 'rejected' && quote.status !== 'expired' && (
-              <button type="button" onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+              <button type="button" onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors">
                 <Pencil className="h-3 w-3" /> {t('crm.quoteDetail.edit')}
               </button>
             )}
@@ -197,7 +202,7 @@ export function QuoteDetailView({ quoteId, onBack, onEdit, onInvoiceCreated }: {
       />
 
       {/* Quote document card */}
-      <div className="rounded-xl border bg-card overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         {/* Top accent stripe */}
         <div className="h-1 bg-primary" />
 
@@ -300,7 +305,7 @@ export function QuoteDetailView({ quoteId, onBack, onEdit, onInvoiceCreated }: {
                       <span className="text-muted-foreground">{t('crm.quoteDetail.subtotal')}</span>
                       <span className="tabular-nums w-24 text-right">{formatCurrency(subtotal, currency)}</span>
                     </div>
-                    <div className="flex items-center gap-6 text-xs text-emerald-600">
+                    <div className="flex items-center gap-6 text-xs text-success">
                       <span>{t('crm.quoteDetail.discount')}</span>
                       <span className="tabular-nums w-24 text-right">-{formatCurrency(totalDiscount, currency)}</span>
                     </div>
@@ -334,9 +339,9 @@ export function QuoteDetailView({ quoteId, onBack, onEdit, onInvoiceCreated }: {
 
       {/* Invoice link — when approved (quote IS the invoice, same row) */}
       {quote.status === 'approved' && (
-        <div className="flex items-center justify-between rounded-lg border bg-emerald-500/5 px-4 py-2.5">
+        <div className="flex items-center justify-between rounded-lg border border-success/30 bg-success/5 px-4 py-2.5">
           <div className="flex items-center gap-2 text-xs">
-            <CircleCheckBig className="h-3.5 w-3.5 text-emerald-500" />
+            <CircleCheckBig className="h-3.5 w-3.5 text-success" />
             <span className="text-muted-foreground">{t('crm.quoteDetail.invoiceCreated')}</span>
           </div>
           <a
@@ -350,9 +355,9 @@ export function QuoteDetailView({ quoteId, onBack, onEdit, onInvoiceCreated }: {
 
       {/* Rejection reason — outside the card */}
       {quote.status === 'rejected' && quote.rejectionReason && (
-        <div className="flex items-center justify-between rounded-lg border bg-red-500/5 px-4 py-2.5">
+        <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5">
           <div className="flex items-center gap-2 text-xs">
-            <Ban className="h-3.5 w-3.5 text-red-500" />
+            <Ban className="h-3.5 w-3.5 text-destructive" />
             <span className="text-muted-foreground">{t('crm.quoteDetail.rejectionReason')}: <span className="font-medium text-foreground">{quote.rejectionReason}</span></span>
           </div>
         </div>
@@ -361,10 +366,10 @@ export function QuoteDetailView({ quoteId, onBack, onEdit, onInvoiceCreated }: {
       {/* Reject reason dialog */}
       {rejectOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setRejectOpen(false)}>
-          <div className="w-full max-w-sm rounded-xl border bg-card shadow-2xl mx-4 p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-modal border bg-card shadow-lg mx-4 p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 shrink-0">
-                <X className="h-5 w-5 text-red-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 shrink-0">
+                <X className="h-5 w-5 text-destructive" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold">{t('crm.quoteDetail.reject')}</h3>
@@ -375,21 +380,22 @@ export function QuoteDetailView({ quoteId, onBack, onEdit, onInvoiceCreated }: {
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder={t('crm.quoteDetail.rejectReasonPlaceholder')}
-              className="w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-input border border-input bg-card px-3 py-2 text-sm shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] resize-none h-20 focus:outline-none focus:ring-2 focus:ring-ring"
               autoFocus
             />
             <div className="flex justify-end gap-2 mt-3">
-              <button type="button" onClick={() => setRejectOpen(false)} className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+              <Button type="button" variant="outline" size="sm" onClick={() => setRejectOpen(false)}>
                 {t('common.cancel')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="destructive"
+                size="sm"
                 onClick={handleReject}
                 disabled={rejecting || !rejectReason.trim()}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
               >
                 {rejecting ? t('crm.quoteDetail.rejecting') : t('crm.quoteDetail.confirmReject')}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -13,11 +13,11 @@ import type { MovementType, StockMovement, StockPosition } from '../types'
 // ---------------------------------------------------------------------------
 
 const MOVEMENT_TYPES: { value: MovementType; labelKey: string; icon: React.ElementType; color: string; activeColor: string; descKey: string }[] = [
-  { value: 'entry', labelKey: 'inventory.stock.entryLabel', icon: ArrowDownRight, color: 'text-emerald-600', activeColor: 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400', descKey: 'inventory.stock.entryDesc' },
-  { value: 'exit', labelKey: 'inventory.stock.exitLabel', icon: ArrowUpRight, color: 'text-red-500', activeColor: 'border-red-500 bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400', descKey: 'inventory.stock.exitDesc' },
-  { value: 'adjustment', labelKey: 'inventory.stock.adjustmentLabel', icon: RefreshCw, color: 'text-blue-500', activeColor: 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400', descKey: 'inventory.stock.adjustmentDesc' },
-  { value: 'transfer', labelKey: 'inventory.stock.transferLabel', icon: ArrowRightLeft, color: 'text-violet-500', activeColor: 'border-violet-500 bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400', descKey: 'inventory.stock.transferDesc' },
-  { value: 'loss', labelKey: 'inventory.stock.lossLabel', icon: Trash2, color: 'text-amber-500', activeColor: 'border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400', descKey: 'inventory.stock.lossDesc' },
+  { value: 'entry', labelKey: 'inventory.stock.entryLabel', icon: ArrowDownRight, color: 'text-success', activeColor: 'border-success bg-success/10 text-success dark:bg-success/10', descKey: 'inventory.stock.entryDesc' },
+  { value: 'exit', labelKey: 'inventory.stock.exitLabel', icon: ArrowUpRight, color: 'text-destructive', activeColor: 'border-destructive bg-destructive/10 text-destructive dark:bg-destructive/10', descKey: 'inventory.stock.exitDesc' },
+  { value: 'adjustment', labelKey: 'inventory.stock.adjustmentLabel', icon: RefreshCw, color: 'text-info', activeColor: 'border-info bg-info/10 text-info dark:bg-info/10', descKey: 'inventory.stock.adjustmentDesc' },
+  { value: 'transfer', labelKey: 'inventory.stock.transferLabel', icon: ArrowRightLeft, color: 'text-magic', activeColor: 'border-magic bg-magic/10 text-magic dark:bg-magic/10', descKey: 'inventory.stock.transferDesc' },
+  { value: 'loss', labelKey: 'inventory.stock.lossLabel', icon: Trash2, color: 'text-warning', activeColor: 'border-warning bg-warning/10 text-warning dark:bg-warning/10', descKey: 'inventory.stock.lossDesc' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -37,7 +37,7 @@ function MovementDetail({ movement, currency, onClose }: {
     <div className="space-y-4">
       <SubpageHeader title={movement.productName ?? `#${movement.id.slice(0, 8)}`} onBack={onClose} parentLabel={t('inventory.nav.stock')} />
 
-      <div className="rounded-lg border bg-card p-5 space-y-4">
+      <div className="rounded-lg border bg-card shadow-sm p-5 space-y-4">
         {/* Type + Product hero */}
         <div className="flex items-center gap-3">
           <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${typeConfig?.activeColor ?? 'bg-muted'}`}>
@@ -322,7 +322,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
             <button
               onClick={() => setStep(2)}
               disabled={!canProceedStep1}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors disabled:opacity-50"
             >
               {t('inventory.stock.next')}
             </button>
@@ -333,7 +333,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
       {/* Step 2: How much — Quantity + Cost + Location */}
       {step === 2 && (
         <div className="space-y-5">
-          <div className="rounded-lg border bg-card p-5 space-y-4">
+          <div className="rounded-lg border bg-card shadow-sm p-5 space-y-4">
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.quantity')}</label>
@@ -344,12 +344,12 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
                   value={quantity}
                   onChange={(e) => setQuantity(Number(e.target.value) || 0)}
                   autoFocus
-                  className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.unitCost')}</label>
-                <div className="flex items-center mt-1 rounded-lg border bg-background focus-within:ring-2 focus-within:ring-primary/20">
+                <div className="flex items-center mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] focus-within:ring-2 focus-within:ring-primary/20">
                   <span className="pl-2.5 text-xs text-muted-foreground">{currency.symbol}</span>
                   <input type="number" min={0} step={0.01} value={unitCost} onChange={(e) => setUnitCost(Number(e.target.value) || 0)} className="flex-1 bg-transparent px-2 py-2 text-sm outline-none" />
                 </div>
@@ -385,7 +385,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
                             <span className={cn(
                               'inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
                               qty > 0
-                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                ? 'bg-success/10 text-success'
                                 : 'bg-muted text-muted-foreground',
                             )}>
                               {qty}
@@ -419,7 +419,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
                               <span className={cn(
                                 'inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
                                 qty > 0
-                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                  ? 'bg-success/10 text-success'
                                   : 'bg-muted text-muted-foreground',
                               )}>
                                 {qty}
@@ -438,14 +438,14 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
             {needsReason && (
               <div>
                 <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.reason')}</label>
-                <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={movementType === 'loss' ? t('inventory.stock.reasonLossPlaceholder') : t('inventory.stock.reasonAdjustPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={movementType === 'loss' ? t('inventory.stock.reasonLossPlaceholder') : t('inventory.stock.reasonAdjustPlaceholder')} className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
               </div>
             )}
           </div>
 
           <div className="flex justify-between">
-            <button onClick={() => setStep(1)} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors">{t('inventory.stock.back')}</button>
-            <button onClick={() => setStep(3)} disabled={!canProceedStep2} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">{t('inventory.stock.next')}</button>
+            <button onClick={() => setStep(1)} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors">{t('inventory.stock.back')}</button>
+            <button onClick={() => setStep(3)} disabled={!canProceedStep2} className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors disabled:opacity-50">{t('inventory.stock.next')}</button>
           </div>
         </div>
       )}
@@ -454,7 +454,7 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
       {step === 3 && (
         <div className="space-y-5">
           {/* Summary card */}
-          <div className="rounded-lg border bg-card p-5">
+          <div className="rounded-lg border bg-card shadow-sm p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${typeConfig.activeColor}`}>
                 <typeConfig.icon className="h-5 w-5" />
@@ -473,18 +473,18 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
           </div>
 
           {/* Optional details */}
-          <div className="rounded-lg border bg-card p-5 space-y-4">
+          <div className="rounded-lg border bg-card shadow-sm p-5 space-y-4">
             <p className="text-xs font-medium text-muted-foreground">{t('inventory.stock.additionalDetails')}</p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.documentNumber')}</label>
-                <input type="text" value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder={t('inventory.stock.documentPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                <input type="text" value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder={t('inventory.stock.documentPlaceholder')} className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
               </div>
               {modules.batchTracking && (
                 <>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.batchNumber')}</label>
-                    <input type="text" value={batchNumber} onChange={(e) => setBatchNumber(e.target.value)} placeholder={t('inventory.stock.batchPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    <input type="text" value={batchNumber} onChange={(e) => setBatchNumber(e.target.value)} placeholder={t('inventory.stock.batchPlaceholder')} className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.expirationDate')}</label>
@@ -495,16 +495,16 @@ export function StockMovementView({ defaultType, onSaved, viewMovement }: {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">{t('inventory.stock.notes')}</label>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={t('inventory.stock.notesPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={t('inventory.stock.notesPlaceholder')} className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
             </div>
           </div>
 
           <div className="flex justify-between">
-            <button onClick={() => setStep(2)} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors">{t('inventory.stock.back')}</button>
+            <button onClick={() => setStep(2)} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors">{t('inventory.stock.back')}</button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors disabled:opacity-50"
             >
               <Check className="h-3.5 w-3.5" /> {saving ? t('inventory.stock.recording') : t('inventory.stock.recordMovement')}
             </button>

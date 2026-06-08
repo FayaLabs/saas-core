@@ -25,7 +25,7 @@ function FormSection({ title, subtitle, children }: {
   title: string; subtitle?: string; children: React.ReactNode
 }) {
   return (
-    <div className="rounded-lg border bg-card">
+    <div className="rounded-lg border bg-card shadow-sm">
       <div className="px-5 py-3 border-b">
         <h3 className="text-sm font-semibold">{title}</h3>
         {subtitle && <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>}
@@ -118,14 +118,14 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
         actions={
           <div className="flex items-center gap-2">
             {onSaved && (
-              <button onClick={onSaved} className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+              <button onClick={onSaved} className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors">
                 {t('inventory.productForm.cancel')}
               </button>
             )}
             <button
               onClick={handleSave}
               disabled={!name.trim() || saving}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors disabled:opacity-50"
             >
               <Save className="h-3 w-3" /> {saving ? t('inventory.productForm.saving') : t('inventory.productForm.save')}
             </button>
@@ -152,7 +152,7 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t('inventory.productForm.namePlaceholder')}
                 autoFocus
-                className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
             <div>
@@ -162,7 +162,7 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
                 placeholder={t('inventory.productForm.brandPlaceholder')}
-                className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
@@ -171,11 +171,11 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="text-xs font-medium text-muted-foreground">{t('inventory.productForm.sku')}</label>
-            <input type="text" value={sku} onChange={(e) => setSku(e.target.value)} placeholder={t('inventory.productForm.skuPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            <input type="text" value={sku} onChange={(e) => setSku(e.target.value)} placeholder={t('inventory.productForm.skuPlaceholder')} className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
           <div>
             <label className="text-xs font-medium text-muted-foreground">{t('inventory.productForm.barcode')}</label>
-            <input type="text" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder={t('inventory.productForm.barcodePlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            <input type="text" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder={t('inventory.productForm.barcodePlaceholder')} className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
         </div>
 
@@ -186,7 +186,7 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
             placeholder={t('inventory.productForm.descriptionPlaceholder')}
-            className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+            className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
           />
         </div>
       </FormSection>
@@ -239,7 +239,7 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
             <label className="text-xs font-medium text-muted-foreground">{t('inventory.productForm.margin')}</label>
             <div className="mt-1 rounded-lg border bg-muted/20 px-3 py-2 text-sm tabular-nums text-right">
               {margin !== null ? (
-                <span className={Number(margin) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}>
+                <span className={Number(margin) >= 0 ? 'text-success' : 'text-destructive'}>
                   {margin}%
                 </span>
               ) : (
@@ -261,7 +261,7 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
               value={minQuantity}
               onChange={(e) => setMinQuantity(Number(e.target.value) || 0)}
               placeholder="0"
-              className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <p className="text-[10px] text-muted-foreground mt-1">{t('inventory.productForm.minQuantityHint')}</p>
           </div>
@@ -273,7 +273,7 @@ export function ProductFormView({ editId, onSaved }: { editId?: string; onSaved?
               value={maxQuantity}
               onChange={(e) => setMaxQuantity(Number(e.target.value) || 0)}
               placeholder={t('inventory.productForm.optional')}
-              className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <p className="text-[10px] text-muted-foreground mt-1">{t('inventory.productForm.maxQuantityHint')}</p>
           </div>

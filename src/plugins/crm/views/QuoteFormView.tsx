@@ -14,9 +14,9 @@ import { DatePicker } from '../../../components/ui/date-picker'
 
 const STATUSES = [
   { value: 'draft', labelKey: 'crm.quoteForm.statusDraft', color: 'bg-primary text-primary-foreground' },
-  { value: 'sent', labelKey: 'crm.quoteForm.statusSent', color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30' },
-  { value: 'approved', labelKey: 'crm.quoteForm.statusApproved', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30' },
-  { value: 'rejected', labelKey: 'crm.quoteForm.statusRejected', color: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 border border-red-200 dark:border-red-500/30' },
+  { value: 'sent', labelKey: 'crm.quoteForm.statusSent', color: 'bg-info-soft text-info-soft-foreground border border-info/30 dark:border-info/30' },
+  { value: 'approved', labelKey: 'crm.quoteForm.statusApproved', color: 'bg-success-soft text-success-soft-foreground border border-success/30 dark:border-success/30' },
+  { value: 'rejected', labelKey: 'crm.quoteForm.statusRejected', color: 'bg-destructive-soft text-destructive-soft-foreground border border-destructive/30 dark:border-destructive/30' },
   { value: 'expired', labelKey: 'crm.quoteForm.statusExpired', color: 'bg-muted text-muted-foreground border' },
 ]
 
@@ -116,13 +116,13 @@ function QuoteItemRow({ item, index, itemTypes, currency, expanded, onToggle, on
               ) : (
                 <>
                   <label className="text-[10px] font-medium text-muted-foreground">{t('crm.quoteForm.description')}</label>
-                  <input type="text" value={item.description} onChange={(e) => onUpdate({ description: e.target.value })} placeholder={t('crm.quoteForm.itemDescriptionPlaceholder')} autoFocus className="w-full mt-0.5 rounded-md border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  <input type="text" value={item.description} onChange={(e) => onUpdate({ description: e.target.value })} placeholder={t('crm.quoteForm.itemDescriptionPlaceholder')} autoFocus className="w-full mt-0.5 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                 </>
               )}
             </div>
             <div className="col-span-2 sm:col-span-1">
               <label className="text-[10px] font-medium text-muted-foreground">{t('crm.quoteForm.qty')}</label>
-              <input type="number" min={1} value={item.quantity} onChange={(e) => onUpdate({ quantity: Number(e.target.value) || 1 })} className="w-full mt-0.5 rounded-md border bg-background px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              <input type="number" min={1} value={item.quantity} onChange={(e) => onUpdate({ quantity: Number(e.target.value) || 1 })} className="w-full mt-0.5 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
             <div className="col-span-4">
               <CurrencyInput label={t('crm.quoteForm.unitPrice')} value={item.unitPrice} onChange={(v) => onUpdate({ unitPrice: v })} symbol={currency.symbol} locale={currency.locale} currencyCode={currency.code} />
@@ -316,7 +316,7 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
       <div className="space-y-5">
         <SubpageHeader title="" onBack={onSaved} parentLabel={t('crm.quotes.title')} />
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-lg border bg-card p-5 space-y-4">
+          <div className="rounded-lg border bg-card shadow-sm p-5 space-y-4">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="space-y-1.5">
                 <div className="h-3 w-16 rounded bg-muted/30 animate-pulse" />
@@ -324,7 +324,7 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
               </div>
             ))}
           </div>
-          <div className="lg:col-span-2 rounded-lg border bg-card p-5 space-y-3">
+          <div className="lg:col-span-2 rounded-lg border bg-card shadow-sm p-5 space-y-3">
             <div className="h-4 w-24 rounded bg-muted/30 animate-pulse" />
             {[1, 2].map((i) => (
               <div key={i} className="flex items-center gap-3 py-2">
@@ -349,11 +349,11 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
         actions={
           <div className="flex items-center gap-2">
             {onSaved && (
-              <button onClick={() => onSaved()} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+              <button onClick={() => onSaved()} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors">
                 <X className="h-3 w-3" /> {t('crm.quoteForm.cancel')}
               </button>
             )}
-            <button onClick={handleSave} disabled={items.length === 0 || saving} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+            <button onClick={handleSave} disabled={items.length === 0 || saving} className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors disabled:opacity-50">
               <Save className="h-3 w-3" /> {saving ? t('crm.quoteForm.saving') : isEdit ? t('crm.quoteForm.saveChanges') : t('crm.quoteForm.saveQuote')}
             </button>
           </div>
@@ -372,7 +372,7 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
       {/* Quote details + Items — side by side */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Left: Quote details */}
-        <div className="rounded-lg border bg-card p-5 space-y-4">
+        <div className="rounded-lg border bg-card shadow-sm p-5 space-y-4">
           <h3 className="text-sm font-semibold">{t('crm.quoteForm.quoteDetails')}</h3>
 
           <SearchSelect
@@ -408,20 +408,20 @@ export function QuoteFormView({ quoteId, leadId, onSaved }: { quoteId?: string; 
 
           <div>
             <label className="text-xs font-medium text-muted-foreground">{t('crm.quoteForm.paymentConditions')}</label>
-            <textarea value={paymentConditions} onChange={(e) => setPaymentConditions(e.target.value)} rows={2} placeholder={t('crm.quoteForm.paymentConditionsPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+            <textarea value={paymentConditions} onChange={(e) => setPaymentConditions(e.target.value)} rows={2} placeholder={t('crm.quoteForm.paymentConditionsPlaceholder')} className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
           </div>
 
           <div>
             <label className="text-xs font-medium text-muted-foreground">{t('crm.quoteForm.notes')}</label>
-            <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={2} placeholder={t('crm.quoteForm.notesPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+            <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={2} placeholder={t('crm.quoteForm.notesPlaceholder')} className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
           </div>
         </div>
 
         {/* Right: Items */}
-        <div className="lg:col-span-2 rounded-lg border bg-card overflow-hidden flex flex-col">
+        <div className="lg:col-span-2 rounded-lg border bg-card shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b">
             <h3 className="text-sm font-semibold">{t('crm.quoteForm.quoteItems')}</h3>
-            <button onClick={() => setAddingItem(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+            <button onClick={() => setAddingItem(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors">
               <Plus className="h-3 w-3" /> {t('crm.quoteForm.addItem')}
             </button>
           </div>

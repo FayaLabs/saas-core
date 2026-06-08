@@ -8,11 +8,11 @@ import { SubpageHeader } from '../../../components/layout/ModulePage'
 import type { Lead, LeadStatus } from '../types'
 
 const STATUS_OPTIONS: { value: LeadStatus; label: string; color: string }[] = [
-  { value: 'new', label: 'New', color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400' },
-  { value: 'contacted', label: 'Contacted', color: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400' },
-  { value: 'qualified', label: 'Qualified', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' },
+  { value: 'new', label: 'New', color: 'bg-info-soft text-info-soft-foreground' },
+  { value: 'contacted', label: 'Contacted', color: 'bg-magic-soft text-magic-soft-foreground' },
+  { value: 'qualified', label: 'Qualified', color: 'bg-success-soft text-success-soft-foreground' },
   { value: 'unqualified', label: 'Unqualified', color: 'bg-muted text-muted-foreground' },
-  { value: 'converted', label: 'Converted', color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' },
+  { value: 'converted', label: 'Converted', color: 'bg-warning-soft text-warning-soft-foreground' },
 ]
 
 const columns: ColumnDef<Lead, any>[] = [

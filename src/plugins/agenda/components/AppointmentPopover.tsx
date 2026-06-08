@@ -102,7 +102,7 @@ export function AppointmentPopover({ booking, position, onClose, onEdit }: Props
                 <button onClick={() => setConfirmingDelete(false)}
                   className="rounded px-2 py-0.5 text-[11px] font-medium hover:bg-muted/50 transition-colors">{t('agenda.appointment.cancel')}</button>
                 <button onClick={handleDelete} disabled={deleting}
-                  className="rounded bg-destructive px-2 py-0.5 text-[11px] font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-40 transition-colors">{deleting ? t('agenda.appointment.deleting') : t('agenda.appointment.confirmDelete')}</button>
+                  className="rounded bg-destructive border border-destructive px-2 py-0.5 text-[11px] font-medium text-destructive-foreground hover:bg-destructive/90 shadow-button-primary active:shadow-button-inset disabled:opacity-40 transition-colors">{deleting ? t('agenda.appointment.deleting') : t('agenda.appointment.confirmDelete')}</button>
               </>
             ) : (
               <>
@@ -179,11 +179,11 @@ export function AppointmentPopover({ booking, position, onClose, onEdit }: Props
               }
 
               const badgeConfig: Record<string, { icon: React.ElementType; bg: string; text: string; label: string }> = {
-                none: { icon: HandCoins, bg: 'bg-amber-500/10 hover:bg-amber-500/15', text: 'text-amber-700', label: `${total} · ${t('agenda.payment.collect')}` },
-                pending: { icon: Clock, bg: 'bg-amber-500/10 hover:bg-amber-500/15', text: 'text-amber-700', label: `${total} · ${t('agenda.payment.pending')}` },
-                partial: { icon: DollarSign, bg: 'bg-yellow-500/10 hover:bg-yellow-500/15', text: 'text-yellow-700', label: `${total} · ${t('agenda.payment.partial')}` },
-                paid: { icon: Check, bg: 'bg-emerald-500/10 hover:bg-emerald-500/15', text: 'text-emerald-700', label: `${total} · ${t('agenda.payment.paid')}` },
-                overdue: { icon: AlertTriangle, bg: 'bg-red-500/10 hover:bg-red-500/15', text: 'text-red-700', label: `${total} · ${t('agenda.payment.overdue')}` },
+                none: { icon: HandCoins, bg: 'bg-warning/10 hover:bg-warning/15', text: 'text-warning', label: `${total} · ${t('agenda.payment.collect')}` },
+                pending: { icon: Clock, bg: 'bg-warning/10 hover:bg-warning/15', text: 'text-warning', label: `${total} · ${t('agenda.payment.pending')}` },
+                partial: { icon: DollarSign, bg: 'bg-warning/10 hover:bg-warning/15', text: 'text-warning', label: `${total} · ${t('agenda.payment.partial')}` },
+                paid: { icon: Check, bg: 'bg-success/10 hover:bg-success/15', text: 'text-success', label: `${total} · ${t('agenda.payment.paid')}` },
+                overdue: { icon: AlertTriangle, bg: 'bg-destructive/10 hover:bg-destructive/15', text: 'text-destructive', label: `${total} · ${t('agenda.payment.overdue')}` },
                 cancelled: { icon: X, bg: 'bg-muted hover:bg-muted/80', text: 'text-muted-foreground', label: `${total} · ${t('agenda.payment.cancelled')}` },
               }
               const cfg = badgeConfig[ps] ?? badgeConfig.none

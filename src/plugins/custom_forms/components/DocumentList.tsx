@@ -15,10 +15,10 @@ interface DocumentListProps {
 }
 
 const STATUS_COLORS: Record<DocumentStatus, string> = {
-  draft: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-  completed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  signed: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  archived: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  draft: 'bg-warning-soft text-warning-soft-foreground',
+  completed: 'bg-success-soft text-success-soft-foreground',
+  signed: 'bg-info-soft text-info-soft-foreground',
+  archived: 'bg-muted text-muted-foreground',
 }
 
 const KIND_ICONS: Record<string, React.ElementType> = {

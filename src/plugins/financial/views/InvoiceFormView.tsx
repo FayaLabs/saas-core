@@ -5,6 +5,7 @@ import { useFinancialConfig, useFinancialStore, useFinancialProvider, formatCurr
 import { SearchSelect } from '../../../components/ui/search-select'
 import { CurrencyInput } from '../../../components/ui/currency-input'
 import { DatePicker } from '../../../components/ui/date-picker'
+import { Button } from '../../../components/ui/button'
 import type { EntityLookupMap } from '../../../types/entity-lookup'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { useTranslation } from '../../../hooks/useTranslation'
@@ -49,7 +50,7 @@ function LocationSelector({ locations, value, onChange }: {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full mt-1 flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm text-left hover:bg-muted/30 transition-colors"
+        className="w-full mt-1 flex items-center gap-2 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm text-left hover:bg-muted/30  transition-colors"
       >
         <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <span className="flex-1 truncate">{selected?.name ?? t('financial.invoiceForm.selectUnit')}</span>
@@ -66,7 +67,7 @@ function LocationSelector({ locations, value, onChange }: {
             </button>
           </div>
           <div className="p-2 border-b">
-            <div className="flex items-center gap-2 rounded-md border bg-background px-2.5 py-1.5">
+            <div className="flex items-center gap-2 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2.5 py-1.5">
               <Search className="h-3.5 w-3.5 text-muted-foreground" />
               <input
                 type="text"
@@ -152,7 +153,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
         </span>
         <span className="text-sm truncate flex-1 min-w-0">{item.description || <span className="text-muted-foreground italic">{t('financial.invoiceForm.noDescription')}</span>}</span>
         <span className="text-xs text-muted-foreground shrink-0">{item.quantity} x {formatCurrency(item.unitPrice, currency)}</span>
-        {hasAdjustments && <Tag className="h-3 w-3 text-amber-500 shrink-0" />}
+        {hasAdjustments && <Tag className="h-3 w-3 text-warning shrink-0" />}
         <span className="text-sm font-semibold shrink-0 min-w-[80px] text-right">{formatCurrency(total, currency)}</span>
         <button
           onClick={(e) => { e.stopPropagation(); onRemove() }}
@@ -226,7 +227,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
                     onChange={(e) => onUpdate({ description: e.target.value })}
                     placeholder={t('financial.invoiceForm.itemDescription')}
                     autoFocus
-                    className="w-full mt-0.5 rounded-md border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full mt-0.5 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </>
               )}
@@ -238,7 +239,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
                 min={1}
                 value={item.quantity}
                 onChange={(e) => onUpdate({ quantity: Number(e.target.value) || 1 })}
-                className="w-full mt-0.5 rounded-md border bg-background px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full mt-0.5 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
             <div className="col-span-4">
@@ -265,7 +266,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
             <div className="flex items-center gap-3">
               <div className="flex-1">
                 <label className="text-[10px] font-medium text-muted-foreground">{t('financial.invoiceForm.discount')}</label>
-                <div className="flex items-center mt-0.5 rounded-md border bg-background focus-within:ring-2 focus-within:ring-primary/20">
+                <div className="flex items-center mt-0.5 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] focus-within:ring-2 focus-within:ring-primary/20">
                   <span className="pl-2 text-xs text-muted-foreground">{currency.symbol}</span>
                   <input
                     type="number"
@@ -279,7 +280,7 @@ function ItemRow({ item, index, itemTypes, currency, expanded, onToggle, onUpdat
               </div>
               <div className="flex-1">
                 <label className="text-[10px] font-medium text-muted-foreground">{t('financial.invoiceForm.surcharge')}</label>
-                <div className="flex items-center mt-0.5 rounded-md border bg-background focus-within:ring-2 focus-within:ring-primary/20">
+                <div className="flex items-center mt-0.5 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] focus-within:ring-2 focus-within:ring-primary/20">
                   <span className="pl-2 text-xs text-muted-foreground">{currency.symbol}</span>
                   <input
                     type="number"
@@ -594,31 +595,35 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
         actions={
           <div className="flex items-center gap-2">
             {onSaved && (
-              <button onClick={() => onSaved?.()} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
-                <X className="h-3 w-3" /> {t('financial.invoiceForm.close')}
-              </button>
+              <Button variant="outline" size="sm" onClick={() => onSaved?.()}>
+                <X className="h-3.5 w-3.5" />
+                {t('financial.invoiceForm.close')}
+              </Button>
             )}
-            <button
+            <Button
+              variant="default"
+              size="sm"
               onClick={handleSave}
               disabled={items.length === 0 || saving}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              <Save className="h-3 w-3" />
+              <Save className="h-3.5 w-3.5" />
               {saving ? t('financial.invoiceForm.saving') : t('financial.invoiceForm.save')}
-            </button>
+            </Button>
             {isEdit && (
               <div className="relative" ref={menuRef}>
-                <button
+                <Button
+                  variant="outline"
+                  size="icon"
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors"
+                  aria-label="More actions"
                 >
-                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                </button>
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
                 {menuOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border bg-card shadow-lg z-20 py-1" style={{ animation: 'field-slide-in 150ms ease-out' }}>
+                  <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border bg-popover shadow-md z-20 py-1" style={{ animation: 'field-slide-in 150ms ease-out' }}>
                     <button
                       onClick={() => { setConfirmCancel(true); setMenuOpen(false) }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-500/10 transition-colors"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
                     >
                       <Ban className="h-3.5 w-3.5" /> {t('financial.invoiceForm.cancelInvoice')}
                     </button>
@@ -631,7 +636,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
       />
 
       {/* Top fields: Pay to + Unit + Date + Fiscal Number */}
-      <div className="rounded-lg border bg-card p-5">
+      <div className="rounded-lg border bg-card shadow-sm p-5">
         <div className={`grid gap-4 ${hasLocations ? 'sm:grid-cols-12' : 'sm:grid-cols-10'}`}>
           <div className={hasLocations ? 'sm:col-span-4' : 'sm:col-span-4'}>
             <SearchSelect
@@ -668,7 +673,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
               value={fiscalNumber}
               onChange={(e) => setFiscalNumber(e.target.value)}
               placeholder={t('financial.invoiceForm.fiscalNumber')}
-              className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
@@ -677,7 +682,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
       {/* Items + Installments side by side */}
       {loading ? (
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2 rounded-lg border bg-card overflow-hidden">
+          <div className="lg:col-span-2 rounded-lg border bg-card shadow-sm overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <div className="flex items-center gap-2">
                 <LayoutList className="h-4 w-4 text-muted-foreground" />
@@ -697,7 +702,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
               ))}
             </div>
           </div>
-          <div className="rounded-lg border bg-card">
+          <div className="rounded-lg border bg-card shadow-sm">
             <div className="px-5 py-3 border-b">
               <h3 className="text-sm font-semibold">{t('financial.invoiceForm.installments')}</h3>
             </div>
@@ -717,7 +722,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
       ) : (
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Items (left 2/3) */}
-        <div className="lg:col-span-2 rounded-lg border bg-card overflow-hidden flex flex-col">
+        <div className="lg:col-span-2 rounded-lg border bg-card shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b">
             <div className="flex items-center gap-2">
               <LayoutList className="h-4 w-4 text-muted-foreground" />
@@ -725,7 +730,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
             </div>
             <button
               onClick={() => setAddingItem(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors"
             >
               <Plus className="h-3 w-3" /> {t('financial.invoiceForm.addItem')}
             </button>
@@ -782,7 +787,7 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
         </div>
 
         {/* Installments (right 1/3) */}
-        <div className="rounded-lg border bg-card">
+        <div className="rounded-lg border bg-card shadow-sm">
           <div className="flex items-center justify-between px-5 py-3 border-b">
             <h3 className="text-sm font-semibold">Installments</h3>
           </div>
@@ -842,17 +847,17 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
           onChange={(e) => setObservations(e.target.value)}
           placeholder={t('financial.invoiceForm.additionalNotes')}
           rows={2}
-          className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+          className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
         />
       </div>
 
       {/* Cancel confirmation */}
       {confirmCancel && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmCancel(false)}>
-          <div className="w-full max-w-sm rounded-xl border bg-card shadow-2xl mx-4 p-5" onClick={(e) => e.stopPropagation()} style={{ animation: 'field-slide-in 200ms ease-out' }}>
+          <div className="w-full max-w-sm rounded-modal border bg-card shadow-lg mx-4 p-5" onClick={(e) => e.stopPropagation()} style={{ animation: 'field-slide-in 200ms ease-out' }}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 shrink-0">
-                <Ban className="h-5 w-5 text-red-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 shrink-0">
+                <Ban className="h-5 w-5 text-destructive" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold">{t('financial.invoiceForm.cancelInvoice')}</h3>
@@ -863,16 +868,13 @@ export function InvoiceFormView({ direction, editId, onSaved }: {
               {t('financial.invoiceForm.cancelDesc')}
             </p>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setConfirmCancel(false)} className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+              <Button variant="outline" size="sm" onClick={() => setConfirmCancel(false)}>
                 {t('financial.invoiceForm.keepInvoice')}
-              </button>
-              <button
-                onClick={handleCancelInvoice}
-                disabled={cancelling}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
-              >
-                <Ban className="h-3 w-3" /> {cancelling ? t('financial.invoiceForm.cancelling') : t('financial.invoiceForm.yesCancel')}
-              </button>
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleCancelInvoice} disabled={cancelling}>
+                <Ban className="h-3.5 w-3.5" />
+                {cancelling ? t('financial.invoiceForm.cancelling') : t('financial.invoiceForm.yesCancel')}
+              </Button>
             </div>
           </div>
         </div>,

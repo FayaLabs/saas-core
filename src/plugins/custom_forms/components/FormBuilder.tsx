@@ -301,24 +301,24 @@ export function FormBuilder({ templateId, store, provider, config, onBack }: For
 
       {/* Preview — A4 paper overlay (portaled to body) */}
       {showPreview && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-start justify-center bg-gray-900/70 overflow-y-auto py-10 px-4" onClick={() => setShowPreview(false)}>
+        <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/60 overflow-y-auto py-10 px-4" onClick={() => setShowPreview(false)}>
           <div
-            className="relative w-full max-w-3xl bg-white rounded-xl shadow-2xl"
+            className="relative w-full max-w-3xl bg-white rounded-modal shadow-lg"
             style={{ minHeight: '80vh' }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
+            {/* Close button — kept on white paper background; literal grays are intentional print look */}
             <button
               onClick={() => setShowPreview(false)}
-              className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+              className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
             >
               <span className="text-lg">✕</span>
             </button>
 
-            {/* Paper content */}
-            <div className="px-10 py-8 sm:px-14 sm:py-10 text-gray-900">
+            {/* Paper content — printed A4 simulation; literal black-on-white is the point */}
+            <div className="px-10 py-8 sm:px-14 sm:py-10 text-neutral-900">
               <h1 className="text-2xl font-bold mb-1">{name || t('customForms.newTemplate')}</h1>
-              {description && <p className="text-sm text-gray-500 mb-8">{description}</p>}
+              {description && <p className="text-sm text-neutral-500 mb-8">{description}</p>}
               {!description && <div className="mb-8" />}
 
               <FormRenderer

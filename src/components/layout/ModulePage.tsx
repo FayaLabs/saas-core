@@ -198,7 +198,7 @@ export function SubpageHeader({ title, subtitle, icon, onBack, parentLabel, acti
             {onBack && (
               <button
                 onClick={onBack}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors"
               >
                 <ChevronRight className="h-4 w-4 rotate-180" />
               </button>

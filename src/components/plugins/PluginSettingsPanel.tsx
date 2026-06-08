@@ -130,7 +130,7 @@ export function PluginSettingsPanel({ title, subtitle, generalSettings, registri
       {/* Header */}
       <div className="flex items-center gap-3">
         {onClose && (
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors">
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors">
             <ChevronLeft className="h-4 w-4" />
           </button>
         )}

@@ -37,7 +37,7 @@ export function TaskCard({ task, subtaskCount }: { task: Task; subtaskCount?: { 
   return (
     <div
       onClick={() => selectTask(task.id)}
-      className="group flex items-start gap-2.5 rounded-lg border border-transparent px-3 py-2.5 transition-colors hover:bg-muted/50 hover:border-border cursor-pointer"
+      className="group flex items-start gap-2.5 rounded-lg border border-transparent px-3 py-2.5 transition-colors hover:bg-muted bg-card shadow-button active:shadow-button-inset hover:border-border cursor-pointer"
     >
       <div className="pt-0.5" onClick={handleCheck}>
         <Checkbox checked={isDone} onChange={() => {}} />
@@ -53,7 +53,7 @@ export function TaskCard({ task, subtaskCount }: { task: Task; subtaskCount?: { 
 
           {task.dueDate && (
             <span className={`inline-flex items-center gap-1 text-[11px] ${
-              overdue ? 'text-red-600 font-medium' : dueToday ? 'text-amber-600 font-medium' : 'text-muted-foreground'
+              overdue ? 'text-destructive font-medium' : dueToday ? 'text-warning font-medium' : 'text-muted-foreground'
             }`}>
               <Calendar className="h-3 w-3" />
               {formatDueDate(task.dueDate)}

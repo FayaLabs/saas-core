@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Search, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { DataTable } from './data-table'
+import { Button } from './button'
 import { cn } from '../../lib/cn'
 
 // ---------------------------------------------------------------------------
@@ -150,18 +151,15 @@ export function ListView<TData>({
                 placeholder={searchPlaceholder}
                 value={internalSearch}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full rounded-lg border bg-background pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           )}
           {onNew && newLabel && (
-            <button
-              onClick={onNew}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
-            >
+            <Button variant="default" size="default" onClick={onNew} className="shrink-0">
               <Plus className="h-3.5 w-3.5" />
               {newLabel}
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -232,7 +230,7 @@ export function ListView<TData>({
             <button
               onClick={() => onPageChange!(page - 1)}
               disabled={page <= 1}
-              className="flex h-7 w-7 items-center justify-center rounded-md border hover:bg-muted/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="flex h-7 w-7 items-center justify-center rounded-md border hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </button>
@@ -242,7 +240,7 @@ export function ListView<TData>({
             <button
               onClick={() => onPageChange!(page + 1)}
               disabled={page >= totalPages}
-              className="flex h-7 w-7 items-center justify-center rounded-md border hover:bg-muted/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="flex h-7 w-7 items-center justify-center rounded-md border hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronRight className="h-3.5 w-3.5" />
             </button>

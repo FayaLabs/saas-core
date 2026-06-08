@@ -129,7 +129,7 @@ export function DatePicker({ value, onChange, className, defaultOpen, onOpenChan
     <div ref={ref} className={`relative ${className ?? ''}`}>
       {/* Trigger */}
       <button ref={triggerRef} type="button" onClick={() => setOpen((p) => !p)}
-        className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm hover:bg-muted/30 transition-colors w-full text-left">
+        className="flex items-center gap-2 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm hover:bg-muted/30  transition-colors w-full text-left">
         <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <span>{value ? formatDate(selectedDate, locale) : t('common.selectDate')}</span>
       </button>

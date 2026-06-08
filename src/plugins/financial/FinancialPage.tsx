@@ -8,6 +8,7 @@ import type { FinancialDataProvider } from './data/types'
 import type { FinancialUIState } from './store'
 import type { PluginRegistryDef, PluginQuickAction } from '../../types/plugins'
 import { useModuleNavigation } from '../../hooks/useModuleNavigation'
+import { Button } from '../../components/ui/button'
 import { QuickActionsButton } from '../../components/plugins/QuickActionsButton'
 import { SummaryView } from './views/SummaryView'
 import { PayablesView } from './views/PayablesView'
@@ -256,13 +257,14 @@ export function FinancialPage({ config, provider, store, registries }: {
           <div className="flex items-center gap-2">
             {quickActions.length > 0 && <QuickActionsButton actions={quickActions} />}
             {registries && registries.length > 0 && (
-              <button
+              <Button
+                variant="outline"
+                size="icon"
                 onClick={() => { window.location.hash = '/settings/financial' }}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors"
                 title={t('financial.settingsPage.title')}
               >
-                <Settings className="h-4 w-4 text-muted-foreground" />
-              </button>
+                <Settings className="h-4 w-4" />
+              </Button>
             )}
           </div>
         }

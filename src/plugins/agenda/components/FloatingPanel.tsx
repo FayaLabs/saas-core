@@ -111,7 +111,7 @@ export function FloatingPanel({
   return createPortal(
     <div ref={ref}
       style={{ position: 'fixed', left: x, top: y, zIndex, transition: phase === 'visible' ? 'left 200ms ease-out, top 200ms ease-out' : undefined }}
-      className={`rounded-3xl border bg-card shadow-2xl overflow-hidden ${
+      className={`rounded-modal border border-border bg-popover shadow-lg overflow-hidden ${
         phase === 'expanding' ? 'saas-fp-expanding'
         : phase === 'dismissing' ? 'saas-fp-dismissing'
         : 'animate-in fade-in zoom-in-95 duration-150'

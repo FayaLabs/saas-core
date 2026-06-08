@@ -16,11 +16,11 @@ const TYPE_ICONS: Record<MovementType, React.ElementType> = {
 }
 
 const TYPE_COLORS: Record<MovementType, string> = {
-  entry: 'text-emerald-500',
-  exit: 'text-red-500',
-  adjustment: 'text-blue-500',
-  transfer: 'text-violet-500',
-  loss: 'text-amber-500',
+  entry: 'text-success',
+  exit: 'text-destructive',
+  adjustment: 'text-info',
+  transfer: 'text-magic',
+  loss: 'text-warning',
 }
 
 export function MovementHistoryView({ onViewDetail }: { onViewDetail?: (id: string) => void } = {}) {

@@ -20,6 +20,7 @@ import { AppointmentPopover } from '../components/AppointmentPopover'
 import { PersonLink } from '../../../components/shared/PersonLink'
 import { EventContextMenu } from '../components/EventContextMenu'
 import { ConfirmDialog } from '../../../components/ui/confirm-dialog'
+import { Button } from '../../../components/ui/button'
 import type { CalendarBooking, Schedule } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -588,9 +589,9 @@ export function CalendarView() {
         {/* + Create button */}
         <button
           onClick={() => openModal('create')}
-          className="flex items-center gap-2 rounded-2xl bg-primary text-primary-foreground pl-4 pr-6 py-2.5 text-sm font-medium hover:bg-primary/90 shadow-md hover:shadow-lg transition-all mb-6 w-fit"
+          className="flex items-center gap-2 rounded-button bg-primary text-primary-foreground border border-primary pl-3 pr-4 py-1.5 text-sm font-semibold hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-all mb-6 w-fit"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-4 w-4" />
           {t('agenda.sidebar.create')}
         </button>
 
@@ -663,7 +664,7 @@ export function CalendarView() {
             </button>
 
             <button onClick={handleToday}
-              className="rounded-md border px-3 py-1 text-sm font-medium hover:bg-muted/50 transition-colors">
+              className="rounded-md border px-3 py-1 text-sm font-medium hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors">
               {t('agenda.toolbar.today')}
             </button>
             <div className="flex items-center gap-0.5">
@@ -690,13 +691,15 @@ export function CalendarView() {
                 </button>
               ))}
             </div>
-            <button
+            <Button
+              variant="outline"
+              size="icon"
               onClick={() => window.location.hash = '/settings/agenda'}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors ml-1"
               title="Agenda Settings"
+              className="ml-1"
             >
-              <Settings className="h-4 w-4 text-muted-foreground" />
-            </button>
+              <Settings className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 

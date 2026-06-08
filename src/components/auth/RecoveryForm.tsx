@@ -36,11 +36,11 @@ export function RecoveryForm({
   if (submitted) {
     return (
       <div className={cn('flex flex-col gap-4 w-full max-w-sm text-center', className)}>
-        <div className="rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 px-4 py-6">
-          <h3 className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">
+        <div className="rounded-md bg-success/10 border border-success/30 px-4 py-6">
+          <h3 className="text-sm font-medium text-success mb-1">
             {t('auth.recovery.checkEmail')}
           </h3>
-          <p className="text-sm text-green-700 dark:text-green-300">
+          <p className="text-sm text-success">
             {t('auth.recovery.resetLinkSent', { email })}
           </p>
         </div>
@@ -91,7 +91,7 @@ export function RecoveryForm({
       <button
         type="submit"
         disabled={loading}
-        className="inline-flex items-center justify-center h-10 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+        className="inline-flex items-center justify-center h-10 px-4 py-2 rounded-md bg-primary border border-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors disabled:opacity-50 disabled:pointer-events-none"
       >
         {loading ? t('auth.recovery.sending') : t('auth.recovery.sendResetLink')}
       </button>

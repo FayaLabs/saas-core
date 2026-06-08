@@ -16,7 +16,7 @@ export function TasksGeneralSettings() {
       <div className="space-y-4">
         <div className="space-y-1.5">
           <label className="text-sm font-medium">{t('tasks.settings.defaultPriority')}</label>
-          <select className="w-full max-w-xs rounded-md border bg-background px-3 py-2 text-sm">
+          <select className="w-full max-w-xs rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm">
             <option value="low">{t('tasks.priority.low')}</option>
             <option value="medium" selected>{t('tasks.priority.medium')}</option>
             <option value="high">{t('tasks.priority.high')}</option>

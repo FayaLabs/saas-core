@@ -214,8 +214,8 @@ export function AccessTab({ item }: { item: Record<string, any> }) {
           {/* Status row */}
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div className="flex items-center gap-3">
-              <div className={`flex h-8 w-8 items-center justify-center rounded-full ${isLinked ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-amber-100 dark:bg-amber-500/20'}`}>
-                {isLinked ? <Check className="h-4 w-4 text-emerald-600" /> : <Send className="h-4 w-4 text-amber-600" />}
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full ${isLinked ? 'bg-success/15 dark:bg-success/20' : 'bg-warning/15 dark:bg-warning/20'}`}>
+                {isLinked ? <Check className="h-4 w-4 text-success" /> : <Send className="h-4 w-4 text-warning" />}
               </div>
               <div>
                 <p className="text-sm font-medium">{email}</p>
@@ -228,8 +228,8 @@ export function AccessTab({ item }: { item: Record<string, any> }) {
               </div>
             </div>
             <Badge variant="secondary" className={`text-[10px] border-0 ${
-              isLinked ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
-                      : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
+              isLinked ? 'bg-success-soft text-success-soft-foreground'
+                      : 'bg-warning-soft text-warning-soft-foreground'
             }`}>
               {isLinked ? t('crud.access.statusLinked') : t('crud.access.statusPending')}
             </Badge>
@@ -293,7 +293,7 @@ export function AccessTab({ item }: { item: Record<string, any> }) {
                   const has = effectiveProfile.systemPermissions.includes(sp.id)
                   return (
                     <div key={sp.id} className="flex items-center gap-2 rounded-md border px-3 py-2">
-                      {has ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <X className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                      {has ? <Check className="h-3.5 w-3.5 text-success" /> : <X className="h-3.5 w-3.5 text-muted-foreground/40" />}
                       <span className={`text-xs ${has ? 'text-foreground' : 'text-muted-foreground'}`}>{t(sp.key)}</span>
                     </div>
                   )

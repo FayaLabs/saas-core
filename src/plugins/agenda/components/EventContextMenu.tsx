@@ -90,7 +90,7 @@ export function EventContextMenu({ booking, position, onClose, onEdit }: Props) 
                   <button onClick={() => setConfirming(false)}
                     className="rounded px-2 py-0.5 text-[11px] font-medium hover:bg-muted/50 transition-colors">{t('agenda.appointment.cancel')}</button>
                   <button onClick={handleDelete} disabled={deleting}
-                    className="rounded bg-destructive px-2 py-0.5 text-[11px] font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-40 transition-colors">{deleting ? t('agenda.appointment.deleting') : t('agenda.appointment.confirmDelete')}</button>
+                    className="rounded bg-destructive border border-destructive px-2 py-0.5 text-[11px] font-medium text-destructive-foreground hover:bg-destructive/90 shadow-button-primary active:shadow-button-inset disabled:opacity-40 transition-colors">{deleting ? t('agenda.appointment.deleting') : t('agenda.appointment.confirmDelete')}</button>
                 </div>
               </div>
             ) : (

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, Loader2, Send, CircleDashed, CircleCheckBig, CircleAlert, Ban } from 'lucide-react'
 import { Dropdown, DropdownTrigger, DropdownContent, DropdownItem, DropdownLabel, DropdownSeparator } from '../../../components/ui/dropdown'
 import { ConfirmDialog } from '../../../components/ui/confirm-dialog'
+import { Button } from '../../../components/ui/button'
 import { useCrmStore } from '../CrmContext'
 import type { Quote, QuoteStatus } from '../types'
 
@@ -11,11 +12,11 @@ import type { Quote, QuoteStatus } from '../types'
 // ---------------------------------------------------------------------------
 
 const STATUS_CONFIG: Record<QuoteStatus, { bg: string; dot: string; icon: React.ElementType; label: string }> = {
-  draft: { bg: 'bg-gray-100 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400', dot: 'bg-gray-400', icon: CircleDashed, label: 'Draft' },
-  sent: { bg: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', dot: 'bg-blue-500', icon: Send, label: 'Sent' },
-  approved: { bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', dot: 'bg-emerald-500', icon: CircleCheckBig, label: 'Approved' },
-  rejected: { bg: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400', dot: 'bg-red-500', icon: Ban, label: 'Rejected' },
-  expired: { bg: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400', dot: 'bg-amber-500', icon: CircleAlert, label: 'Expired' },
+  draft: { bg: 'bg-muted text-muted-foreground', dot: 'bg-muted-foreground', icon: CircleDashed, label: 'Draft' },
+  sent: { bg: 'bg-info-soft text-info-soft-foreground', dot: 'bg-info', icon: Send, label: 'Sent' },
+  approved: { bg: 'bg-success-soft text-success-soft-foreground', dot: 'bg-success', icon: CircleCheckBig, label: 'Approved' },
+  rejected: { bg: 'bg-destructive-soft text-destructive-soft-foreground', dot: 'bg-destructive', icon: Ban, label: 'Rejected' },
+  expired: { bg: 'bg-warning-soft text-warning-soft-foreground', dot: 'bg-warning', icon: CircleAlert, label: 'Expired' },
 }
 
 const TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {
@@ -36,7 +37,7 @@ function RejectModal({ onConfirm, onCancel }: { onConfirm: (reason: string) => v
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={onCancel}>
       <div
-        className="w-full max-w-sm rounded-xl border bg-card shadow-2xl mx-4 p-5"
+        className="w-full max-w-sm rounded-modal border bg-card shadow-lg mx-4 p-5"
         onClick={(e) => e.stopPropagation()}
         style={{ animation: 'saas-sheet-fade-in 150ms ease-out' }}
       >
@@ -50,19 +51,15 @@ function RejectModal({ onConfirm, onCancel }: { onConfirm: (reason: string) => v
           rows={3}
           placeholder="Reason for rejection..."
           autoFocus
-          className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+          className="w-full rounded-input border border-input bg-card px-3 py-2 text-sm shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] focus:outline-none focus:ring-2 focus:ring-ring resize-none"
         />
         <div className="flex justify-end gap-2 mt-3">
-          <button onClick={onCancel} className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+          <Button variant="outline" size="sm" onClick={onCancel}>
             Cancel
-          </button>
-          <button
-            onClick={() => onConfirm(reason)}
-            disabled={!reason.trim()}
-            className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
-          >
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => onConfirm(reason)} disabled={!reason.trim()}>
             Reject Quote
-          </button>
+          </Button>
         </div>
       </div>
     </div>,
@@ -154,7 +151,7 @@ export function QuoteStatusDropdown({ quote, onStatusChange, size = 'default' }:
             disabled={loading}
             className={`inline-flex items-center gap-1 rounded-full font-medium capitalize transition-all ${config.bg} ${
               isSmall ? 'px-1.5 py-0.5 text-[9px]' : 'px-2.5 py-1 text-[11px]'
-            } hover:ring-2 hover:ring-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/20`}
+            } hover:ring-2 hover:ring-primary/20 focus:outline-none focus:ring-2 focus:ring-ring`}
           >
             {!isSmall && <StatusIcon className="h-3 w-3" />}
             {config.label}

@@ -96,11 +96,11 @@ export function RecipeFormView({ onSaved }: { onSaved?: (id?: string) => void })
         actions={
           <div className="flex items-center gap-2">
             {onSaved && (
-              <button onClick={() => onSaved()} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+              <button onClick={() => onSaved()} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors">
                 <X className="h-3 w-3" /> {t('inventory.recipeForm.cancel')}
               </button>
             )}
-            <button onClick={handleSave} disabled={!name.trim() || !productId || ingredients.length === 0 || saving} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+            <button onClick={handleSave} disabled={!name.trim() || !productId || ingredients.length === 0 || saving} className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors disabled:opacity-50">
               <Save className="h-3 w-3" /> {saving ? t('inventory.recipeForm.saving') : t('inventory.recipeForm.saveRecipe')}
             </button>
           </div>
@@ -109,17 +109,17 @@ export function RecipeFormView({ onSaved }: { onSaved?: (id?: string) => void })
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Left: Recipe details */}
-        <div className="rounded-lg border bg-card p-5 space-y-4">
+        <div className="rounded-lg border bg-card shadow-sm p-5 space-y-4">
           <h3 className="text-sm font-semibold">{t('inventory.recipeForm.recipeDetails')}</h3>
 
           <div>
             <label className="text-xs font-medium text-muted-foreground">{t('inventory.recipeForm.recipeName')} *</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('inventory.recipeForm.recipeNamePlaceholder')} autoFocus className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('inventory.recipeForm.recipeNamePlaceholder')} autoFocus className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
 
           <div>
             <label className="text-xs font-medium text-muted-foreground">{t('inventory.recipeForm.description')}</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder={t('inventory.recipeForm.descriptionPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder={t('inventory.recipeForm.descriptionPlaceholder')} className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
           </div>
 
           <SearchSelect
@@ -140,25 +140,25 @@ export function RecipeFormView({ onSaved }: { onSaved?: (id?: string) => void })
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground">{t('inventory.recipeForm.yieldQuantity')}</label>
-              <input type="number" min={0.01} step={0.01} value={yieldQuantity} onChange={(e) => setYieldQuantity(Number(e.target.value) || 1)} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              <input type="number" min={0.01} step={0.01} value={yieldQuantity} onChange={(e) => setYieldQuantity(Number(e.target.value) || 1)} className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">{t('inventory.recipeForm.prepTime')}</label>
-              <input type="number" min={0} value={prepTime} onChange={(e) => setPrepTime(e.target.value)} placeholder="—" className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              <input type="number" min={0} value={prepTime} onChange={(e) => setPrepTime(e.target.value)} placeholder="—" className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
           </div>
 
           <div>
             <label className="text-xs font-medium text-muted-foreground">{t('inventory.recipeForm.instructions')}</label>
-            <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={4} placeholder={t('inventory.recipeForm.instructionsPlaceholder')} className="w-full mt-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+            <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={4} placeholder={t('inventory.recipeForm.instructionsPlaceholder')} className="w-full mt-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
           </div>
         </div>
 
         {/* Right: Ingredients */}
-        <div className="lg:col-span-2 rounded-lg border bg-card overflow-hidden flex flex-col">
+        <div className="lg:col-span-2 rounded-lg border bg-card shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b">
             <h3 className="text-sm font-semibold">{t('inventory.recipeForm.ingredients')}</h3>
-            <button onClick={addIngredient} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+            <button onClick={addIngredient} className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors">
               <Plus className="h-3 w-3" /> {t('inventory.recipeForm.addIngredient')}
             </button>
           </div>
@@ -202,7 +202,7 @@ export function RecipeFormView({ onSaved }: { onSaved?: (id?: string) => void })
                         step={0.01}
                         value={ing.quantity}
                         onChange={(e) => updateIngredient(ing._id, { quantity: Number(e.target.value) || 0 })}
-                        className="w-full rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                     </div>
                     <div className="col-span-4">
@@ -211,7 +211,7 @@ export function RecipeFormView({ onSaved }: { onSaved?: (id?: string) => void })
                         value={ing.notes}
                         onChange={(e) => updateIngredient(ing._id, { notes: e.target.value })}
                         placeholder={t('inventory.recipeForm.notesPlaceholder')}
-                        className="w-full rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                     </div>
                     <div className="col-span-1 flex justify-end">

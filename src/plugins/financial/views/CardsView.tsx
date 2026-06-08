@@ -36,7 +36,7 @@ export function CardsView() {
         </div>
       ) : (
         Object.entries(byBrand).map(([brand, txs]) => (
-          <div key={brand} className="rounded-lg border bg-card">
+          <div key={brand} className="rounded-lg border bg-card shadow-sm">
             <div className="flex items-center gap-2 px-4 py-3 border-b">
               <CreditCard className="h-4 w-4 text-indigo-500" />
               <h3 className="text-sm font-semibold">{brand}</h3>
@@ -54,11 +54,11 @@ export function CardsView() {
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-medium">{formatCurrency(tx.installmentAmount, currency)}</span>
                     {tx.status === 'received' ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success dark:bg-success/20">
                         <Check className="h-2.5 w-2.5" /> Received
                       </span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
+                      <span className="inline-flex items-center rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning dark:bg-warning/20">
                         Pending
                       </span>
                     )}

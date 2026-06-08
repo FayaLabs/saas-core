@@ -55,7 +55,7 @@ export function StatementsView() {
     {
       id: 'debit', header: t('financial.statements.columnDebit'),
       cell: ({ row }) => (
-        <span className="text-right block text-red-500 text-xs">
+        <span className="text-right block text-destructive text-xs">
           {row.original.movement.direction === 'debit' ? formatCurrency(row.original.movement.paidAmount, currency) : ''}
         </span>
       ),
@@ -63,7 +63,7 @@ export function StatementsView() {
     {
       id: 'credit', header: t('financial.statements.columnCredit'),
       cell: ({ row }) => (
-        <span className="text-right block text-emerald-600 text-xs">
+        <span className="text-right block text-success text-xs">
           {row.original.movement.direction === 'credit' ? formatCurrency(row.original.movement.paidAmount, currency) : ''}
         </span>
       ),
@@ -87,7 +87,7 @@ export function StatementsView() {
           <select
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
-            className="w-full mt-0.5 rounded-lg border bg-background px-3 py-2 text-sm"
+            className="w-full mt-0.5 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm"
           >
             <option value="">{t('financial.statements.selectAccount')}</option>
             {bankAccounts.map((a) => (

@@ -105,7 +105,7 @@ export function CalendarSidebar() {
           <select
             value={selectedLocationId ?? ''}
             onChange={(e) => setFilters({ locationId: e.target.value || null })}
-            className="mt-2 block w-full rounded-lg border bg-background px-2 py-1.5 text-sm"
+            className="mt-2 block w-full rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-sm"
           >
             <option value="">{t('agenda.sidebar.allLocations')}</option>
             {config.locations.map((loc) => (

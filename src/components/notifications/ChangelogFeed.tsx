@@ -16,7 +16,7 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
 
 const TYPE_COLORS: Record<string, string> = {
   feature: 'text-primary',
-  improvement: 'text-blue-500',
+  improvement: 'text-info',
   fix: 'text-success',
 }
 

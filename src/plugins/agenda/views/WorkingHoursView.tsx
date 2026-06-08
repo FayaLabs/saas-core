@@ -172,7 +172,7 @@ export function WorkingHoursView() {
         <button
           onClick={handleSave}
           disabled={saving || !selectedProfId}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg bg-primary border border-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset disabled:opacity-50"
         >
           <Save className="h-4 w-4" />
           {saving ? t('agenda.workingHours.saving') : t('agenda.workingHours.save')}
@@ -185,7 +185,7 @@ export function WorkingHoursView() {
         <select
           value={selectedProfId}
           onChange={(e) => setSelectedProfId(e.target.value)}
-          className="mt-1 block w-full max-w-xs rounded-lg border bg-background px-3 py-2 text-sm"
+          className="mt-1 block w-full max-w-xs rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-3 py-2 text-sm"
         >
           {profLoading && <option>{t('agenda.confirmations.loading')}</option>}
           {professionals.map((p) => (

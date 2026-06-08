@@ -48,10 +48,10 @@ export const lightTheme: ThemeTokens = {
     modalRadius: '1rem',                  // 16px (--p-border-radius-400)
     fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, sans-serif',
     fontFamilyMono: 'JetBrains Mono, ui-monospace, SFMono-Regular, monospace',
-    // Polaris card shadow is barely a shadow — just a hairline bottom edge.
-    shadowSm: '0 1px 0 rgba(0, 0, 0, 0.05)',
-    shadowMd: '0 1px 1px -1px rgba(26, 26, 26, 0.07), 0 3px 6px -3px rgba(26, 26, 26, 0.10)',
-    shadowLg: '0 4px 8px -2px rgba(26, 26, 26, 0.12), 0 1px 2px rgba(26, 26, 26, 0.07)',
+    // Polaris hairline + a touch of bottom lift so cards visibly float on the gray page.
+    shadowSm: '0 1px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(26, 26, 26, 0.06), 0 1px 2px -1px rgba(26, 26, 26, 0.06)',
+    shadowMd: '0 1px 1px -1px rgba(26, 26, 26, 0.07), 0 4px 8px -2px rgba(26, 26, 26, 0.10)',
+    shadowLg: '0 4px 12px -2px rgba(26, 26, 26, 0.15), 0 1px 3px rgba(26, 26, 26, 0.08)',
     // Inset bevels — Polaris signature. Buttons feel physical because of these.
     shadowButton:
       'inset 0 -1px 0 rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.50), 0 1px 0 rgba(0,0,0,0.05)',

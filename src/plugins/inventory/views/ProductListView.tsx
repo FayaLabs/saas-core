@@ -34,7 +34,7 @@ const useColumns = (currency: { code: string; locale: string; symbol: string }, 
     enableSorting: true,
     meta: { align: 'right' },
     cell: ({ row }) => (
-      <span className={`text-right block ${row.original.currentQuantity <= row.original.minQuantity ? 'text-red-500 font-medium' : ''}`}>
+      <span className={`text-right block ${row.original.currentQuantity <= row.original.minQuantity ? 'text-destructive font-medium' : ''}`}>
         {row.original.currentQuantity}
       </span>
     ),

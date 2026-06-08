@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Filter, Globe, Target, ChevronRight, Check } from 'lucide-react'
 import { useTranslation } from '../../../hooks/useTranslation'
+import { Button } from '../../../components/ui/button'
 
 const STEPS = [
   { id: 'welcome', icon: Filter, titleKey: 'crm.onboarding.welcome', descKey: 'crm.onboarding.description' },
@@ -21,7 +22,7 @@ export function CrmOnboarding({ onComplete }: { onComplete: () => void }) {
         <div className="flex items-center gap-1 mb-8">
           {STEPS.map((_, i) => <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? 'bg-primary' : 'bg-muted'}`} />)}
         </div>
-        <div className="rounded-xl border bg-card p-8 text-center space-y-6">
+        <div className="rounded-card border bg-card p-8 text-center space-y-6 shadow-sm">
           <div className="flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
               <Icon className="h-8 w-8 text-primary" />
@@ -32,15 +33,15 @@ export function CrmOnboarding({ onComplete }: { onComplete: () => void }) {
             <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">{t(current.descKey)}</p>
           </div>
           <div className="flex items-center justify-center gap-3 pt-2">
-            {step > 0 && <button onClick={() => setStep(step - 1)} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted/50 transition-colors">{t('common.back')}</button>}
+            {step > 0 && <Button variant="outline" size="lg" onClick={() => setStep(step - 1)}>{t('common.back')}</Button>}
             {isLast ? (
-              <button onClick={onComplete} className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+              <Button variant="default" size="lg" onClick={onComplete}>
                 <Check className="h-4 w-4" /> {t('crm.onboarding.startSelling')}
-              </button>
+              </Button>
             ) : (
-              <button onClick={() => setStep(step + 1)} className="inline-flex items-center gap-1 rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+              <Button variant="default" size="lg" onClick={() => setStep(step + 1)}>
                 {step === 0 ? t('crm.onboarding.getStarted') : t('crm.onboarding.next')} <ChevronRight className="h-4 w-4" />
-              </button>
+              </Button>
             )}
           </div>
           {step === 0 && <button onClick={onComplete} className="text-xs text-muted-foreground hover:text-foreground transition-colors">{t('crm.onboarding.skip')}</button>}

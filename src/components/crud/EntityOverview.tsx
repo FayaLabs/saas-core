@@ -81,7 +81,7 @@ function EditableFieldRow({ field, value, t, onSave }: {
           <dt className="text-xs font-medium text-muted-foreground pt-2">{field.label}</dt>
           <dd className="col-span-2 flex items-center gap-1.5">
             <select value={editValue} onChange={(e) => setEditValue(e.target.value)} autoFocus
-              className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+              className="flex-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
               <option value="">—</option>
               {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
@@ -98,7 +98,7 @@ function EditableFieldRow({ field, value, t, onSave }: {
           <dt className="text-xs font-medium text-muted-foreground pt-2">{field.label}</dt>
           <dd className="col-span-2 flex items-start gap-1.5">
             <textarea value={editValue} onChange={(e) => setEditValue(e.target.value)} autoFocus rows={3}
-              className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring" />
+              className="flex-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring" />
             <div className="flex flex-col gap-1">
               <button type="button" onClick={handleSave} className="p-1 text-primary hover:bg-primary/10 rounded"><Check className="h-3.5 w-3.5" /></button>
               <button type="button" onClick={handleCancel} className="p-1 text-muted-foreground hover:bg-muted rounded"><X className="h-3.5 w-3.5" /></button>
@@ -128,7 +128,7 @@ function EditableFieldRow({ field, value, t, onSave }: {
         <dd className="col-span-2 flex items-center gap-1.5">
           <input type={inputType} value={editValue} onChange={(e) => setEditValue(e.target.value)} autoFocus
             onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel() }}
-            className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+            className="flex-1 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           <button type="button" onClick={handleSave} className="p-1 text-primary hover:bg-primary/10 rounded"><Check className="h-3.5 w-3.5" /></button>
           <button type="button" onClick={handleCancel} className="p-1 text-muted-foreground hover:bg-muted rounded"><X className="h-3.5 w-3.5" /></button>
         </dd>

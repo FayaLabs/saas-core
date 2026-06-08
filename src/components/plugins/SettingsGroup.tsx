@@ -67,7 +67,7 @@ export function SelectRow({ label, description, value, options, onChange, disabl
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="h-8 rounded-md border bg-background px-2 text-sm"
+        className="h-8 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 text-sm"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -92,7 +92,7 @@ export function SettingsGroup({ title, description, children }: {
         <h3 className="text-sm font-semibold">{title}</h3>
         {description && <p className="text-[10px] text-muted-foreground mt-0.5">{description}</p>}
       </div>
-      <div className="rounded-lg border bg-card px-5 divide-y">
+      <div className="rounded-lg border bg-card shadow-sm px-5 divide-y">
         {children}
       </div>
     </div>

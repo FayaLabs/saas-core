@@ -83,13 +83,13 @@ export function ConfirmationsView() {
             const services = booking.services?.map((s) => s.name).join(', ') ?? '-'
 
             return (
-              <div key={booking.id} className="flex items-center gap-4 rounded-lg border p-4 hover:bg-muted/30 transition-colors">
+              <div key={booking.id} className="flex items-center gap-4 rounded-lg border p-4 hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors">
                 {/* Status indicator */}
                 <div className={`h-2 w-2 rounded-full shrink-0 ${
-                  confStatus === 'confirmed' ? 'bg-green-500' :
-                  confStatus === 'sent' ? 'bg-blue-500' :
-                  confStatus === 'declined' ? 'bg-red-500' :
-                  'bg-yellow-500'
+                  confStatus === 'confirmed' ? 'bg-success' :
+                  confStatus === 'sent' ? 'bg-info' :
+                  confStatus === 'declined' ? 'bg-destructive' :
+                  'bg-warning'
                 }`} />
 
                 {/* Client info */}
@@ -121,28 +121,28 @@ export function ConfirmationsView() {
                       className="p-1.5 rounded hover:bg-muted"
                       title={t('agenda.confirmations.sendWhatsApp')}
                     >
-                      <MessageCircle className="h-4 w-4 text-green-600" />
+                      <MessageCircle className="h-4 w-4 text-success" />
                     </button>
                   )}
                   <button
                     className="p-1.5 rounded hover:bg-muted"
                     title={t('agenda.confirmations.call')}
                   >
-                    <Phone className="h-4 w-4 text-blue-600" />
+                    <Phone className="h-4 w-4 text-info" />
                   </button>
                   <button
                     onClick={() => updateStatus(booking.id, 'confirmed')}
                     className="p-1.5 rounded hover:bg-muted"
                     title={t('agenda.confirmations.markConfirmed')}
                   >
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <CheckCircle className="h-4 w-4 text-success" />
                   </button>
                   <button
                     onClick={() => updateStatus(booking.id, 'cancelled')}
                     className="p-1.5 rounded hover:bg-muted"
                     title={t('agenda.confirmations.markCancelled')}
                   >
-                    <XCircle className="h-4 w-4 text-red-500" />
+                    <XCircle className="h-4 w-4 text-destructive" />
                   </button>
                 </div>
               </div>

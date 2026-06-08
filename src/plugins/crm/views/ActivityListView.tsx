@@ -6,19 +6,19 @@ import { SubpageHeader } from '../../../components/layout/ModulePage'
 import type { ActivityType } from '../types'
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  call: { icon: Phone, color: 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400', label: 'Call' },
-  email: { icon: Mail, color: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400', label: 'Email' },
-  meeting: { icon: Users, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400', label: 'Meeting' },
-  note: { icon: FileText, color: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400', label: 'Note' },
+  call: { icon: Phone, color: 'bg-info/15 text-info dark:bg-info/20', label: 'Call' },
+  email: { icon: Mail, color: 'bg-magic/15 text-magic dark:bg-magic/20', label: 'Email' },
+  meeting: { icon: Users, color: 'bg-success-soft text-success-soft-foreground', label: 'Meeting' },
+  note: { icon: FileText, color: 'bg-warning/15 text-warning dark:bg-warning/20', label: 'Note' },
   task: { icon: CheckSquare, color: 'bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400', label: 'Task' },
-  whatsapp: { icon: MessageCircle, color: 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400', label: 'WhatsApp' },
+  whatsapp: { icon: MessageCircle, color: 'bg-success/15 text-success dark:bg-success/20', label: 'WhatsApp' },
 }
 
 function ActivitySkeleton() {
   return (
     <div className="space-y-2">
       {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="flex items-start gap-3 rounded-lg border bg-card p-4">
+        <div key={i} className="flex items-start gap-3 rounded-lg border bg-card shadow-sm p-4">
           <div className="h-9 w-9 rounded-lg bg-muted/40 animate-pulse shrink-0" />
           <div className="flex-1 space-y-2 pt-0.5">
             <div className="flex items-center gap-2">
@@ -94,13 +94,13 @@ export function ActivityListView() {
         <div className="flex gap-1.5">
           <button
             onClick={() => setShowCompleted(showCompleted === false ? null : false)}
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${showCompleted === false ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${showCompleted === false ? 'bg-warning-soft text-warning-soft-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}
           >
             <Clock className="h-3 w-3" /> {t('crm.activities.pendingFilter')}
           </button>
           <button
             onClick={() => setShowCompleted(showCompleted === true ? null : true)}
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${showCompleted === true ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${showCompleted === true ? 'bg-success-soft text-success-soft-foreground' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}
           >
             <Check className="h-3 w-3" /> {t('crm.activities.completedFilter')}
           </button>
@@ -128,7 +128,7 @@ export function ActivityListView() {
             return (
               <div
                 key={a.id}
-                className={`flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors ${isOverdue ? 'border-red-200 dark:border-red-500/20' : ''}`}
+                className={`flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors ${isOverdue ? 'border-destructive/30 dark:border-destructive/20' : ''}`}
               >
                 <div className={`flex h-9 w-9 items-center justify-center rounded-lg shrink-0 ${cfg.color}`}>
                   <Icon className="h-4 w-4" />
@@ -137,12 +137,12 @@ export function ActivityListView() {
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium truncate">{a.title}</p>
                     {a.completedAt && (
-                      <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-success/15 px-1.5 py-0.5 text-[9px] font-medium text-success dark:bg-success/20">
                         <Check className="h-2.5 w-2.5" /> {t('crm.activities.done')}
                       </span>
                     )}
                     {isOverdue && (
-                      <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-medium text-red-700 dark:bg-red-500/20 dark:text-red-400">
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/15 px-1.5 py-0.5 text-[9px] font-medium text-destructive dark:bg-destructive/20">
                         {t('crm.activities.overdueLabel')}
                       </span>
                     )}
@@ -153,7 +153,7 @@ export function ActivityListView() {
                     {a.dueDate && (
                       <>
                         <span>&middot;</span>
-                        <span className={isOverdue ? 'text-red-500 font-medium' : ''}>Due {a.dueDate}</span>
+                        <span className={isOverdue ? 'text-destructive font-medium' : ''}>Due {a.dueDate}</span>
                       </>
                     )}
                     {a.assignedToName && (

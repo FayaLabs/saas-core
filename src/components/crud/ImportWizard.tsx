@@ -524,12 +524,12 @@ function ImportingStep({
     <div className="flex flex-col items-center gap-5 py-4">
       <div className={cn(
         'h-16 w-16 rounded-2xl flex items-center justify-center',
-        hasErrors ? 'bg-warning/10' : 'bg-emerald-500/10',
+        hasErrors ? 'bg-warning/10' : 'bg-success/10',
       )}>
         {hasErrors ? (
           <AlertCircle className="h-8 w-8 text-warning" />
         ) : (
-          <Check className="h-8 w-8 text-emerald-500" />
+          <Check className="h-8 w-8 text-success" />
         )}
       </div>
 
@@ -551,7 +551,7 @@ function ImportingStep({
           <div
             className={cn(
               'h-full rounded-full transition-all duration-300',
-              hasErrors ? 'bg-warning' : 'bg-emerald-500',
+              hasErrors ? 'bg-warning' : 'bg-success',
             )}
             style={{ width: '100%' }}
           />

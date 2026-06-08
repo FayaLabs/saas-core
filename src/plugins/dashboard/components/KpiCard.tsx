@@ -10,7 +10,7 @@ function getIcon(name: string): React.ComponentType<{ className?: string }> {
 function TrendIndicator({ trend, percent }: { trend?: 'up' | 'down' | 'neutral'; percent?: number }) {
   if (!trend || trend === 'neutral') return null
   const Arrow = trend === 'up' ? LucideIcons.TrendingUp : LucideIcons.TrendingDown
-  const color = trend === 'up' ? 'text-green-600' : 'text-red-600'
+  const color = trend === 'up' ? 'text-success' : 'text-destructive'
   return (
     <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${color}`}>
       <Arrow className="h-3 w-3" />

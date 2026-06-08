@@ -108,7 +108,7 @@ export function BlockSettingsPopover({
               <button
                 type="button"
                 onClick={() => update({ maxConcurrent: Math.max(1, (settings.maxConcurrent ?? config.defaults.maxConcurrent) - 1) })}
-                className="flex h-7 w-7 items-center justify-center rounded-md border text-sm hover:bg-muted transition-colors"
+                className="flex h-7 w-7 items-center justify-center rounded-md border text-sm hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors"
               >
                 -
               </button>
@@ -118,7 +118,7 @@ export function BlockSettingsPopover({
               <button
                 type="button"
                 onClick={() => update({ maxConcurrent: (settings.maxConcurrent ?? config.defaults.maxConcurrent) + 1 })}
-                className="flex h-7 w-7 items-center justify-center rounded-md border text-sm hover:bg-muted transition-colors"
+                className="flex h-7 w-7 items-center justify-center rounded-md border text-sm hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors"
               >
                 +
               </button>
@@ -137,7 +137,7 @@ export function BlockSettingsPopover({
                   min={0}
                   value={settings.minAdvanceHours ?? config.defaults.minAdvanceHours}
                   onChange={(e) => update({ minAdvanceHours: Number(e.target.value) || 0 })}
-                  className="w-full rounded-md border bg-background px-2 py-1 text-xs tabular-nums"
+                  className="w-full rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1 text-xs tabular-nums"
                 />
                 <span className="text-[10px] text-muted-foreground shrink-0">{t('schedule.blockSettings.hrs')}</span>
               </div>
@@ -150,7 +150,7 @@ export function BlockSettingsPopover({
                   min={1}
                   value={settings.maxAdvanceDays ?? config.defaults.maxAdvanceDays}
                   onChange={(e) => update({ maxAdvanceDays: Number(e.target.value) || 30 })}
-                  className="w-full rounded-md border bg-background px-2 py-1 text-xs tabular-nums"
+                  className="w-full rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1 text-xs tabular-nums"
                 />
                 <span className="text-[10px] text-muted-foreground shrink-0">{t('schedule.blockSettings.days')}</span>
               </div>
@@ -166,7 +166,7 @@ export function BlockSettingsPopover({
             value={settings.label ?? ''}
             onChange={(e) => update({ label: e.target.value || undefined })}
             placeholder={t('schedule.blockSettings.labelPlaceholder')}
-            className="mt-1 w-full rounded-md border bg-background px-2 py-1 text-xs placeholder:text-muted-foreground/40"
+            className="mt-1 w-full rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1 text-xs placeholder:text-muted-foreground/40"
           />
         </div>
       </div>
@@ -212,7 +212,7 @@ function LocationSelect({
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        className="mt-1 flex items-center justify-between w-full rounded-md border bg-background px-2 py-1.5 text-xs hover:bg-muted/30 transition-colors"
+        className="mt-1 flex items-center justify-between w-full rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-xs hover:bg-muted/30  transition-colors"
       >
         <span className={current ? '' : 'text-muted-foreground'}>{label}</span>
         <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -283,7 +283,7 @@ function ServiceSelect({
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
-        className="mt-1 flex items-center justify-between w-full rounded-md border bg-background px-2 py-1.5 text-xs hover:bg-muted/30 transition-colors"
+        className="mt-1 flex items-center justify-between w-full rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-xs hover:bg-muted/30  transition-colors"
       >
         <span className={allSelected ? 'text-muted-foreground' : ''}>{label}</span>
         <ChevronDown className="h-3 w-3 text-muted-foreground" />

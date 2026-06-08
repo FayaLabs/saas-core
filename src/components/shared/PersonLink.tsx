@@ -134,8 +134,8 @@ export function PersonLink({ personId, name, profileHref, tab, size = 'default',
                     </span>
                   )}
                   {isActive !== undefined && (
-                    <span className={`inline-flex items-center gap-1 text-[10px] ${isActive ? 'text-emerald-600' : 'text-muted-foreground/50'}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
+                    <span className={`inline-flex items-center gap-1 text-[10px] ${isActive ? 'text-success' : 'text-muted-foreground/50'}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-success' : 'bg-muted-foreground/30'}`} />
                       {isActive ? 'Active' : 'Inactive'}
                     </span>
                   )}

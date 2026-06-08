@@ -10,11 +10,11 @@ const STATUS_CONFIG: Record<BookingPaymentStatus, {
   icon: React.ElementType
 }> = {
   none: { dot: '', text: 'text-muted-foreground', bg: 'hover:bg-muted/50', icon: DollarSign },
-  pending: { dot: 'bg-amber-500', text: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-500/10', icon: Clock },
-  partial: { dot: 'bg-yellow-500', text: 'text-yellow-700 dark:text-yellow-400', bg: 'bg-yellow-500/10', icon: Clock },
-  paid: { dot: 'bg-emerald-500', text: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-500/10', icon: Check },
-  overdue: { dot: 'bg-red-500', text: 'text-red-700 dark:text-red-400', bg: 'bg-red-500/10', icon: AlertTriangle },
-  cancelled: { dot: 'bg-gray-400', text: 'text-muted-foreground', bg: 'bg-muted/30', icon: DollarSign },
+  pending: { dot: 'bg-warning', text: 'text-warning', bg: 'bg-warning/10', icon: Clock },
+  partial: { dot: 'bg-warning', text: 'text-warning', bg: 'bg-warning/10', icon: Clock },
+  paid: { dot: 'bg-success', text: 'text-success', bg: 'bg-success/10', icon: Check },
+  overdue: { dot: 'bg-destructive', text: 'text-destructive', bg: 'bg-destructive/10', icon: AlertTriangle },
+  cancelled: { dot: 'bg-muted-foreground', text: 'text-muted-foreground', bg: 'bg-muted/30', icon: DollarSign },
 }
 
 interface PaymentStatusBadgeProps {

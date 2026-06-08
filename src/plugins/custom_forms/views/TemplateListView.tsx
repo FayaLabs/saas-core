@@ -18,11 +18,11 @@ interface TemplateListViewProps {
 }
 
 const CATEGORY_COLORS: Record<TemplateCategory, string> = {
-  anamnesis: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  evolution: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  report: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  contract: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  general: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+  anamnesis: 'bg-info-soft text-info-soft-foreground',
+  evolution: 'bg-success-soft text-success-soft-foreground',
+  report: 'bg-magic-soft text-magic-soft-foreground',
+  contract: 'bg-warning-soft text-warning-soft-foreground',
+  general: 'bg-muted text-muted-foreground',
 }
 
 export function TemplateListView({ store, config, onEdit, onNew }: TemplateListViewProps) {

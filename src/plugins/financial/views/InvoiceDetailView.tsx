@@ -6,16 +6,17 @@ import { useFinancialConfig, useFinancialStore, useFinancialProvider, formatCurr
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { PaymentModal } from '../components/PaymentModal'
 import { useTranslation } from '../../../hooks/useTranslation'
+import { Button } from '../../../components/ui/button'
 import type { Invoice, InvoiceItem, FinancialMovement, TransactionDirection } from '../types'
 
 const STATUS_COLORS: Record<string, { bg: string; icon: React.ElementType; labelKey: string }> = {
-  open: { bg: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400', icon: CircleDashed, labelKey: 'financial.invoice.statusOpen' },
-  pending: { bg: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400', icon: CircleDashed, labelKey: 'financial.invoice.statusPending' },
-  partial: { bg: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400', icon: CircleEllipsis, labelKey: 'financial.invoice.statusPartial' },
-  paid: { bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', icon: CircleCheckBig, labelKey: 'financial.invoice.statusPaid' },
-  overdue: { bg: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400', icon: CircleAlert, labelKey: 'financial.invoice.statusOverdue' },
-  draft: { bg: 'bg-gray-100 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400', icon: CircleDashed, labelKey: 'financial.invoice.statusDraft' },
-  cancelled: { bg: 'bg-gray-100 text-gray-500 dark:bg-gray-500/20 dark:text-gray-400', icon: Ban, labelKey: 'financial.invoice.statusCancelled' },
+  open: { bg: 'bg-info-soft text-info-soft-foreground', icon: CircleDashed, labelKey: 'financial.invoice.statusOpen' },
+  pending: { bg: 'bg-warning-soft text-warning-soft-foreground', icon: CircleDashed, labelKey: 'financial.invoice.statusPending' },
+  partial: { bg: 'bg-warning-soft text-warning-soft-foreground', icon: CircleEllipsis, labelKey: 'financial.invoice.statusPartial' },
+  paid: { bg: 'bg-success-soft text-success-soft-foreground', icon: CircleCheckBig, labelKey: 'financial.invoice.statusPaid' },
+  overdue: { bg: 'bg-destructive-soft text-destructive-soft-foreground', icon: CircleAlert, labelKey: 'financial.invoice.statusOverdue' },
+  draft: { bg: 'bg-muted text-muted-foreground', icon: CircleDashed, labelKey: 'financial.invoice.statusDraft' },
+  cancelled: { bg: 'bg-muted text-muted-foreground', icon: Ban, labelKey: 'financial.invoice.statusCancelled' },
 }
 
 export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
@@ -111,7 +112,7 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
         <SubpageHeader title="" onBack={onBack} parentLabel={direction === 'debit' ? t('financial.nav.payables') : t('financial.nav.receivables')} />
 
         {/* Invoice card skeleton */}
-        <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
           <div className="h-1 bg-muted animate-pulse" />
           <div className="p-5 pb-4">
             <div className="flex items-start justify-between">
@@ -165,7 +166,7 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
         {/* Installments skeleton */}
         <div className="space-y-2">
           <div className="h-4 w-28 rounded bg-muted/30 animate-pulse" />
-          <div className="rounded-lg border bg-card divide-y">
+          <div className="rounded-lg border bg-card shadow-sm divide-y">
             {[1].map((i) => (
               <div key={i} className="flex items-center gap-3 px-4 py-3">
                 <div className="h-3 w-5 rounded bg-muted/30 animate-pulse" />
@@ -208,23 +209,20 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
         actions={
           <div className="flex items-center gap-1.5">
             {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
-              <button onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
-                <Pencil className="h-3 w-3" /> {t('financial.invoice.edit')}
-              </button>
+              <Button variant="outline" size="sm" onClick={onEdit}>
+                <Pencil className="h-3.5 w-3.5" /> {t('financial.invoice.edit')}
+              </Button>
             )}
             {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
               <div className="relative" ref={menuRef}>
-                <button
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-muted/50 transition-colors"
-                >
-                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                </button>
+                <Button variant="outline" size="icon" onClick={() => setMenuOpen(!menuOpen)} aria-label="More actions">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
                 {menuOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border bg-card shadow-lg z-20 py-1" style={{ animation: 'field-slide-in 150ms ease-out' }}>
+                  <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border bg-popover shadow-md z-20 py-1" style={{ animation: 'field-slide-in 150ms ease-out' }}>
                     <button
                       onClick={() => { setConfirmCancel(true); setMenuOpen(false) }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-500/10 transition-colors"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
                     >
                       <Ban className="h-3.5 w-3.5" /> {t('financial.invoice.cancelInvoice')}
                     </button>
@@ -237,7 +235,7 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
       />
 
       {/* Invoice document */}
-      <div className="rounded-xl border bg-card overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         {/* Top accent stripe */}
         <div className="h-1 bg-primary" />
 
@@ -299,13 +297,13 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
           {/* Booking link — shows when this order has a scheduled time */}
           {invoice.bookingStartsAt && (
             <div className="flex items-center gap-2 mt-3 pt-3 border-t">
-              <CalendarDays className="h-3.5 w-3.5 text-violet-500 shrink-0" />
+              <CalendarDays className="h-3.5 w-3.5 text-magic shrink-0" />
               <div className="flex items-center gap-2 min-w-0">
                 <p className="text-[10px] text-muted-foreground">{t('financial.invoice.booking')}</p>
                 <button
                   type="button"
                   onClick={() => config.onBookingClick?.(invoice.id)}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 dark:text-violet-400 hover:underline"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-magic hover:underline"
                 >
                   {new Date(invoice.bookingStartsAt).toLocaleDateString(undefined, { weekday: 'short', day: '2-digit', month: 'short' })}
                   {' '}
@@ -363,13 +361,13 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
                   </div>
                 )}
                 {totalDiscount > 0 && (
-                  <div className="flex items-center gap-6 text-xs text-emerald-600">
+                  <div className="flex items-center gap-6 text-xs text-success">
                     <span>{t('financial.invoice.discount')}</span>
                     <span className="tabular-nums w-24 text-right">-{formatCurrency(totalDiscount, currency)}</span>
                   </div>
                 )}
                 {totalSurcharge > 0 && (
-                  <div className="flex items-center gap-6 text-xs text-amber-600">
+                  <div className="flex items-center gap-6 text-xs text-warning">
                     <span>{t('financial.invoice.surcharge')}</span>
                     <span className="tabular-nums w-24 text-right">+{formatCurrency(totalSurcharge, currency)}</span>
                   </div>
@@ -395,7 +393,7 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
       {/* Installments — outside the invoice card */}
       <div className="space-y-2">
         <h3 className="text-sm font-semibold text-muted-foreground">{t('financial.invoice.paymentSchedule')}</h3>
-        <div className="rounded-lg border bg-card">
+        <div className="rounded-lg border bg-card shadow-sm">
           {movements.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">{t('financial.invoice.noInstallments')}</div>
           ) : (
@@ -437,7 +435,7 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
                       {!isPaid && !isPartial && invoice.status !== 'cancelled' && (
                         <button
                           onClick={(e) => { e.stopPropagation(); setPayingMovement(mov) }}
-                          className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+                          className="inline-flex items-center gap-1 rounded-lg bg-primary border border-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors shrink-0"
                         >
                           <DollarSign className="h-3 w-3" />
                           {t('financial.invoice.pay')} {remaining < mov.amount ? formatCurrency(remaining, currency) : ''}
@@ -446,7 +444,7 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
                       {isPartial && invoice.status !== 'cancelled' && (
                         <button
                           onClick={(e) => { e.stopPropagation(); setPayingMovement(mov) }}
-                          className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors shrink-0"
+                          className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors shrink-0"
                         >
                           <DollarSign className="h-3 w-3" />
                           {t('financial.invoice.pay')} {formatCurrency(remaining, currency)}
@@ -496,7 +494,7 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
                               {mov.paidAmount > 0 && (
                                 <>
                                   <span>&middot;</span>
-                                  <span className="font-medium text-emerald-600">{formatCurrency(mov.paidAmount, currency)}</span>
+                                  <span className="font-medium text-success">{formatCurrency(mov.paidAmount, currency)}</span>
                                 </>
                               )}
                               {mov.paymentDate && (
@@ -530,13 +528,13 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
         {movements.length > 0 && (
           <div className="flex items-center justify-between rounded-lg border bg-muted/20 px-4 py-2.5">
             <div className="flex items-center gap-4 text-xs">
-              <span className="text-muted-foreground">{t('financial.invoice.paidLabel')} <span className="font-semibold text-emerald-600">{formatCurrency(totalPaid, currency)}</span></span>
+              <span className="text-muted-foreground">{t('financial.invoice.paidLabel')} <span className="font-semibold text-success">{formatCurrency(totalPaid, currency)}</span></span>
               {totalRemaining > 0 && (
                 <span className="text-muted-foreground">{t('financial.invoice.remaining')} <span className="font-semibold text-foreground">{formatCurrency(totalRemaining, currency)}</span></span>
               )}
             </div>
             {totalRemaining <= 0 && (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
                 <CircleCheckBig className="h-3 w-3" /> {t('financial.invoice.fullyPaid')}
               </span>
             )}
@@ -556,10 +554,10 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
       {/* Cancel confirmation */}
       {confirmCancel && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmCancel(false)}>
-          <div className="w-full max-w-sm rounded-xl border bg-card shadow-2xl mx-4 p-5" onClick={(e) => e.stopPropagation()} style={{ animation: 'field-slide-in 200ms ease-out' }}>
+          <div className="w-full max-w-sm rounded-modal border bg-card shadow-lg mx-4 p-5" onClick={(e) => e.stopPropagation()} style={{ animation: 'field-slide-in 200ms ease-out' }}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 shrink-0">
-                <Ban className="h-5 w-5 text-red-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 shrink-0">
+                <Ban className="h-5 w-5 text-destructive" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold">{t('financial.invoice.cancelInvoice')}</h3>
@@ -570,16 +568,13 @@ export function InvoiceDetailView({ invoiceId, direction, onBack, onEdit }: {
               {t('financial.invoice.cancelDesc')}
             </p>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setConfirmCancel(false)} className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted/50 transition-colors">
+              <Button variant="outline" size="sm" onClick={() => setConfirmCancel(false)}>
                 {t('financial.invoice.keepInvoice')}
-              </button>
-              <button
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
-              >
-                <Ban className="h-3 w-3" /> {cancelling ? t('financial.invoice.cancelling') : t('financial.invoice.yesCancel')}
-              </button>
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleCancel} disabled={cancelling}>
+                <Ban className="h-3.5 w-3.5" />
+                {cancelling ? t('financial.invoice.cancelling') : t('financial.invoice.yesCancel')}
+              </Button>
             </div>
           </div>
         </div>,

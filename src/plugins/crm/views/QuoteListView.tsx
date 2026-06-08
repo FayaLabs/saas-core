@@ -9,14 +9,14 @@ import type { Quote } from '../types'
 
 const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
-  sent: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
-  approved: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
-  rejected: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
-  expired: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
-  invoiced: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
-  paid: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
-  partial: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400',
-  overdue: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+  sent: 'bg-info-soft text-info-soft-foreground',
+  approved: 'bg-success-soft text-success-soft-foreground',
+  rejected: 'bg-destructive-soft text-destructive-soft-foreground',
+  expired: 'bg-warning-soft text-warning-soft-foreground',
+  invoiced: 'bg-warning-soft text-warning-soft-foreground',
+  paid: 'bg-success-soft text-success-soft-foreground',
+  partial: 'bg-warning-soft text-warning-soft-foreground',
+  overdue: 'bg-destructive-soft text-destructive-soft-foreground',
   cancelled: 'bg-muted text-muted-foreground',
 }
 
@@ -76,7 +76,7 @@ export function QuoteListView({ onNew, onEdit, onEditQuote }: { onNew?: () => vo
         title={t('crm.quotes.title')}
         subtitle={t('crm.quotes.quotesCount', { count: String(quotes.length) })}
         actions={onNew && (
-          <button onClick={onNew} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+          <button onClick={onNew} className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors">
             <span className="h-3.5 w-3.5 inline-flex items-center justify-center">+</span> {t('crm.quotes.newQuote')}
           </button>
         )}

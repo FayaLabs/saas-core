@@ -33,20 +33,20 @@ export function CalendarToolbar({
         <div className="flex items-center gap-1">
           <button
             onClick={onPrev}
-            className="flex h-8 items-center justify-center rounded-lg border px-2 text-sm hover:bg-muted/50 transition-colors"
+            className="flex h-8 items-center justify-center rounded-lg border px-2 text-sm hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
             <span className="hidden sm:inline">{t('agenda.toolbar.previous')}</span>
           </button>
           <button
             onClick={onToday}
-            className="flex h-8 items-center justify-center rounded-lg border px-3 text-sm font-medium hover:bg-muted/50 transition-colors"
+            className="flex h-8 items-center justify-center rounded-lg border px-3 text-sm font-medium hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors"
           >
             {t('agenda.toolbar.today')}
           </button>
           <button
             onClick={onNext}
-            className="flex h-8 items-center justify-center rounded-lg border px-2 text-sm hover:bg-muted/50 transition-colors"
+            className="flex h-8 items-center justify-center rounded-lg border px-2 text-sm hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors"
           >
             <span className="hidden sm:inline">{t('agenda.toolbar.next')}</span>
             <ChevronRight className="h-4 w-4" />
@@ -79,7 +79,7 @@ export function CalendarToolbar({
 
         <button
           onClick={onNewAppointment}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-2 rounded-lg bg-primary border border-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors"
         >
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">{config.labels.newAppointment}</span>

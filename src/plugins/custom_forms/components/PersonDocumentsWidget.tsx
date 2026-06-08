@@ -193,7 +193,7 @@ function FileDocumentViewer({ document: doc, onBack }: { document: FormDocument;
             {new Date(doc.createdAt).toLocaleDateString()}
           </p>
         </div>
-        <Badge variant="secondary" className="text-[10px] bg-green-100 text-green-700">
+        <Badge variant="secondary" className="text-[10px] bg-success/15 text-success">
           {doc.status === 'completed' ? 'Finalizado' : doc.status}
         </Badge>
       </div>

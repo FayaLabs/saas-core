@@ -4,6 +4,7 @@ import { useFinancialConfig, useFinancialStore, formatCurrency } from '../Financ
 import { useTranslation } from '../../../hooks/useTranslation'
 import { SubpageHeader } from '../../../components/layout/ModulePage'
 import { CurrencyInput } from '../../../components/ui/currency-input'
+import { Button } from '../../../components/ui/button'
 
 // ---------------------------------------------------------------------------
 // Denomination definitions (BRL default — overridden by currency config)
@@ -179,14 +180,14 @@ function CashOpeningPanel({
         <div className="flex gap-2">
           <button
             onClick={() => setConfirming(false)}
-            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted bg-card shadow-button active:shadow-button-inset transition-colors"
           >
             <X className="h-3 w-3" /> {t('common.back')}
           </button>
           <button
             onClick={handleConfirm}
             disabled={submitting}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors disabled:opacity-50"
           >
             <Check className="h-3 w-3" /> {submitting ? t('financial.cash.opening') : t('financial.cash.confirmAndOpen')}
           </button>
@@ -204,7 +205,7 @@ function CashOpeningPanel({
           <select
             value={selectedAccountId}
             onChange={(e) => setSelectedAccountId(e.target.value)}
-            className="w-full mt-0.5 rounded-lg border bg-background px-2 py-1.5 text-xs"
+            className="w-full mt-0.5 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-xs"
           >
             {cashAccounts.map((a) => (
               <option key={a.id} value={a.id}>{a.name}</option>
@@ -278,7 +279,7 @@ function CashOpeningPanel({
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
               placeholder={t('financial.cash.openingObservations')}
-              className="w-full mt-0.5 rounded-lg border bg-background px-2 py-1.5 text-xs resize-none"
+              className="w-full mt-0.5 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-xs resize-none"
             />
           </div>
         )}
@@ -288,7 +289,7 @@ function CashOpeningPanel({
       <button
         onClick={() => setConfirming(true)}
         disabled={effectiveBalance <= 0}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-primary border border-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 shadow-button-primary active:shadow-button-inset transition-colors disabled:opacity-50"
       >
         <Play className="h-3 w-3" /> {t('financial.cash.openSession')}
       </button>
@@ -383,7 +384,7 @@ function CashClosingPanel({
         <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
           <span className="text-xs text-muted-foreground">{t('financial.cash.differenceFromOpening')}</span>
           <span className={`text-sm font-bold tabular-nums ${
-            difference > 0 ? 'text-emerald-600' : difference < 0 ? 'text-red-500' : 'text-muted-foreground'
+            difference > 0 ? 'text-success' : difference < 0 ? 'text-destructive' : 'text-muted-foreground'
           }`}>
             {difference >= 0 ? '+' : ''}{formatCurrency(difference, currency)}
           </span>
@@ -398,17 +399,19 @@ function CashClosingPanel({
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
           placeholder={t('financial.cash.closingObservations')}
-          className="w-full mt-0.5 rounded-lg border bg-background px-2 py-1.5 text-xs resize-none"
+          className="w-full mt-0.5 rounded-input border border-input  bg-card shadow-[inset_0_1px_0_rgb(0_0_0_/0.06)] px-2 py-1.5 text-xs resize-none"
         />
       </div>
 
-      <button
+      <Button
+        variant="destructive"
+        size="sm"
         onClick={handleClose}
         disabled={submitting || effectiveBalance <= 0}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-red-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-red-600 transition-colors disabled:opacity-50"
       >
-        <Square className="h-3 w-3" /> {submitting ? t('financial.cash.closing') : t('financial.cash.closeSession')}
-      </button>
+        <Square className="h-3.5 w-3.5" />
+        {submitting ? t('financial.cash.closing') : t('financial.cash.closeSession')}
+      </Button>
     </div>
   )
 }
@@ -452,13 +455,13 @@ export function CashRegistersView() {
       <SubpageHeader title={labels.cashRegisters ?? t('financial.cash.title')} subtitle={t('financial.cash.subtitle')} />
 
       {/* Open sessions */}
-      <div className="rounded-lg border bg-card">
+      <div className="rounded-lg border bg-card shadow-sm">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <div className="flex items-center gap-2">
-            <Landmark className="h-4 w-4 text-blue-500" />
+            <Landmark className="h-4 w-4 text-info" />
             <h3 className="text-sm font-semibold">{t('financial.cash.openSessions')}</h3>
             {openSessions.length > 0 && (
-              <span className="rounded-full bg-blue-500/10 text-blue-600 px-2 py-0.5 text-[10px] font-semibold">
+              <span className="rounded-full bg-info/10 text-info px-2 py-0.5 text-[10px] font-semibold">
                 {openSessions.length}
               </span>
             )}
@@ -491,7 +494,7 @@ export function CashRegistersView() {
                 ) : (
                   <button
                     onClick={() => setExpandedClosing(session.id)}
-                    className="inline-flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs text-destructive hover:text-destructive font-medium transition-colors"
                   >
                     <ChevronDown className="h-3 w-3" /> {t('financial.cash.closeThisSession')}
                   </button>
@@ -508,7 +511,7 @@ export function CashRegistersView() {
       )}
 
       {/* Session history */}
-      <div className="rounded-lg border bg-card">
+      <div className="rounded-lg border bg-card shadow-sm">
         <div className="flex items-center gap-2 px-4 py-3 border-b">
           <Clock className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold">{t('financial.cash.sessionHistory')}</h3>
@@ -535,7 +538,7 @@ export function CashRegistersView() {
                       <span>{t('financial.cash.closeLabel')}: {formatCurrency(session.closingBalance ?? 0, currency)}</span>
                     </div>
                     {session.difference !== undefined && session.difference !== 0 && (
-                      <p className={`text-xs font-semibold tabular-nums mt-0.5 ${session.difference > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                      <p className={`text-xs font-semibold tabular-nums mt-0.5 ${session.difference > 0 ? 'text-success' : 'text-destructive'}`}>
                         {t('financial.cash.diff')}: {session.difference >= 0 ? '+' : ''}{formatCurrency(session.difference, currency)}
                       </p>
                     )}
@@ -577,7 +580,7 @@ function OpenAnotherCollapsible({
   if (availableAccounts.length === 0) return null
 
   return (
-    <div className="rounded-lg border bg-card">
+    <div className="rounded-lg border bg-card shadow-sm">
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between px-4 py-3 text-xs font-medium hover:bg-muted/50 transition-colors"
