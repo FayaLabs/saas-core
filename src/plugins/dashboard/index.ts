@@ -111,6 +111,9 @@ export function createDashboardPlugin(options?: DashboardPluginOptions): PluginM
     verticalId: options?.verticalId,
     defaultEnabled: true,
     dependencies: [],
+    declaredFeatures: [
+      { id: 'dashboard', label: config.labels.pageTitle, group: 'Core' },
+    ],
 
     navigation: options?.skipNavigation ? [] : [
       {

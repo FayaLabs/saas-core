@@ -157,6 +157,7 @@ function createEmptyRuntime(context: PluginRuntimeContext = EMPTY_RUNTIME_CONTEX
     capabilities: [],
     aiTools: [],
     registries: new Map(),
+    pluginFeatures: [],
     issues: [],
   }
 }
@@ -367,6 +368,12 @@ export function resolvePluginRuntime({
     return left.order - right.order
   })
 
+  // Collect plugin-declared permission features
+  const pluginFeatures: import('../types/permissions').FeatureDeclaration[] = []
+  for (const plugin of activePlugins) {
+    if (plugin.declaredFeatures) pluginFeatures.push(...plugin.declaredFeatures)
+  }
+
   return {
     context,
     plugins: resolvedPlugins,
@@ -378,6 +385,7 @@ export function resolvePluginRuntime({
     capabilities,
     aiTools,
     registries,
+    pluginFeatures,
     issues,
   }
 }

@@ -43,6 +43,41 @@ export function ToggleRow({ label, description, checked, onChange, disabled }: {
 }
 
 // ---------------------------------------------------------------------------
+// SelectRow — a single setting with label, description, and select dropdown
+// ---------------------------------------------------------------------------
+
+export function SelectRow({ label, description, value, options, onChange, disabled }: {
+  label: string
+  description?: string
+  value: string
+  options: { value: string; label: string }[]
+  onChange: (value: string) => void
+  disabled?: boolean
+}) {
+  return (
+    <label className={cn(
+      'flex items-center justify-between gap-4 py-3',
+      disabled && 'opacity-50 cursor-not-allowed',
+    )}>
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{label}</p>
+        {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+      </div>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className="h-8 rounded-md border bg-background px-2 text-sm"
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // SettingsGroup — a bordered section with title and children
 // ---------------------------------------------------------------------------
 

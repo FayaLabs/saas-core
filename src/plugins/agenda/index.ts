@@ -67,6 +67,10 @@ export function createAgendaPlugin(options?: AgendaPluginOptions): PluginManifes
     verticalId: options?.verticalId,
     defaultEnabled: true,
     dependencies: [],
+    declaredFeatures: [
+      { id: 'appointments', label: config.labels.pageTitle, group: config.labels.pageTitle },
+      { id: 'agenda.schedules', label: 'Schedule Management', group: config.labels.pageTitle },
+    ],
 
     navigation: [
       {

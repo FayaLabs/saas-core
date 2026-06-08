@@ -128,6 +128,10 @@ export function createInventoryPlugin(options?: InventoryPluginOptions): PluginM
     verticalId: options?.verticalId,
     defaultEnabled: true,
     dependencies: [],
+    declaredFeatures: [
+      { id: 'inventory', label: config.labels.pageTitle, group: config.labels.pageTitle },
+      ...(config.modules.recipes ? [{ id: 'inventory.recipes', label: config.labels.recipes ?? 'Recipes', group: config.labels.pageTitle }] : []),
+    ],
     navigation: [
       {
         section: options?.navSection ?? 'main',

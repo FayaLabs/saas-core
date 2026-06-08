@@ -4,21 +4,58 @@ import type { FeatureDeclaration, PermissionProfile } from '../types/permissions
 interface PermissionsStore {
   features: FeatureDeclaration[]
   profiles: PermissionProfile[]
+  /** The effective profile used for permission checks (may be impersonated) */
   currentProfile: PermissionProfile | null
+  /** The user's actual profile (preserved during impersonation) */
+  realProfile: PermissionProfile | null
+  /** The profile being previewed, if any */
+  impersonatedProfile: PermissionProfile | null
+  /** Whether impersonation is active */
+  isImpersonating: boolean
 
   setFeatures: (f: FeatureDeclaration[]) => void
   setProfiles: (p: PermissionProfile[]) => void
   setCurrentProfile: (p: PermissionProfile | null) => void
+  startImpersonation: (profile: PermissionProfile) => void
+  stopImpersonation: () => void
   reset: () => void
 }
 
-export const usePermissionsStore = create<PermissionsStore>((set) => ({
+export const usePermissionsStore = create<PermissionsStore>((set, get) => ({
   features: [],
   profiles: [],
   currentProfile: null,
+  realProfile: null,
+  impersonatedProfile: null,
+  isImpersonating: false,
 
   setFeatures: (features) => set({ features }),
   setProfiles: (profiles) => set({ profiles }),
-  setCurrentProfile: (currentProfile) => set({ currentProfile }),
-  reset: () => set({ features: [], profiles: [], currentProfile: null }),
+  setCurrentProfile: (profile) => set({
+    currentProfile: profile,
+    realProfile: profile,
+    impersonatedProfile: null,
+    isImpersonating: false,
+  }),
+  startImpersonation: (profile) => set({
+    currentProfile: profile,
+    impersonatedProfile: profile,
+    isImpersonating: true,
+  }),
+  stopImpersonation: () => {
+    const { realProfile } = get()
+    set({
+      currentProfile: realProfile,
+      impersonatedProfile: null,
+      isImpersonating: false,
+    })
+  },
+  reset: () => set({
+    features: [],
+    profiles: [],
+    currentProfile: null,
+    realProfile: null,
+    impersonatedProfile: null,
+    isImpersonating: false,
+  }),
 }))

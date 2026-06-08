@@ -147,6 +147,12 @@ export function createCrmPlugin(options?: CrmPluginOptions): PluginManifest {
     verticalId: options?.verticalId,
     defaultEnabled: true,
     dependencies: [],
+    declaredFeatures: [
+      { id: 'sales', label: config.labels.pageTitle, group: config.labels.pageTitle },
+      { id: 'crm.leads', label: config.labels.leads, group: config.labels.pageTitle },
+      { id: 'crm.quotes', label: config.labels.quotes, group: config.labels.pageTitle },
+      { id: 'crm.pipeline', label: config.labels.pipeline, group: config.labels.pageTitle },
+    ],
     navigation: [
       {
         section: options?.navSection ?? 'main',

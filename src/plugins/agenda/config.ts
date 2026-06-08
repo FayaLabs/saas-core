@@ -63,7 +63,10 @@ export interface AgendaPluginOptions {
   /** Booking status options */
   statuses?: StatusConfig[]
 
-  /** Calendar visible time range (default: '08:00'-'20:00') */
+  /** Default calendar view (default: 'resourceTimeGridWeek'). Options: 'dayGridMonth', 'timeGridWeek', 'resourceTimeGridWeek', 'listWeek' */
+  defaultCalendarView?: string
+
+  /** Calendar visible time range (default: '07:00'-'21:00') */
   businessHours?: { startTime: string; endTime: string }
 
   /** Slot duration in minutes (default: 30) */
@@ -217,6 +220,7 @@ export interface ResolvedAgendaConfig {
     minAdvanceHours: number
     maxAdvanceDays: number
   }
+  defaultCalendarView: string
 }
 
 // ---------------------------------------------------------------------------
@@ -240,7 +244,7 @@ export function resolveConfig(options?: AgendaPluginOptions): ResolvedAgendaConf
     scheduleKind: options?.scheduleKind ?? 'working_hours',
     statuses: options?.statuses ?? DEFAULT_STATUSES,
     bookingTypes: options?.bookingTypes ?? DEFAULT_BOOKING_TYPES,
-    businessHours: options?.businessHours ?? { startTime: '08:00', endTime: '20:00' },
+    businessHours: options?.businessHours ?? { startTime: '07:00', endTime: '21:00' },
     slotDuration: options?.slotDuration ?? 30,
     professionalKind: options?.professionalKind ?? 'staff',
     clientKind: options?.clientKind ?? 'customer',
@@ -260,5 +264,6 @@ export function resolveConfig(options?: AgendaPluginOptions): ResolvedAgendaConf
       minAdvanceHours: options?.scheduleBlockDefaults?.minAdvanceHours ?? 0,
       maxAdvanceDays: options?.scheduleBlockDefaults?.maxAdvanceDays ?? 60,
     },
+    defaultCalendarView: options?.defaultCalendarView ?? 'resourceTimeGridWeek',
   }
 }

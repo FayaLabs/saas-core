@@ -4,6 +4,7 @@ import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { Checkbox, type CheckboxColor } from '../ui/checkbox'
+import { ChevronDown, ChevronRight, Search } from 'lucide-react'
 import { useTranslation } from '../../hooks/useTranslation'
 import type { FeatureDeclaration, PermissionAction, PermissionProfile, SystemPermission } from '../../types/permissions'
 
@@ -35,6 +36,8 @@ export function PermissionMatrixEditor({ features, profile, onSave, onCancel, sa
   const [description, setDescription] = React.useState(profile?.description ?? '')
   const [systemPerms, setSystemPerms] = React.useState<SystemPermission[]>(profile?.systemPermissions ?? [])
   const [grants, setGrants] = React.useState<Record<string, PermissionAction[]>>(profile?.grants ?? {})
+  const [collapsed, setCollapsed] = React.useState<Set<string>>(new Set())
+  const [search, setSearch] = React.useState('')
 
   const toggleSystemPerm = (perm: SystemPermission) => {
     setSystemPerms((prev) =>
@@ -52,21 +55,32 @@ export function PermissionMatrixEditor({ features, profile, onSave, onCancel, sa
     })
   }
 
+  const toggleGroup = (group: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      next.has(group) ? next.delete(group) : next.add(group)
+      return next
+    })
+  }
+
   const handleSave = () => {
     if (!name.trim()) return
     onSave({ name: name.trim(), description: description.trim() || undefined, systemPermissions: systemPerms, grants })
   }
 
-  // Group features
+  // Group features, filtering by search
   const groups = React.useMemo(() => {
+    const filtered = search
+      ? features.filter((f) => f.label.toLowerCase().includes(search.toLowerCase()))
+      : features
     const map = new Map<string, FeatureDeclaration[]>()
-    for (const f of features) {
+    for (const f of filtered) {
       const group = f.group ?? 'General'
       if (!map.has(group)) map.set(group, [])
       map.get(group)!.push(f)
     }
     return map
-  }, [features])
+  }, [features, search])
 
   return (
     <div className="space-y-6">
@@ -81,24 +95,23 @@ export function PermissionMatrixEditor({ features, profile, onSave, onCancel, sa
         </div>
       </div>
 
-      {/* System Permissions */}
-      <Card className="p-4">
-        <h3 className="text-sm font-semibold mb-3">{t('organization.permissions.systemPermissions')}</h3>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {SYSTEM_PERMISSIONS.map((sp) => (
-            <label key={sp.id} className="flex items-center gap-2.5 text-sm cursor-pointer">
-              <Checkbox
-                checked={systemPerms.includes(sp.id)}
-                onChange={() => toggleSystemPerm(sp.id)}
-              />
-              {t(sp.key)}
-            </label>
-          ))}
-        </div>
-      </Card>
-
-      {/* Feature Permission Matrix */}
+      {/* Unified Permission Matrix */}
       <Card className="overflow-hidden">
+        {/* Search filter */}
+        {features.length > 8 && (
+          <div className="border-b border-border/40 px-3 py-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t('organization.permissions.searchFeatures')}
+                className="h-8 pl-8 text-xs"
+              />
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -106,20 +119,60 @@ export function PermissionMatrixEditor({ features, profile, onSave, onCancel, sa
                 <th className="text-left p-3 text-sm font-medium text-muted-foreground">{t('common.feature')}</th>
                 {ACTIONS.map((action) => (
                   <th key={action} className="p-3 text-center text-sm font-medium text-muted-foreground capitalize w-20">
-                    {action}
+                    {t(`organization.permissions.action.${action}`) === `organization.permissions.action.${action}` ? action : t(`organization.permissions.action.${action}`)}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y">
+              {/* System permissions group */}
+              <tr>
+                <td colSpan={5} className="p-2 px-3">
+                  <button
+                    onClick={() => toggleGroup('__system')}
+                    className="flex items-center gap-1.5 text-xs"
+                  >
+                    {collapsed.has('__system')
+                      ? <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                      : <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                    }
+                    <Badge variant="secondary" className="text-xs">{t('organization.permissions.systemPermissions')}</Badge>
+                  </button>
+                </td>
+              </tr>
+              {!collapsed.has('__system') && SYSTEM_PERMISSIONS.map((sp) => (
+                <tr key={sp.id} className="hover:bg-muted/30">
+                  <td className="p-3 text-sm font-medium">{t(sp.key)}</td>
+                  <td colSpan={4} className="p-3">
+                    <div className="flex justify-center">
+                      <Checkbox
+                        checked={systemPerms.includes(sp.id)}
+                        onChange={() => toggleSystemPerm(sp.id)}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+              {/* Feature permission groups */}
               {Array.from(groups.entries()).map(([groupName, groupFeatures]) => (
                 <React.Fragment key={groupName}>
                   <tr>
                     <td colSpan={5} className="p-2 px-3">
-                      <Badge variant="secondary" className="text-xs">{groupName}</Badge>
+                      <button
+                        onClick={() => toggleGroup(groupName)}
+                        className="flex items-center gap-1.5 text-xs"
+                      >
+                        {collapsed.has(groupName)
+                          ? <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                          : <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                        }
+                        <Badge variant="secondary" className="text-xs">{groupName}</Badge>
+                        <span className="text-[10px] text-muted-foreground">{groupFeatures.length}</span>
+                      </button>
                     </td>
                   </tr>
-                  {groupFeatures.map((feature) => (
+                  {!collapsed.has(groupName) && groupFeatures.map((feature) => (
                     <tr key={feature.id} className="hover:bg-muted/30">
                       <td className="p-3 text-sm font-medium">{feature.label}</td>
                       {ACTIONS.map((action) => (

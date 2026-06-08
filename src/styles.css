@@ -4,89 +4,152 @@
 
 @layer base {
   :root {
-    /* Semantic Colors */
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Polaris "Sail" light — page #f1f1f1, cards #ffffff, near-black brand #303030 */
+    --primary: 0 0% 18.8%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96.9%;
+    --secondary-foreground: 0 0% 18.8%;
+    --accent: 0 0% 94.5%;
+    --accent-foreground: 0 0% 18.8%;
+    --background: 0 0% 94.5%;
+    --foreground: 0 0% 18.8%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 18.8%;
+    --muted: 0 0% 96.9%;
+    --muted-foreground: 0 0% 38%;
+    --border: 0 0% 89%;
+    --input: 0 0% 54.1%;
+    --ring: 214 100% 41.4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --success: 142 76% 36%;
-    --success-foreground: 210 40% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 0 0% 18.8%;
+    --destructive: 354 92% 41%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 167 95% 25.1%;
+    --success-foreground: 0 0% 100%;
+    --warning: 43 100% 50%;
+    --warning-foreground: 0 0% 18.8%;
 
-    /* Layout Surfaces */
-    --sidebar: 220 20% 14%;
-    --sidebar-foreground: 220 15% 85%;
-    --sidebar-border: 220 15% 20%;
-    --sidebar-accent: 220 20% 22%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-muted: 220 10% 50%;
-    --content: 220 14% 97.5%;
+    /* Info + Magic — Polaris semantic accents (full strength, used for icons/links) */
+    --info: 214 100% 41.4%;               /* #005bd3 */
+    --info-foreground: 0 0% 100%;
+    --magic: 257 100% 65.7%;              /* #8051ff */
+    --magic-foreground: 0 0% 100%;
+
+    /* Polaris soft status pairs — desaturated tints used on badges/banners
+       so status reads calmly inside cards. */
+    --info-soft: 212 100% 95.9%;          /* #ebf5ff */
+    --info-soft-foreground: 200 100% 24.3%;     /* #00527c */
+    --success-soft: 126 96% 90%;          /* #cdfed4 */
+    --success-soft-foreground: 153 74% 18.6%;   /* #0c5132 */
+    --warning-soft: 51 100% 92.7%;        /* #fff8db */
+    --warning-soft-foreground: 39 73% 31.4%;    /* #8a6116 */
+    --destructive-soft: 351 91% 95.5%;    /* #fee8eb */
+    --destructive-soft-foreground: 350 86% 30%; /* #8e0b21 */
+    --magic-soft: 257 100% 96.7%;         /* #f3eeff */
+    --magic-soft-foreground: 256 64% 45%;       /* #4f2bbb */
+
+    /* Layout surfaces — light gray sidebar with raised-white active items */
+    --sidebar: 0 0% 92.2%;
+    --sidebar-foreground: 0 0% 18.8%;
+    --sidebar-border: 0 0% 86.3%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 0 0% 18.8%;
+    --sidebar-muted: 0 0% 38%;
+    --content: 0 0% 94.5%;
 
     /* UI Perception Tokens */
     --button-radius: 0.5rem;
-    --card-radius: 0.75rem;
+    --card-radius: 0.5rem;
     --input-radius: 0.5rem;
-    --modal-radius: 0.75rem;
+    --modal-radius: 1rem;
     --font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
     --font-family-mono: JetBrains Mono, ui-monospace, SFMono-Regular, monospace;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-sm: 0 1px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 1px 1px -1px rgba(26, 26, 26, 0.07), 0 3px 6px -3px rgba(26, 26, 26, 0.10);
+    --shadow-lg: 0 4px 8px -2px rgba(26, 26, 26, 0.12), 0 1px 2px rgba(26, 26, 26, 0.07);
+
+    /* Polaris button bevels — inset shadows give the buttons their "physical" feel */
+    --shadow-button:
+      inset 0 -1px 0 rgba(0,0,0,0.10),
+      inset 0  1px 0 rgba(255,255,255,0.50),
+      0 1px 0 rgba(0,0,0,0.05);
+    --shadow-button-primary:
+      inset 0 -1px 0 rgba(0,0,0,0.20),
+      inset 0  1px 0 rgba(255,255,255,0.20),
+      0 1px 1.5px rgba(0,0,0,0.20);
+    --shadow-button-inset:
+      inset 0 2px 1px -1px rgba(0,0,0,0.20),
+      inset 0 0 0 1px rgba(0,0,0,0.05);
   }
 
   .dark {
-    --primary: 0 0% 95%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 95%;
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 95%;
-    --background: 0 0% 10.6%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 13%;
-    --card-foreground: 0 0% 95%;
-    --muted: 0 0% 17%;
-    --muted-foreground: 0 0% 55%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 0 0% 60%;
-    --popover: 0 0% 13%;
-    --popover-foreground: 0 0% 95%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 95%;
-    --success: 142 69% 28%;
-    --success-foreground: 0 0% 95%;
-    --warning: 38 92% 40%;
-    --warning-foreground: 0 0% 95%;
+    /* "Sail midnight" — Polaris philosophy for dark: page < card luminance,
+       brand inverts to near-white, accents bumped one step brighter. */
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 10.2%;
+    --secondary: 0 0% 18.8%;
+    --secondary-foreground: 0 0% 89%;
+    --accent: 0 0% 22.7%;
+    --accent-foreground: 0 0% 100%;
+    --background: 0 0% 10.2%;
+    --foreground: 0 0% 89%;
+    --card: 0 0% 14.9%;
+    --card-foreground: 0 0% 89%;
+    --muted: 0 0% 18.8%;
+    --muted-foreground: 0 0% 64.7%;
+    --border: 0 0% 22.7%;
+    --input: 0 0% 32.2%;
+    --ring: 217 100% 68.4%;
+    --popover: 0 0% 18.8%;
+    --popover-foreground: 0 0% 89%;
+    --destructive: 7 100% 44.9%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 156 71% 42.5%;
+    --success-foreground: 0 0% 0%;
+    --warning: 41 100% 65.1%;
+    --warning-foreground: 0 0% 10.2%;
 
-    /* Layout Surfaces */
-    --sidebar: 0 0% 8%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-muted: 0 0% 50%;
-    --content: 0 0% 10.6%;
+    --info: 217 100% 68.4%;
+    --info-foreground: 0 0% 10.2%;
+    --magic: 257 96% 75%;
+    --magic-foreground: 0 0% 10.2%;
 
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.1);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+    /* Soft pairs invert: deep saturated bg, bright accent fg */
+    --info-soft: 215 100% 31%;            /* #00359e */
+    --info-soft-foreground: 213 100% 84.5%;     /* #b3d4ff */
+    --success-soft: 153 74% 18.6%;        /* #0c5132 */
+    --success-soft-foreground: 152 56% 80.5%;   /* #aee9d1 */
+    --warning-soft: 31 100% 17.6%;        /* #5a3500 */
+    --warning-soft-foreground: 35 100% 81%;     /* #ffd79d */
+    --destructive-soft: 350 75% 17.6%;    /* #4d0b1a */
+    --destructive-soft-foreground: 357 100% 92%;/* #ffd7d9 */
+    --magic-soft: 254 67% 26%;            /* #2a1670 */
+    --magic-soft-foreground: 267 89% 86%;       /* #d6bbfb */
+
+    /* Layout surfaces */
+    --sidebar: 0 0% 10.2%;
+    --sidebar-foreground: 0 0% 89%;
+    --sidebar-border: 0 0% 16.5%;
+    --sidebar-accent: 0 0% 18.8%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-muted: 0 0% 64.7%;
+    --content: 0 0% 10.2%;
+
+    --shadow-sm: 0 1px 0 rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 1px 1px -1px rgba(0, 0, 0, 0.5), 0 3px 6px -3px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 4px 8px -2px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.4);
+
+    --shadow-button:
+      inset 0 -1px 0 rgba(0,0,0,0.40),
+      inset 0  1px 0 rgba(255,255,255,0.08),
+      0 1px 0 rgba(0,0,0,0.30);
+    --shadow-button-primary:
+      inset 0 -1px 0 rgba(0,0,0,0.20),
+      inset 0  1px 0 rgba(255,255,255,0.40),
+      0 1px 1.5px rgba(0,0,0,0.40);
+    --shadow-button-inset:
+      inset 0 2px 1px -1px rgba(0,0,0,0.50),
+      inset 0 0 0 1px rgba(0,0,0,0.20);
   }
 
   * {
@@ -97,6 +160,11 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: var(--font-family);
+    font-size: 0.8125rem;               /* 13px — Polaris body default */
+    line-height: 1.25rem;               /* 20px */
+    font-feature-settings: 'ss01', 'ss02', 'cv11';  /* Inter tabular-friendly */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 

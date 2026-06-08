@@ -1,6 +1,6 @@
 import type React from 'react'
 import type { LayoutVariant } from './layout'
-import type { PermissionAction } from './permissions'
+import type { PermissionAction, FeatureDeclaration } from './permissions'
 
 // --- Database-facing types (map to Supabase tables) ---
 
@@ -305,6 +305,8 @@ export interface PluginManifest {
   aiTools?: PluginAITool[]
   entities?: string[]
   permissions?: string[]
+  /** Permission features this plugin introduces to the permission matrix */
+  declaredFeatures?: FeatureDeclaration[]
   /** Registry entities the plugin brings (CRUD pages managed within the plugin) */
   registries?: PluginRegistryDef[]
   /** SQL migrations to create the plugin's tables */
@@ -352,4 +354,6 @@ export interface PluginRuntime {
   issues: PluginRuntimeIssue[]
   /** All registries from active plugins, keyed by pluginId */
   registries: Map<string, PluginRegistryDef[]>
+  /** Permission features declared by active plugins */
+  pluginFeatures: FeatureDeclaration[]
 }

@@ -26,6 +26,17 @@ import {
   Camera,
   UtensilsCrossed,
   Search,
+  PartyPopper,
+  Radio,
+  CalendarDays,
+  Banknote,
+  Layers,
+  Music,
+  Eye,
+  ListMusic,
+  Disc3,
+  UsersRound,
+  Mic,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
@@ -55,6 +66,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   FileText, Mail, MessageCircle, DollarSign, Megaphone, ShoppingCart,
   Target, Wrench, ClipboardList, Briefcase, UserCog, BookOpen, Globe,
   Percent, Tag, Camera, UtensilsCrossed, Search,
+  PartyPopper, Radio, CalendarDays, Banknote, Layers, Music, Eye, ListMusic, Disc3, UsersRound, Mic,
 }
 
 export function BottomNav({ navigation, activeRoute, onNavigate, showChat = true, customItems }: BottomNavProps) {

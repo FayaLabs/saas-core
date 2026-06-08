@@ -8,6 +8,8 @@ const BOOKING_TYPE_ICONS: Record<string, React.ElementType> = {
 import {
   Modal, ModalContent, ModalTitle,
 } from '../../../components/ui/modal'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../../../components/ui/tooltip'
+import { cn } from '../../../lib/cn'
 import { SearchCombobox, type ComboboxOption } from './SearchCombobox'
 import { PersonLink } from '../../../components/shared/PersonLink'
 import { BookingPaymentPanel } from './BookingPaymentPanel'
@@ -35,6 +37,58 @@ function formatCompactDate(dateStr: string, locale: string): string {
 }
 
 interface ServiceItem { serviceId: string; name: string; durationMinutes: number; price: number }
+
+// ---------------------------------------------------------------------------
+// Inline editable number — allows clearing, commits on blur/enter
+// ---------------------------------------------------------------------------
+
+function InlineNumber({ value, onChange, min = 0, step = 1, className, disabled, tooltip }: {
+  value: number; onChange: (v: number) => void; min?: number; step?: number
+  className?: string; disabled?: boolean; tooltip?: string
+}) {
+  const [draft, setDraft] = useState(String(value))
+  const [focused, setFocused] = useState(false)
+
+  useEffect(() => { if (!focused) setDraft(String(value)) }, [value, focused])
+
+  function commit() {
+    setFocused(false)
+    const v = parseFloat(draft)
+    if (!isNaN(v) && v >= min) {
+      onChange(v)
+    } else {
+      setDraft(String(value))
+    }
+  }
+
+  const input = (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onFocus={(e) => { setFocused(true); e.target.select() }}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit() } }}
+      disabled={disabled}
+      className={cn(
+        'text-right text-[11px] text-muted-foreground bg-transparent border-b border-transparent hover:border-muted-foreground/40 focus:border-foreground focus:outline-none tabular-nums',
+        className,
+      )}
+    />
+  )
+
+  if (!tooltip) return input
+
+  return (
+    <TooltipProvider delayDuration={400}>
+      <Tooltip>
+        <TooltipTrigger asChild>{input}</TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">{tooltip}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
 
 // ---------------------------------------------------------------------------
 // Custom Status Select
@@ -326,12 +380,12 @@ export function AppointmentModal({ open, mode, bookingId, prefill, initialTab, o
       setEditOrderTotal(b.orderTotal ?? 0)
       setEditPaymentStatus(b.paymentStatus ?? 'none')
       // Save initial snapshot for dirty check
-      const svcIds = b.services ? b.services.map((s) => s.serviceId ?? '') : []
+      const svcSnap = b.services ? b.services.map((s) => ({ id: s.serviceId ?? '', dur: s.durationMinutes, price: s.price })) : []
       initialSnapshot.current = JSON.stringify({
         clientId: b.clientId ?? '', professionalId: b.professionalId ?? '', locationId: b.locationId ?? '',
         date: b.startsAt.slice(0, 10),
         startTime: `${String(new Date(b.startsAt).getHours()).padStart(2, '0')}:${String(new Date(b.startsAt).getMinutes()).padStart(2, '0')}`,
-        status: b.status, notes: b.notes ?? '', services: svcIds,
+        status: b.status, notes: b.notes ?? '', services: svcSnap,
       })
       setLoading(false)
       // Resolve payment status from bridge if available
@@ -444,7 +498,10 @@ export function AppointmentModal({ open, mode, bookingId, prefill, initialTab, o
         onClose()
         onCreated?.(newBooking.id)
       } else if (bookingId) {
-        await updateBooking(bookingId, { clientId, professionalId, locationId: locationId || undefined, startsAt, notes: notes || undefined, status: status as any })
+        await updateBooking(bookingId, {
+          clientId, professionalId, locationId: locationId || undefined, startsAt, notes: notes || undefined, status: status as any,
+          services: services.map((s) => ({ serviceId: s.serviceId, name: s.name, durationMinutes: s.durationMinutes, price: s.price })),
+        })
         onClose()
       }
     } catch { /* toast */ }
@@ -462,7 +519,7 @@ export function AppointmentModal({ open, mode, bookingId, prefill, initialTab, o
 
   // Dirty check — only enable Update when something changed
   const formSnapshot = useMemo(() =>
-    JSON.stringify({ clientId, professionalId, locationId, date, startTime, status, notes, services: services.map((s) => s.serviceId) }),
+    JSON.stringify({ clientId, professionalId, locationId, date, startTime, status, notes, services: services.map((s) => ({ id: s.serviceId, dur: s.durationMinutes, price: s.price })) }),
     [clientId, professionalId, locationId, date, startTime, status, notes, services]
   )
   const isDirty = mode === 'create' || formSnapshot !== initialSnapshot.current
@@ -792,12 +849,34 @@ export function AppointmentModal({ open, mode, bookingId, prefill, initialTab, o
                   {services.length > 0 && (
                     <div className="space-y-0.5 mb-1">
                       {services.map((svc, idx) => (
-                        <div key={idx} className="flex items-center gap-2 rounded-md bg-muted/30 px-2.5 py-1.5 text-sm">
-                          <span className="flex-1 truncate">{svc.name}</span>
-                          <span className="text-[10px] text-muted-foreground shrink-0">{svc.durationMinutes}min</span>
-                          <span className="text-[10px] text-muted-foreground shrink-0">{fmtCurrency(svc.price, currency.locale, currency.code)}</span>
+                        <div key={idx} className="flex items-center rounded-md bg-muted/30 px-2.5 py-1.5 text-sm">
+                          <span className="flex-1 truncate min-w-0">{svc.name}</span>
+                          <div className="flex items-center gap-0.5 shrink-0 ml-3">
+                            <InlineNumber
+                              value={svc.durationMinutes}
+                              onChange={(v) => setServices((p) => p.map((s, i) => i === idx ? { ...s, durationMinutes: Math.round(v) } : s))}
+                              min={5}
+                              step={5}
+                              className="w-10 shrink-0"
+                              disabled={isPaidBooking}
+                              tooltip={t('agenda.appointment.duration')}
+                            />
+                            <span className="text-[11px] text-muted-foreground">min</span>
+                          </div>
+                          <div className="flex items-center gap-0.5 shrink-0 ml-3">
+                            <span className="text-[11px] text-muted-foreground">{currency.symbol}</span>
+                            <InlineNumber
+                              value={svc.price}
+                              onChange={(v) => setServices((p) => p.map((s, i) => i === idx ? { ...s, price: v } : s))}
+                              min={0}
+                              step={0.01}
+                              className="w-14 shrink-0"
+                              disabled={isPaidBooking}
+                              tooltip={t('agenda.appointment.price')}
+                            />
+                          </div>
                           {!isPaidBooking && (
-                            <button type="button" onClick={() => removeService(idx)} className="p-0.5 text-muted-foreground hover:text-destructive shrink-0">
+                            <button type="button" onClick={() => removeService(idx)} className="p-0.5 ml-2 text-muted-foreground hover:text-destructive shrink-0">
                               <X className="h-3 w-3" />
                             </button>
                           )}

@@ -184,6 +184,16 @@ export function createMockAgendaProvider(): AgendaDataProvider {
       const idx = bookings.findIndex((b) => b.id === id)
       if (idx === -1) throw new Error('Booking not found')
       const existing = bookings[idx]
+      const serviceUpdates: Partial<CalendarBooking> = {}
+      if (data.services) {
+        serviceUpdates.services = data.services.map((s) => ({
+          id: uid(), serviceId: s.serviceId, name: s.name,
+          durationMinutes: s.durationMinutes, price: s.price,
+          assigneeId: s.assigneeId ?? existing.professionalId ?? '',
+        }))
+        serviceUpdates.totalDurationMinutes = data.services.reduce((sum, s) => sum + s.durationMinutes, 0)
+        serviceUpdates.orderTotal = data.services.reduce((sum, s) => sum + s.price, 0)
+      }
       const updated: CalendarBooking = {
         ...existing,
         ...(data.startsAt && { startsAt: data.startsAt }),
@@ -193,6 +203,7 @@ export function createMockAgendaProvider(): AgendaDataProvider {
         ...(data.professionalId && { professionalId: data.professionalId }),
         ...(data.clientId && { clientId: data.clientId }),
         ...(data.locationId && { locationId: data.locationId }),
+        ...serviceUpdates,
         updatedAt: now(),
       }
       bookings[idx] = updated

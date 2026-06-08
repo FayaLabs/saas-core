@@ -30,6 +30,34 @@ const saasPreset: Partial<Config> = {
           DEFAULT: 'hsl(var(--warning))',
           foreground: 'hsl(var(--warning-foreground))',
         },
+        info: {
+          DEFAULT: 'hsl(var(--info))',
+          foreground: 'hsl(var(--info-foreground))',
+        },
+        magic: {
+          DEFAULT: 'hsl(var(--magic))',
+          foreground: 'hsl(var(--magic-foreground))',
+        },
+        'info-soft': {
+          DEFAULT: 'hsl(var(--info-soft))',
+          foreground: 'hsl(var(--info-soft-foreground))',
+        },
+        'success-soft': {
+          DEFAULT: 'hsl(var(--success-soft))',
+          foreground: 'hsl(var(--success-soft-foreground))',
+        },
+        'warning-soft': {
+          DEFAULT: 'hsl(var(--warning-soft))',
+          foreground: 'hsl(var(--warning-soft-foreground))',
+        },
+        'destructive-soft': {
+          DEFAULT: 'hsl(var(--destructive-soft))',
+          foreground: 'hsl(var(--destructive-soft-foreground))',
+        },
+        'magic-soft': {
+          DEFAULT: 'hsl(var(--magic-soft))',
+          foreground: 'hsl(var(--magic-soft-foreground))',
+        },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
@@ -71,6 +99,9 @@ const saasPreset: Partial<Config> = {
         sm: 'var(--shadow-sm)',
         md: 'var(--shadow-md)',
         lg: 'var(--shadow-lg)',
+        button: 'var(--shadow-button)',
+        'button-primary': 'var(--shadow-button-primary)',
+        'button-inset': 'var(--shadow-button-inset)',
       },
       keyframes: {
         'fade-in': {

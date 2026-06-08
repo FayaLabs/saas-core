@@ -125,6 +125,9 @@ export function createCustomFormsPlugin(options?: CustomFormsPluginOptions): Plu
     verticalId: options?.verticalId,
     defaultEnabled: true,
     dependencies: [],
+    declaredFeatures: [
+      { id: 'custom_forms', label: config.labels.pageTitle, group: config.labels.pageTitle },
+    ],
 
     navigation: [],
 

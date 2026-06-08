@@ -47,6 +47,17 @@ import {
   Apple,
   Egg,
   Wheat,
+  PartyPopper,
+  Radio,
+  CalendarDays,
+  Banknote,
+  Layers,
+  Music,
+  Eye,
+  ListMusic,
+  Disc3,
+  UsersRound,
+  Mic,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
@@ -100,6 +111,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   ClipboardList, Briefcase, UserCog, BookOpen, MessageCircle, Globe,
   Percent, Tag, Camera, UtensilsCrossed, MapPin, Handshake, Contact,
   Building2, Filter, Plus, List, Search, Dog, Cat, PawPrint, Heart, LayoutTemplate, LeafyGreen, Apple, Egg, Wheat,
+  PartyPopper, Radio, CalendarDays, Banknote, Layers, Music, Eye, ListMusic, Disc3, UsersRound, Mic,
 }
 
 function getIcon(name: string): LucideIcon {
@@ -123,12 +135,12 @@ function NavItem({
     <button
       onClick={() => onNavigate(item.route)}
       className={cn(
-        'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-        'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+        'flex w-full items-center gap-3 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors',
+        'hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground',
         isActive
-          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-          : 'text-sidebar-muted',
-        collapsed && 'justify-center px-2'
+          ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-sm'
+          : 'text-sidebar-foreground/80',
+        collapsed && 'justify-center px-2',
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />

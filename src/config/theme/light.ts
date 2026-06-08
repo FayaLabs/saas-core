@@ -1,50 +1,63 @@
 import type { ThemeTokens } from './tokens'
 
+// Polaris (Shopify Admin "Sail") light theme.
+// Page #f1f1f1, cards #ffffff, near-black brand #303030, light sidebar #ebebeb
+// with raised-white active items. Semantic accents only carry color.
 export const lightTheme: ThemeTokens = {
   name: 'light',
   colors: {
-    primary: '222.2 47.4% 11.2%',
-    primaryForeground: '210 40% 98%',
-    secondary: '210 40% 96.1%',
-    secondaryForeground: '222.2 47.4% 11.2%',
-    accent: '210 40% 96.1%',
-    accentForeground: '222.2 47.4% 11.2%',
-    background: '0 0% 100%',
-    foreground: '222.2 84% 4.9%',
-    card: '0 0% 100%',
-    cardForeground: '222.2 84% 4.9%',
-    muted: '210 40% 96.1%',
-    mutedForeground: '215.4 16.3% 46.9%',
-    border: '214.3 31.8% 91.4%',
-    input: '214.3 31.8% 91.4%',
-    ring: '222.2 84% 4.9%',
+    // Brand surface is near-black, not a saturated hue. Buttons get the bevel
+    // shadow below; flat color is only half the look.
+    primary: '0 0% 18.8%',                // #303030
+    primaryForeground: '0 0% 100%',       // #ffffff
+    secondary: '0 0% 96.9%',              // #f7f7f7
+    secondaryForeground: '0 0% 18.8%',    // #303030
+    accent: '0 0% 94.5%',                 // #f1f1f1 (hover/selected step)
+    accentForeground: '0 0% 18.8%',       // #303030
+    background: '0 0% 94.5%',             // #f1f1f1 — page is never white
+    foreground: '0 0% 18.8%',             // #303030
+    card: '0 0% 100%',                    // #ffffff
+    cardForeground: '0 0% 18.8%',         // #303030
+    muted: '0 0% 96.9%',                  // #f7f7f7
+    mutedForeground: '0 0% 38%',          // #616161
+    border: '0 0% 89%',                   // #e3e3e3 (hairline, not dark gray)
+    input: '0 0% 54.1%',                  // #8a8a8a — inputs need stronger border
+    ring: '214 100% 41.4%',               // #005bd3 — focus blue
     popover: '0 0% 100%',
-    popoverForeground: '222.2 84% 4.9%',
-    destructive: '0 84.2% 60.2%',
-    destructiveForeground: '210 40% 98%',
-    success: '142 76% 36%',
-    successForeground: '210 40% 98%',
-    warning: '38 92% 50%',
-    warningForeground: '222.2 84% 4.9%',
+    popoverForeground: '0 0% 18.8%',
+    destructive: '354 92% 41%',           // #c70a24
+    destructiveForeground: '0 0% 100%',
+    success: '167 95% 25.1%',             // #047b5d
+    successForeground: '0 0% 100%',
+    warning: '43 100% 50%',               // #ffb800
+    warningForeground: '0 0% 18.8%',
 
-    // Layout surfaces — defaults: dark sidebar, light gray content
-    sidebar: '220 20% 14%',
-    sidebarForeground: '220 15% 85%',
-    sidebarBorder: '220 15% 20%',
-    sidebarAccent: '220 20% 22%',
-    sidebarAccentForeground: '0 0% 100%',
-    sidebarMuted: '220 10% 50%',
-    content: '220 15% 96%',
+    // Layout surfaces — light gray rail (Polaris "Sail"), raised white active items.
+    sidebar: '0 0% 92.2%',                // #ebebeb
+    sidebarForeground: '0 0% 18.8%',      // #303030
+    sidebarBorder: '0 0% 86.3%',          // #dcdcdc
+    sidebarAccent: '0 0% 100%',           // #ffffff — active item floats above rail
+    sidebarAccentForeground: '0 0% 18.8%',
+    sidebarMuted: '0 0% 38%',             // #616161
+    content: '0 0% 94.5%',                // #f1f1f1
   },
   perception: {
-    buttonRadius: '0.5rem',
-    cardRadius: '0.75rem',
+    buttonRadius: '0.5rem',               // 8px (--p-border-radius-200)
+    cardRadius: '0.5rem',                 // 8px — Polaris cards are 8px, not 12px
     inputRadius: '0.5rem',
-    modalRadius: '0.75rem',
+    modalRadius: '1rem',                  // 16px (--p-border-radius-400)
     fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, sans-serif',
     fontFamilyMono: 'JetBrains Mono, ui-monospace, SFMono-Regular, monospace',
-    shadowSm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-    shadowMd: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-    shadowLg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+    // Polaris card shadow is barely a shadow — just a hairline bottom edge.
+    shadowSm: '0 1px 0 rgba(0, 0, 0, 0.05)',
+    shadowMd: '0 1px 1px -1px rgba(26, 26, 26, 0.07), 0 3px 6px -3px rgba(26, 26, 26, 0.10)',
+    shadowLg: '0 4px 8px -2px rgba(26, 26, 26, 0.12), 0 1px 2px rgba(26, 26, 26, 0.07)',
+    // Inset bevels — Polaris signature. Buttons feel physical because of these.
+    shadowButton:
+      'inset 0 -1px 0 rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.50), 0 1px 0 rgba(0,0,0,0.05)',
+    shadowButtonPrimary:
+      'inset 0 -1px 0 rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.20), 0 1px 1.5px rgba(0,0,0,0.20)',
+    shadowButtonInset:
+      'inset 0 2px 1px -1px rgba(0,0,0,0.20), inset 0 0 0 1px rgba(0,0,0,0.05)',
   },
 }

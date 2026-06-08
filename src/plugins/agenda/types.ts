@@ -224,6 +224,7 @@ export interface UpdateBookingInput {
   endsAt?: string
   status?: BookingStatus
   notes?: string
+  services?: CreateBookingServiceInput[]
 }
 
 export interface SaveScheduleInput {

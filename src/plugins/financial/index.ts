@@ -192,6 +192,12 @@ export function createFinancialPlugin(options?: FinancialPluginOptions): PluginM
     verticalId: options?.verticalId,
     defaultEnabled: true,
     dependencies: [],
+    declaredFeatures: [
+      { id: 'financial', label: config.labels.pageTitle, group: config.labels.pageTitle },
+      ...(config.modules.receivables ? [{ id: 'financial.receivables', label: config.labels.receivables, group: config.labels.pageTitle }] : []),
+      ...(config.modules.payables ? [{ id: 'financial.payables', label: config.labels.payables, group: config.labels.pageTitle }] : []),
+      ...(config.modules.commissions ? [{ id: 'financial.commissions', label: config.labels.commissions, group: config.labels.pageTitle }] : []),
+    ],
     navigation: [
       {
         section: options?.navSection ?? 'main',

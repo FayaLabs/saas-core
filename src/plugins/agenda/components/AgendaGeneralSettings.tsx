@@ -1,9 +1,16 @@
 import React from 'react'
-import { SettingsGroup, ToggleRow } from '../../../components/plugins/SettingsGroup'
+import { SettingsGroup, ToggleRow, SelectRow } from '../../../components/plugins/SettingsGroup'
 import { useTranslation } from '../../../hooks/useTranslation'
+import { useAgendaSettings } from '../hooks/useAgendaSettings'
+
+const HOUR_OPTIONS = Array.from({ length: 18 }, (_, i) => {
+  const h = (5 + i).toString().padStart(2, '0')
+  return { value: `${h}:00`, label: `${h}:00` }
+})
 
 export function AgendaGeneralSettings() {
   const { t } = useTranslation()
+  const { startTime, endTime, setStartTime, setEndTime } = useAgendaSettings()
   return (
     <div className="space-y-4">
       <SettingsGroup title={t('agenda.settings.scheduling')} description={t('agenda.settings.schedulingDesc')}>
@@ -28,6 +35,20 @@ export function AgendaGeneralSettings() {
       </SettingsGroup>
 
       <SettingsGroup title={t('agenda.settings.calendarDisplay')} description={t('agenda.settings.calendarDisplayDesc')}>
+        <SelectRow
+          label={t('agenda.settings.dayStartTime')}
+          description={t('agenda.settings.dayStartTimeDesc')}
+          value={startTime}
+          options={HOUR_OPTIONS}
+          onChange={setStartTime}
+        />
+        <SelectRow
+          label={t('agenda.settings.dayEndTime')}
+          description={t('agenda.settings.dayEndTimeDesc')}
+          value={endTime}
+          options={HOUR_OPTIONS}
+          onChange={setEndTime}
+        />
         <ToggleRow label={t('agenda.settings.showCancelled')} description={t('agenda.settings.showCancelledDesc')} checked={false} onChange={() => {}} />
         <ToggleRow label={t('agenda.settings.showNoShow')} description={t('agenda.settings.showNoShowDesc')} checked={true} onChange={() => {}} />
         <ToggleRow label={t('agenda.settings.compact')} description={t('agenda.settings.compactDesc')} checked={false} onChange={() => {}} />

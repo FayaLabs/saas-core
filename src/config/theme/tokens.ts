@@ -49,6 +49,9 @@ export interface UIPerceptionTokens {
   shadowSm: string
   shadowMd: string
   shadowLg: string
+  shadowButton?: string
+  shadowButtonPrimary?: string
+  shadowButtonInset?: string
 }
 
 // --- Friendly theme presets (non-technical) ---

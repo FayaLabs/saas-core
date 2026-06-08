@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Shield, Pencil, Trash2, Plus } from 'lucide-react'
+import { Shield, Pencil, Trash2, Plus, Eye } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
@@ -17,6 +17,10 @@ export function PermissionProfilesTab() {
   const features = usePermissionsStore((s) => s.features)
   const setProfiles = usePermissionsStore((s) => s.setProfiles)
   const members = useOrganizationStore((s) => s.members)
+  const realProfile = usePermissionsStore((s) => s.realProfile)
+  const startImpersonation = usePermissionsStore((s) => s.startImpersonation)
+
+  const canPreview = realProfile?.systemPermissions.includes('manage_permissions') ?? false
 
   const { t } = useTranslation()
   const [editingProfile, setEditingProfile] = React.useState<PermissionProfile | null>(null)
@@ -112,6 +116,16 @@ export function PermissionProfilesTab() {
                 </p>
               </div>
               <div className="flex items-center gap-1">
+                {canPreview && profile.id !== realProfile?.id && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    title={t('organization.permissions.previewAs')}
+                    onClick={() => startImpersonation(profile)}
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </Button>
+                )}
                 <Button variant="ghost" size="sm" onClick={() => setEditingProfile(profile)}>
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>

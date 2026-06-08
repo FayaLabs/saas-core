@@ -61,11 +61,23 @@ import {
   ArrowDownRight,
   UserPlus,
   TreePalm,
+  PartyPopper,
+  Radio,
+  CalendarDays,
+  Banknote,
+  Layers,
+  Music,
+  Eye,
+  ListMusic,
+  Disc3,
+  UsersRound,
+  Mic,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useRouter } from '../../lib/router'
 import { useLayoutStore } from '../../stores/layout.store'
+import { usePermission } from '../../hooks/usePermission'
 import { useTranslation } from '../../hooks/useTranslation'
 
 interface NavigationItem {
@@ -76,6 +88,7 @@ interface NavigationItem {
   section: 'main' | 'secondary' | 'settings'
   badge?: string | number
   children?: NavigationItem[]
+  permission?: { feature: string; action: 'read' | 'create' | 'edit' | 'delete' }
 }
 
 interface TopbarProps {
@@ -94,6 +107,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Percent, Tag, Camera, UtensilsCrossed, Search, MapPin, Handshake,
   Contact, Building2, ChevronDown, Filter, Plus, List, Dog, Cat, PawPrint, Heart, LayoutTemplate, LeafyGreen, Apple, Egg, Wheat,
   ArrowDownCircle, ArrowUpCircle, Landmark, Receipt, TrendingUp, CircleDollarSign, Clock, AlertTriangle, Sparkles, Wallet, Warehouse, Ruler, ArrowUpRight, ArrowDownRight, UserPlus, TreePalm,
+  PartyPopper, Radio, CalendarDays, Banknote, Layers, Music, Eye, ListMusic, Disc3, UsersRound, Mic,
 }
 
 // Also add to BottomNav
@@ -170,14 +184,19 @@ export function Topbar({ navigation, logo, onMenuClick, leftContent, rightConten
   const currentPath = router.usePathname()
   const setCommandPaletteOpen = useLayoutStore((s) => s.setCommandPaletteOpen)
   const { t } = useTranslation()
-  const mainNav = navigation.filter((item) => item.section === 'main')
-  const secondaryNav = navigation.filter((item) => item.section === 'secondary')
+  const { can } = usePermission()
+  const visibleNav = navigation.filter((item) => {
+    if (!item.permission) return true
+    return can(item.permission.feature, item.permission.action as any)
+  })
+  const mainNav = visibleNav.filter((item) => item.section === 'main')
+  const secondaryNav = visibleNav.filter((item) => item.section === 'secondary')
   const allNav = [...mainNav, ...secondaryNav]
 
   return (
     <header data-print="hide" className="sticky top-0 z-50 w-full shrink-0">
-      {/* Row 1: Logo + Search + Actions — lighter brand */}
-      <div className="bg-sidebar-accent text-sidebar-foreground backdrop-blur-xl">
+      {/* Row 1: Logo + Search + Actions — light gray rail */}
+      <div className="border-b border-sidebar-border bg-sidebar text-sidebar-foreground">
         <div className="flex h-14 w-full items-center justify-between px-4 md:px-6">
           {/* Left: Mobile menu + Logo */}
           <div className="flex items-center gap-3">
@@ -197,11 +216,11 @@ export function Topbar({ navigation, logo, onMenuClick, leftContent, rightConten
           <div className="mx-8 hidden max-w-sm flex-1 md:flex">
             <button
               onClick={() => setCommandPaletteOpen(true)}
-              className="relative flex h-8 w-full items-center rounded-md bg-sidebar/60 px-3 pl-8 text-sm text-sidebar-muted transition-colors hover:bg-sidebar/80"
+              className="relative flex h-8 w-full items-center rounded-md border border-sidebar-border bg-sidebar-accent px-3 pl-8 text-sm text-sidebar-muted shadow-sm transition-colors hover:bg-card"
             >
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-sidebar-muted" />
               <span className="text-xs">{t('layout.topbar.search')}</span>
-              <kbd className="ml-auto hidden rounded bg-sidebar/60 px-1.5 py-0.5 text-[10px] font-medium text-sidebar-muted sm:inline-block">
+              <kbd className="ml-auto hidden rounded border border-sidebar-border bg-sidebar-accent px-1.5 py-0.5 text-[10px] font-medium text-sidebar-muted sm:inline-block">
                 ⌘K
               </kbd>
             </button>

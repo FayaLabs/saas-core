@@ -151,8 +151,42 @@ export function createSupabaseAgendaProvider(): AgendaDataProvider {
       if (data.clientId) updates.party_id = data.clientId
       if (data.locationId) updates.location_id = data.locationId
 
+      // Recalculate totals when services are updated
+      if (data.services) {
+        const totalDuration = data.services.reduce((s, svc) => s + svc.durationMinutes, 0)
+        const totalPrice = data.services.reduce((s, svc) => s + svc.price, 0)
+        updates.subtotal = totalPrice
+        updates.total = totalPrice
+        // Recalculate ends_at from startsAt + total duration
+        if (data.startsAt) {
+          const ends = new Date(new Date(data.startsAt).getTime() + totalDuration * 60000)
+          updates.ends_at = ends.toISOString()
+        }
+      }
+
       const { error } = await core.from('orders').update(updates).eq('id', id)
       if (error) throw error
+
+      // Replace order_items when services change
+      if (data.services) {
+        await core.from('order_items').delete().eq('order_id', id)
+        if (data.services.length > 0) {
+          const items = data.services.map((svc, idx) => ({
+            order_id: id,
+            service_id: svc.serviceId || null,
+            name: svc.name,
+            quantity: 1,
+            unit_price: svc.price,
+            total: svc.price,
+            sort_order: idx,
+            duration_minutes: svc.durationMinutes,
+            assignee_id: svc.assigneeId || null,
+          }))
+          const { error: itemErr } = await core.from('order_items').insert(items)
+          if (itemErr) throw itemErr
+        }
+      }
+
       return (await this.getBookingById(id))!
     },
 

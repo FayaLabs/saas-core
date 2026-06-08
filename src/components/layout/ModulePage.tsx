@@ -23,6 +23,8 @@ interface ModulePageProps {
   headerAction?: React.ReactNode
   /** Show the title/subtitle header. Default: true */
   showHeader?: boolean
+  /** Optional content pinned to the bottom of the sidebar (e.g. "Powered by X") */
+  sidebarFooter?: React.ReactNode
 }
 
 function NavItem({ item }: { item: ModuleNavItem }) {
@@ -222,17 +224,22 @@ export function SubpageHeader({ title, subtitle, icon, onBack, parentLabel, acti
 // Module page
 // ---------------------------------------------------------------------------
 
-export function ModulePage({ title, subtitle, nav, children, className, headerAction, showHeader = true }: ModulePageProps) {
+export function ModulePage({ title, subtitle, nav, children, className, headerAction, showHeader = true, sidebarFooter }: ModulePageProps) {
   return (
     <div className={cn('flex gap-6 -mt-2', className)}>
       {/* Side navigation — hidden on mobile + print */}
       <div className="w-48 shrink-0 hidden md:block no-print">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2.5 mb-2">{title}</p>
-        <nav className="space-y-0.5">
-          {nav.map((item) => (
-            <NavItem key={item.id} item={item} />
-          ))}
-        </nav>
+        <div className={cn(sidebarFooter && 'sticky top-4 flex flex-col')} style={sidebarFooter ? { height: 'calc(100vh - 8rem)' } : undefined}>
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2.5 mb-2">{title}</p>
+            <nav className="space-y-0.5">
+              {nav.map((item) => (
+                <NavItem key={item.id} item={item} />
+              ))}
+            </nav>
+          </div>
+          {sidebarFooter && <div className="mt-auto">{sidebarFooter}</div>}
+        </div>
       </div>
 
       {/* Content */}

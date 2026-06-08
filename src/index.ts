@@ -27,6 +27,7 @@ import { createSupabaseOrgAdapter } from './lib/org-adapters/supabase'
 import { OrgSwitcher } from './components/organization/OrgSwitcher'
 import { OrgInitializer } from './components/organization/OrgInitializer'
 import { PermissionGate } from './components/organization/PermissionGate'
+import { ImpersonationBanner } from './components/organization/ImpersonationBanner'
 import { TeamTab } from './components/organization/TeamTab'
 import { PermissionProfilesTab } from './components/organization/PermissionProfilesTab'
 import { ConnectedLocationsOverview } from './components/settings/ConnectedLocationsOverview'
@@ -545,6 +546,16 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
       ? { fullName: authUser.fullName, email: authUser.email, avatarUrl: authUser.avatarUrl }
       : config.user
 
+    // Merge plugin-declared features into permission store (must be before any early return)
+    React.useEffect(() => {
+      const pf = config.plugins?.flatMap((p) => p.declaredFeatures ?? []) ?? []
+      if (pf.length === 0) return
+      const store = usePermissionsStore.getState()
+      const existing = new Set(store.features.map((f) => f.id))
+      const toAdd = pf.filter((f) => !existing.has(f.id))
+      if (toAdd.length > 0) store.setFeatures([...store.features, ...toAdd])
+    }, [])
+
     // If we're on the login route, render login page
     if (route === '/login') {
       return React.createElement(LoginPageWrapper)
@@ -617,7 +628,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
     if (!routeEntry) {
       // Try prefix match (e.g. /services/new → /services, /financial/settings/... → /financial)
       for (const [path, entry] of routes) {
-        if (path !== '/' && route.startsWith(path + '/') && ((entry.component as any).__isCrudPage || entry.plugin || path === '/settings')) {
+        if (path !== '/' && route.startsWith(path + '/')) {
           routeEntry = entry
           matchedPath = path
           break
@@ -721,6 +732,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
         React.Fragment,
         null,
         React.createElement(MockModeBanner),
+        React.createElement(ImpersonationBanner),
         React.createElement(
           AppShell,
           {
@@ -820,7 +832,7 @@ export function createSaasApp(config: SaasAppConfig): React.FC {
       }
     }, [setPlans])
 
-    // Initialize permissions config
+    // Initialize permissions config (consumer-declared only; plugin features merged in AppContent)
     React.useEffect(() => {
       if (config.permissions?.features) {
         setFeatures(config.permissions.features)
@@ -903,4 +915,5 @@ export { PermissionGate } from './components/organization/PermissionGate'
 export { usePermission } from './hooks/usePermission'
 export { ModulePage, SubpageHeader } from './components/layout/ModulePage'
 export type { ModuleNavItem } from './components/layout/ModulePage'
+export { useModuleNavigation } from './hooks/useModuleNavigation'
 // Financial plugin available via '@fayz/saas-core/plugins/financial'

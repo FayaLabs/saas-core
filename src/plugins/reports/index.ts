@@ -100,6 +100,9 @@ export function createReportsPlugin(options: ReportsPluginOptions): PluginManife
     verticalId: options.verticalId,
     defaultEnabled: true,
     dependencies: [],
+    declaredFeatures: [
+      { id: 'reports', label: config.labels.pageTitle, group: config.labels.pageTitle },
+    ],
     navigation: [
       {
         section: options.navSection ?? 'main',

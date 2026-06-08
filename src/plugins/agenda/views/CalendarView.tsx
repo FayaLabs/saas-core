@@ -13,6 +13,7 @@ import { usePluginPrefs } from '../../../hooks/usePluginPrefs'
 import { useLocaleStore } from '../../../stores/locale.store'
 import { useTranslation } from '../../../hooks/useTranslation'
 import { useAgendaConfig, useAgendaStore } from '../AgendaContext'
+import { useAgendaSettings } from '../hooks/useAgendaSettings'
 import { MiniCalendar } from '../components/MiniCalendar'
 import { AppointmentModal } from '../components/AppointmentModal'
 import { AppointmentPopover } from '../components/AppointmentPopover'
@@ -179,7 +180,7 @@ function generateAvailabilityEvents(
 
 function CalendarSkeleton({ profCount = 2 }: { profCount?: number }) {
   const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
-  const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
+  const hours = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00']
 
   return (
     <div className="flex-1 overflow-hidden animate-pulse">
@@ -239,7 +240,12 @@ export function CalendarView() {
   const currentLocale = useLocaleStore((s) => s.locale)
   const fcLocale = currentLocale === 'pt-BR' ? ptBrLocale : undefined
   const calendarRef = useRef<FullCalendar>(null)
-  const prefs = usePluginPrefs('agenda', { calendarView: 'resourceTimeGridWeek' })
+  const prefs = usePluginPrefs('agenda', { calendarView: config.defaultCalendarView ?? 'resourceTimeGridWeek' })
+  const agendaSettings = useAgendaSettings()
+  const effectiveBusinessHours = {
+    startTime: agendaSettings.startTime,
+    endTime: agendaSettings.endTime,
+  }
 
   const bookings = useAgendaStore((s) => s.bookings)
   const bookingsLoading = useAgendaStore((s) => s.bookingsLoading)
@@ -322,8 +328,8 @@ export function CalendarView() {
   }, [config.modules.locationSelection, allLocations])
 
   const availabilityEvents = useMemo(() =>
-    generateAvailabilityEvents(schedules, professionals, visibleRange, config.businessHours, locationMap),
-    [schedules, professionals, visibleRange, config.businessHours, locationMap])
+    generateAvailabilityEvents(schedules, professionals, visibleRange, effectiveBusinessHours, locationMap),
+    [schedules, professionals, visibleRange, effectiveBusinessHours, locationMap])
 
   const events = useMemo(() =>
     [...bookingEvents, ...availabilityEvents], [bookingEvents, availabilityEvents])
@@ -709,8 +715,8 @@ export function CalendarView() {
             headerToolbar={false}
             locale={fcLocale}
             height="100%"
-            slotMinTime={config.businessHours.startTime + ':00'}
-            slotMaxTime={config.businessHours.endTime + ':00'}
+            slotMinTime={effectiveBusinessHours.startTime + ':00'}
+            slotMaxTime={effectiveBusinessHours.endTime + ':00'}
             slotDuration={{ minutes: config.slotDuration }}
             allDaySlot={false}
             nowIndicator={true}
